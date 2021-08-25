@@ -1,7 +1,7 @@
 #For function storage/ developement 
 
 createColony = function(id = NULL, location = NULL) {
-  colony = vector(mode = "list",  length = 7)
+  colony = vector(mode = "list",  length = 8)
   names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers")
   if (!is.null(id)) {
     colony$id = id
