@@ -1,6 +1,34 @@
 #For function storage/ developement 
 
-createColony = function() {} # remember to add fathers and id, we will likely need queen age too - but that should go into colony$queen$misc slot!
+createColony = function(id = NULL, location = NULL) {
+  colony = vector(mode = "list",  length = 7)
+  names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers")
+  if (!is.null(id)) {
+    colony$id = id
+  }
+  if (!is.null(location)) {
+    colony$location = location
+  }
+  if (!is.null(queen)) {
+    colony$queen = queen
+  }
+  if (!is.null(drones)) {
+    colony$drones = drones
+  }
+  if (is.null(workers)) {
+    colony$workers = workers
+  }
+  if (is.null(virgin_queens)) {
+    colony$virgin_queens = virgin_queens
+  }
+  if (is.null(pheno)) {
+    colony$pheno = pheno
+  }
+  if (is.null(fathers)) {
+    colony$fathers = fathers
+    }
+  return(colony)
+} # remember to add fathers and id, we will likely need queen age too - but that should go into colony$queen$misc slot!
 
 createSwarm = function() {} 
 # no new drones from existing queen
