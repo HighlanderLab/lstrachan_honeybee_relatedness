@@ -33,11 +33,33 @@ return(colony)
 # we will likely need queen age too - but that should go into colony$queen$misc slot!
 #can also look at hive "strength" based on number of colony workers 
 
-createSwarm = function() {} 
-# no new drones from existing queen
+
+
+ # Generate a swarm and modify the existing colony  # colony - list, colony
 # little honey
 # younger queens swarm less
 # build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
+createSwarm = function(colony) {
+  
+  sel_workers = sample(x = colony$workers@id, size = ..., replace = FALSE) # TODO gives ids of workers that will leave with the swarm
+  sel_workers = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
+  swarm = colony()
+  swarm$queen = colony$queen 
+  swarm$workers = colony$workers[sel_workers]
+  # there won't be any drones this season
+  # there won't be any virgin queens either, unless supersedure happens
+  
+  colony$workers = colony$workers[!sel_workers]
+  sel_virgin_queen = sample(x = swarm$workers@id, size = 1)
+  colony$queen = colony$virgin_queen[sel_virgin_queen]
+  colony$virgin_queen = NA # queen kills all the virgin queens
+  # drones stay from the previous queen
+  # possibly more code here - do we do mating of the new virgin queen here in this function? 
+  
+  return(list(colony = colony, swarm = swarm))
+}
+
+
 
 createDCA = function() {}
 
