@@ -93,7 +93,7 @@ return(colony)
 queens = randCross(pop = base_pop, nCrosses = nColonies, nProgeny = 1) #group of queens from number of colonies in with base_pop genetics 
 drones = makeDH(pop = queens, nDH = 50) #TODO: variable number of drones 
 
-createColony(queen = queens[sample(size = 1, replacement = FALSE)], fathers = drones[sample(TODO)])
+createColony(queen = queens[sample(size = 1, replacement = FALSE)], fathers = drones[sample(size = 17, #TODO)]) 
 
 
 
