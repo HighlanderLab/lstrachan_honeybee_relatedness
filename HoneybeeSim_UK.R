@@ -1,9 +1,13 @@
 
 #Packages used ------------------------------------------------------------
 library(AlphaSimR)
+
+#Variables----
 p_supersedure = 0.5
 p_swarming = 0.5
-nBeesPerColony = 500
+nBeesPerColony = 500 #TODO: variable number of bees in colony 
+nColonies <- 10 # to do: variable number of Colonies 
+
 
 #Setting up founder population ----------------------------------------------
 founder_population = quickHaplo(nInd = 10, nChr = 16, ploidy = 2L,
@@ -49,15 +53,49 @@ GenMap[[3]][1:6] = 0
 SP$switchGenMap(GenMap) 
 
 
-#Create a base population --------------------------------------------------
+#Create a base population
 base_pop = newPop(rawPop = founder_population)
 
-template_colony = vector(mode = "list", length = 7)
-names(template_colony) = c("name","id", "location", "queen", "drones", "workers", "virgin_queens", "pheno")
-#We will expand the above list with further data, say (location,pheno, spatial(vector of x,y))
+#CreateColony function ---- to create a new colony from existing (not only base population). Arguments- list of nodes within the hive (to be populated)
+createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL) {
+  colony = vector(mode = "list",  length = 8)
+  names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers")
+  if (!is.null(id)) {
+    colony$id = id
+  }
+  if (!is.null(location)) {
+    colony$location = location
+  }
+  if (!is.null(queen)) {
+    colony$queen = queen
+  }
+  if (!is.null(drones)) {
+    colony$drones = drones
+  }
+  if (is.null(workers)) {
+    colony$workers = workers
+  }
+  if (is.null(virgin_queens)) {
+    colony$virgin_queens = virgin_queens
+  }
+  if (is.null(pheno)) {
+    colony$pheno = pheno
+  }
+  if (is.null(fathers)) {
+    colony$fathers = fathers
+    }
+return(colony)
+} 
+# we will likely need queen age too - but that should go into colony$queen$misc slot!
+#can also look at hive "strength" based on number of colony workers 
 
-#Number of colonies controller--------------- 
-nColonies <- 10 # to do: variable number of Colonies 
+#Populating first generation with queens and fathers ----
+queens = randCross(pop = base_pop, nCrosses = nColonies, nProgeny = 1) #group of queens from number of colonies in with base_pop genetics 
+drones = makeDH(pop = queens, nDH = 50) #TODO: variable number of drones 
+
+createColony(queen = queens[sample(size = 1, replacement = FALSE)], fathers = drones[sample(TODO)])
+
+
 
 #Create a colony list -----------------------------------------------------------
 colony_list = vector(mode = "list", length = nColonies)
