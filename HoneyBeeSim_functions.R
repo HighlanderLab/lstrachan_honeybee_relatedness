@@ -1,6 +1,7 @@
 #For function storage/ developement 
 
-createColony = function(id = NULL, location = NULL) {
+#CreateColony function - to create a new colony from existing (not only base population). Arguments- list of nodes within the hive (to be populated)
+createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL) {
   colony = vector(mode = "list",  length = 8)
   names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers")
   if (!is.null(id)) {
@@ -27,8 +28,10 @@ createColony = function(id = NULL, location = NULL) {
   if (is.null(fathers)) {
     colony$fathers = fathers
     }
-  return(colony)
-} # remember to add fathers and id, we will likely need queen age too - but that should go into colony$queen$misc slot!
+return(colony)
+} 
+# we will likely need queen age too - but that should go into colony$queen$misc slot!
+#can also look at hive "strength" based on number of colony workers 
 
 createSwarm = function() {} 
 # no new drones from existing queen
