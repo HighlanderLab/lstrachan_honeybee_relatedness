@@ -59,11 +59,39 @@ createSwarm = function(colony) {
   return(list(colony = colony, swarm = swarm))
 }
 
+#Drone congregation area of the base population made in colony_list 
+createDCA = function() {
+  DCA = lapply(X = colony_list, FUN = function(z) z$drones)  
+  DCA = mergePops(popList = DCA)
+  
+  return(popList = DCA)
+}
 
+#Splitting of the hive during supersedure and new queen made              
+supersedure = function(create_colony) {
+  nWorkersPerDrone = nBeesPerColony / nMatingDrones[create_colony]
+  
+  supersedure = create_colony()
+  supersedure$queen = supersedure$virgin_queens
+  supersedure$drones = makeDH(pop = supersedure$queen, nDH = 50) #TODO: variable number of drones  
+  
+  n = nInd(supersedure$workers)
+  supersedure$workers = c(supersedure$workers[sample.int(n = n, size = round(n/2))], 
+                          randCross2(females = supersedure$queen, males = DCA, #To do: artificial insemination here? / local DCA 
+                                     nCrosses = nMatingDrones[colony], nProgeny = round(nWorkersPerDrone/2)))
+  supersedure$virgin_queens = randCross2(females =  supersedure$queen, 
+                                         males = base_pop, nCrosses = 1, nProgeny = 1) #to do: variable number of drones
+  
+  return(list(colony = supersedure))
+}
 
-createDCA = function() {}
+#another way to make the supersedure workers ?
+sel_workers = sample(x = supersedure$workers@id, size = ..., replace = FALSE) #TODO: complete size
+sel_workers = supersedure$workers@id %in% sel_workers
+supersedure$workers = c(supersedure$workers[sel_workers], 
+                        randCross2(females = supersedure$queen, males = DCA, #To do: artificial insemination here? / local DCA 
+                                   nCrosses = nMatingDrones[colony], nProgeny = round(nWorkersPerDrone/2)))
 
-supersedure = function () {} # how do we make this one into a verb?
 
 beeCross = function() {}
 
