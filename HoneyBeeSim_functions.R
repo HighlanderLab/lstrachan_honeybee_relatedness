@@ -50,7 +50,7 @@ createSwarm = function(colony) {
   # there won't be any virgin queens either, unless supersedure happens
   
   colony$workers = colony$workers[!sel_workers]
-  sel_virgin_queen = sample(x = swarm$workers@id, size = 1)
+  sel_virgin_queen = sample(x = swarm$virgin_queen, size = 1)
   colony$queen = colony$virgin_queen[sel_virgin_queen]
   colony$virgin_queen = NA # queen kills all the virgin queens
   # drones stay from the previous queen
