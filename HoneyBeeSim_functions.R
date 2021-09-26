@@ -93,9 +93,40 @@ supersedure$workers = c(supersedure$workers[sel_workers],
                                    nCrosses = nMatingDrones[colony], nProgeny = round(nWorkersPerDrone/2)))
 
 
-beeCross = function() {}
 
-splitColony = function() {}
+beeCross = function(create_colony, create_DCA, nBees_created) {
+#creation of fathers group from the local DCA 
+  beeCross$fathers = create_DCA 
+  
+  nBees_created = #TODO: variable number 
+    
+#DCA fathers mate with virgin queen 
+  beeCross$workers = randCross2(females = create_colony$virgin_queens, males = beeCross$fathers
+                                nCrosses = beeCross$fathers, nProgeny = nBees_created) 
+
+  return(#TODO: do we need to create queens + new drones? )
+}
+
+splitColony = function(colony, split_percentage) { #This is a colony split artificially by keeper 
+
+  split_percentage = #TODO: variable percentage of colony size split by beekeeper 
+  sel_workers = sample(x = colony$workers@id, size = split_percentage, replace = FALSE) #gives ids of workers that will leave with the swarm
+  sel_workers = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
+  
+  splitColony = colony()
+  splitColony$queen = colony$queen 
+  splitColony$workers = colony$workers[sel_workers]
+  
+  colony$workers = colony$workers[!sel_workers]
+  sel_virgin_queen = sample(x = splitColony$virgin_queen, size = 1)
+  colony$queen = colony$virgin_queen[sel_virgin_queen]
+  colony$virgin_queen = NA # queen kills all the virgin queens
+  # drones stay from the previous queen
+  
+  return(list(colony = colony, splitColony = splitColony))
+}
+    
+ # buildUpColony = function(colony)  #still being written 
 
 # setPheno = function() {} # keep this one commented for now, we need some object-oriented magic for this to work on our colony and not to clash with AlphaSimR:::setPheno()
 
