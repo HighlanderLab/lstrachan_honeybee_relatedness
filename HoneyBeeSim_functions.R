@@ -1,9 +1,9 @@
 #For function storage/ developement 
 
 #CreateColony function - to create a new colony from existing (not only base population). Arguments- list of nodes within the hive (to be populated)
-createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL) {
-  colony = vector(mode = "list",  length = 8)
-  names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers")
+createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL, last_event = NULL) {
+  colony = vector(mode = "list",  length = 9)
+  names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers", "last_event")
   if (!is.null(id)) {
     colony$id = id
   }
@@ -28,6 +28,9 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
   if (is.null(fathers)) {
     colony$fathers = fathers
     }
+  if (is.null(last_event)) {
+    colony$last_event = "new_colony"
+    }
 return(colony)
 } 
 # we will likely need queen age too - but that should go into colony$queen$misc slot!
@@ -39,32 +42,48 @@ return(colony)
 # little honey
 # younger queens swarm less
 # build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
-createSwarm = function(colony) {
-  
-  sel_workers = sample(x = colony$workers@id, size = ..., replace = FALSE) # TODO gives ids of workers that will leave with the swarm
-  sel_workers = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
+createSwarm = function(colony, per_swarm) {
+  # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
+  noWorkersSwarm = round(length(colony$workers$id) * per_swarm, 0)
+  # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
+  noWorkersStay = length(colony$workers$id) - noWorkersSwarm
+  # Which workers swarm
+  workersSwarmId = sample(x = colony$workers@id, size = noWorkersSwarm, replace = FALSE) # TODO gives ids of workers that will leave with the swarm
+  # Which workers stay
+  workersStayId = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
+  # Create a new colony entity that represents the swarm and set its queen and workers, all the drones stay in the original colony
   swarm = colony()
   swarm$queen = colony$queen 
-  swarm$workers = colony$workers[sel_workers]
+  swarm$workers = colony$workers[workersSwarmId]
+  swarm$virgin_queen = #TODO: sample a virgin queen from the workers
   # there won't be any drones this season
   # there won't be any virgin queens either, unless supersedure happens
-  
+  # Set new set of workers to the original colony (which is just a subset of the original set)
   colony$workers = colony$workers[!sel_workers]
-  sel_virgin_queen = sample(x = swarm$virgin_queen, size = 1)
-  colony$queen = colony$virgin_queen[sel_virgin_queen]
-  colony$virgin_queen = NA # queen kills all the virgin queens
+  # Set a new queen
+  colony$queen = colony[sample(x = colony$virgin_queen$id, size = 1)]
+  colony$virgin_queen = NA #TODO: select a new virgin_queen
   # drones stay from the previous queen
   # possibly more code here - do we do mating of the new virgin queen here in this function? 
+  #Change the status of the colony
+  colony$last_even = "swarmStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
+  swarm$last_even = "swarmLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
   
   return(list(colony = colony, swarm = swarm))
 }
 
 #Drone congregation area of the base population made in colony_list 
-createDCA = function() {
-  DCA = lapply(X = colony_list, FUN = function(z) z$drones)  
+createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be better
+  dca_colony_list = select_colonies(colony_list, colonyIDs)
+  DCA = lapply(X = dca_colony_list, FUN = function(z) z$drones)  
   DCA = mergePops(popList = DCA)
   
   return(popList = DCA)
+}
+
+# TODO: this isn't working yet!
+select_colonies <- function(colony_list, colony_ids) {
+  sel_colony_list = lapply(colony_list, FUN = function(x) if (x$id %in% colony_ids) {return(x)})
 }
 
 #Splitting of the hive during supersedure and new queen made              
@@ -94,22 +113,23 @@ supersedure$workers = c(supersedure$workers[sel_workers],
 
 
 
-beeCross = function(create_colony, create_DCA, nBees_created) {
-#creation of fathers group from the local DCA 
-  beeCross$fathers = create_DCA 
-  
-  nBees_created = #TODO: variable number 
-    
-#DCA fathers mate with virgin queen 
-  beeCross$workers = randCross2(females = create_colony$virgin_queens, males = beeCross$fathers
-                                nCrosses = beeCross$fathers, nProgeny = nBees_created) 
+beeCross = function(colony, drone_pop, nBees_created) {
+  #TODO: do we mate the virgin queen or set the new before this???????
+  #The drone pop can be created with the createDCA - but that is a separate step
+  #1) Write the fathers into the colony$fathers slot
+  colony$fathers = drone_pop
+  #2) Create the workers and write them in the worker slot
+  colony$workers = randCross2(females = colony$virgin_queen, males = drone_pop, nProgeny = nBees_created)
+  colony$drones = #TODO: CreateDrones functions
+  colony$queen = colony$virgin_queen
+  colony$virgin_queen = #TODO: sample from workers
 
-  return(#TODO: do we need to create queens + new drones? )
+  # Jana: I don't think this function returns anything
 }
 
 splitColony = function(colony, split_percentage) { #This is a colony split artificially by keeper 
 
-  split_percentage = #TODO: variable percentage of colony size split by beekeeper 
+  # TODO: Jana: I would do this the same as the swarm
   sel_workers = sample(x = colony$workers@id, size = split_percentage, replace = FALSE) #gives ids of workers that will leave with the swarm
   sel_workers = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
   
@@ -127,6 +147,7 @@ splitColony = function(colony, split_percentage) { #This is a colony split artif
 }
     
  # buildUpColony = function(colony)  #still being written 
+#TODO: add in workers AND drones
 
 # setPheno = function() {} # keep this one commented for now, we need some object-oriented magic for this to work on our colony and not to clash with AlphaSimR:::setPheno()
 
