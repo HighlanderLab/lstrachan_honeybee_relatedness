@@ -36,39 +36,9 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 # we will likely need queen age too - but that should go into colony$queen$misc slot!
 #can also look at hive "strength" based on number of colony workers 
 
-
-
-# Generate a swarm and modify the existing colony  # colony - list, colony
-# little honey
-# younger queens swarm less
-# build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
-createSwarm = function(colony, per_swarm) {
-  # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
-  noWorkersSwarm = round(length(colony$workers$id) * per_swarm, 0)
-  # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
-  noWorkersStay = length(colony$workers$id) - noWorkersSwarm
-  # Which workers swarm
-  workersSwarmId = sample(x = colony$workers@id, size = noWorkersSwarm, replace = FALSE) # TODO gives ids of workers that will leave with the swarm
-  # Which workers stay
-  workersStayId = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
-  # Create a new colony entity that represents the swarm and set its queen and workers, all the drones stay in the original colony
-  swarm = colony()
-  swarm$queen = colony$queen 
-  swarm$workers = colony$workers[workersSwarmId]
-  swarm$virgin_queen = sample(x = swarm$workers, size = 1, replace = FALSE)
-    # there won't be any drones this season
-    # Set new set of workers to the original colony (which is just a subset of the original set)
-  colony$workers = colony$workers[!sel_workers]
-  # Set a new queen
-  colony$queen = colony[sample(x = colony$virgin_queen$id, size = 1)]
-  colony$virgin_queen = colony[sample(x = colony$workers,size = 1, replace = FALSE)] 
-  # drones stay from the previous queen
-  # possibly more code here - do we do mating of the new virgin queen here in this function? 
-  #Change the status of the colony
-  colony$last_even = "swarmStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
-  swarm$last_even = "swarmLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
-  
-  return(list(colony = colony, swarm = swarm))
+#Drone creation (making them haplodiploid)
+createDrones = function(colony, nDrones){
+  colony$drones = makeDH(pop = colony$queen, nDH = nDrones)
 }
 
 #Drone congregation area of the base population made in colony_list 
@@ -80,63 +50,74 @@ createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be bette
   return(popList = DCA)
 }
 
-#Drone creation (making them haplodiploid)
-CreateDrones = function(colony){
-  colony$drones = makeDH(pop = colony$queen, nDH = 50)
-  return (popList = colony$drones)
-}
-
-# TODO: this isn't working yet!
-select_colonies <- function(colony_list, colony_ids) {
-  sel_colony_list = lapply(colony_list, FUN = function(x) if (x$id %in% colony_ids) {return(x)})
-}
-
-#Splitting of the hive during supersedure and new queen made              
-supersedure = function(create_colony) {
-  nWorkersPerDrone = nBeesPerColony / nMatingDrones[create_colony]
-  
-  supersedure = create_colony()
-  supersedure$queen = supersedure$virgin_queens
-  supersedure$drones = makeDH(pop = supersedure$queen, nDH = 50) #TODO: variable number of drones  
-  
-  n = nInd(supersedure$workers)
-  supersedure$workers = c(supersedure$workers[sample.int(n = n, size = round(n/2))], 
-                          randCross2(females = supersedure$queen, males = DCA, #To do: artificial insemination here? / local DCA 
-                                     nCrosses = nMatingDrones[colony], nProgeny = round(nWorkersPerDrone/2)))
-  supersedure$virgin_queens = randCross2(females =  supersedure$queen, 
-                                         males = base_pop, nCrosses = 1, nProgeny = 1) #to do: variable number of drones
-  
-  return(list(colony = supersedure))
-}
-
-#another way to make the supersedure workers ?
-sel_workers = sample(x = supersedure$workers@id, size = ..., replace = FALSE) #TODO: complete size
-sel_workers = supersedure$workers@id %in% sel_workers
-supersedure$workers = c(supersedure$workers[sel_workers], 
-                        randCross2(females = supersedure$queen, males = DCA, #To do: artificial insemination here? / local DCA 
-                                   nCrosses = nMatingDrones[colony], nProgeny = round(nWorkersPerDrone/2)))
-
-
-
-beeCross = function(colony, drone_pop, nBees_created) {
+#JANA: INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!!
+crossColony = function(colony, drone_pop, nFathers, nWorkers_created, nDrones_created) {
   #TODO: do we mate the virgin queen or set the new before this???????
   #The drone pop can be created with the createDCA - but that is a separate step
   #1) Write the fathers into the colony$fathers slot
-  colony$fathers = drone_pop
+  colony$fathers = drone_pop[sample(drone_pop@id, nFathers, replace = FALSE)]
   #2) Create the workers and write them in the worker slot
-  colony$workers = randCross2(females = colony$virgin_queen, males = drone_pop, nProgeny = nBees_created)
-  colony$drones = CreateDrones()
-    colony$queen = colony$virgin_queen
-  colony$virgin_queen = sample(x= colony$workers, size = 1, replace = FALSE)
-
+  colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
+  colony$workers = randCross2(females = colony$queen, males = drone_pop, nCrosses = nWorkers_created)
+  
+  colony$drones = createDrones(colony, nDrones_created)
+  colony$virgin_queen = selectInd(colony$workers, nInd = 1, use = "rand") #Jana: edited - simpler this way
+  
 }
 
 
-splitColony = function(colony, per_swarm) {
+# Generate a swarm and modify the existing colony  # colony - list, colony
+# little honey
+# younger queens swarm less
+# build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
+createSwarm = function(colony, per_swarm) {
   # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
-  noWorkersSplit = round(length(colony$workers$id) * per_split, 0)
+  noWorkersSwarm = round(colony$workers$nInd * per_swarm, 0)
   # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
-  noWorkersStay = length(colony$workers$id) - noWorkersSplit
+  noWorkersStay = colony$workers$nInd - noWorkersSwarm
+  # Which workers swarm
+  workersSwarmId = sample(x = colony$workers@id, size = noWorkersSwarm, replace = FALSE) # TODO gives ids of workers that will leave with the swarm
+  # Which workers stay
+  workersStayId = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
+  # Create a new colony entity that represents the swarm and set its queen and workers, all the drones stay in the original colony
+  swarm = createColony()
+  swarm$queen = colony$queen 
+  swarm$workers = colony$workers[workersSwarmId]
+  swarm$virgin_queen = selectInd(swarm$workers, nInd = 1, use = "rand")
+    # there won't be any drones this season
+
+  # Set a new queen 
+    #Jana: the new queen becomes the virgin_queen --> the new virgin queen will be set by crossColony
+  colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
+  # Set new set of workers to the original colony (which is just a subset of the original set)
+  colony$workers = colony$workers[!sel_workers]
+
+  #Jana: This is not ok, since this has to come from the new fathers!!!
+  #colony$virgin_queen = colony[sample(x = colony$workers,size = 1, repace = FALSE)] 
+  
+  # drones stay from the previous queen
+  # possibly more code here - do we do mating of the new virgin queen here in this function? 
+  #Change the status of the colony
+  colony$last_even = "swarmStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
+  swarm$last_even = "swarmLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
+  
+  return(list(colony = colony, swarm = swarm))
+}
+
+
+
+#Splitting of the hive during supersedure and new queen made              
+supersedure = function(colony) {
+  colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
+}
+
+
+
+splitColony = function(colony, per_split) {
+  # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
+  noWorkersSplit = round(colony$workers$nInd * per_split, 0)
+  # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
+  noWorkersStay = colony$workers$nInd - noWorkersSplit
   # Which workers are taken
   workersSplitId = sample(x = colony$workers@id, size = noWorkersSplit, replace = FALSE) # TODO gives ids of workers that will leave with the swarm
   # Which workers stay
@@ -145,28 +126,42 @@ splitColony = function(colony, per_swarm) {
   splitColony = colony()
   splitColony$queen = colony$queen 
   splitColony$workers = colony$workers[workersSplitId]
-  splitColony$virgin_queen = sample(x = splitColony$workers, size = 1, replace = FALSE)
+  splitColony$virgin_queen = selectInd(colony$workers, nInd = 1, use = "rand")
   # there won't be any drones this season
+  
+  # Set a new queen
+  colony$queen = selectInd(colony$virgin_queens, nInd = 1, use = "rand")
   # Set new set of workers to the original colony (which is just a subset of the original set)
   colony$workers = colony$workers[!sel_workers]
-  # Set a new queen
-  colony$queen = colony[sample(x = colony$virgin_queen$id, size = 1)]
-  colony$virgin_queen = colony[sample(x = colony$workers,size = 1, replace = FALSE)] 
+
+  #Jana: This again is not true - the new virgin queen has to come from tnew queen and drones
+  #colony$virgin_queen = colony[sample(x = colony$workers,size = 1, replace = FALSE)] 
   #Change the status of the colony
-  colony$last_even = "swarmStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
-  swarm$last_even = "swarmLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
+  colony$last_even = "splitStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
+  splitColony$last_even = "splitLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
   
   return(list(colony = colony, splitColony = splitColony))
 }
 
 
-buildUpColony = function(colony, per_workers_increase) {
-  builtColony = colony()
-  builtColony$workers = round(length(colony$workers) * per_workers_increase, 0)
-  builtColony$drones = makeDH(pop = supersedure$queen, nDH = 50) #TODO: variable drone pop number 
+buildUpColony = function(colony, per_workers_increase, nDrones) {
+  #builtColony = colony() Jana: you don't need this! COlony is an input parameter!!!! We are just changing the existing one, not creating a new one!
+  nNewWorkers = round(colony$workers@nInd * per_workers_increase, 0)
+  newWorkers = randCross2(females = colony$queen, males = colony$fathers, nCrosses = nNewWorkers)
+  colony$workers = mergePop(colony$workers, colony$newWorkers)
+  colony$drones = createDrones(colony, nDrones) #TODO: variable drone pop number 
 }  
 
+# TODO: this isn't working yet!
+select_colonies <- function(colony_list, colony_ids) {
+  sel_colony_list = colony_list[sapply(colony_list, FUN = function(x) x$id %in% colony_ids)]
+  #sel_colony_list = sel_colony_list[sapply(sel_colony, FUN = function(x) !is.null(x))]
+  return(sel_colony_list)
+}
+
 # setPheno = function() {} # keep this one commented for now, we need some object-oriented magic for this to work on our colony and not to clash with AlphaSimR:::setPheno()
+
+
 
 
 
