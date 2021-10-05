@@ -1,6 +1,31 @@
-#For function storage/ developement 
+#For function storage/ developement
 
-#CreateColony function - to create a new colony from existing (not only base population). Arguments- list of nodes within the hive (to be populated)
+#-----------------------------------------------------------------------
+# Print plotSummaryAlphaPart
+#-----------------------------------------------------------------------
+#' @rdname createColony
+#' @method createColony
+#' @title Creates a honeybee colony
+##' @usage \method{print}{plotSummaryAlphaPart}(x, ask, ...)
+#' @description Creates a honeybee colony as a list with the following elements:
+#'   \id, location, queen, drones, workers, cirgin_queens, pheno, fathers, ans last event
+#'   \All elements of the list, expect for \code{last_even}, are assumed NULL if not specified
+#'   \otherwise. \code{last_event} is set to "new_colony".
+#' @param id ID of the colony.
+#' @param location Location of the colony.
+#' @param queen AlphaSimR individual object to become the queen of the colony.
+#' @param drones AlphaSimR population object to become the drones of the colony.
+#' @param workers AlphaSimR population object to become the workers of the colony.
+#' @param virgin_queens AlphaSimR individual or population object to become the virgin queen(s) of the colony.
+#' @param pheno
+#' @param fathers AlphaSimR population object of the fathers of the colony - i.e. the drones the queen mated with (semen in spermatheca)
+#' @param last_event Last event of the colony. Default is set to "new_colony", other possible values are TODO?????
+#'
+#' @example inst/examples/examples_createColony.R
+#' @return Returns AlphaSimR class "Colony" object.
+##' @useDynLib AlphaPart, .registration = TRUE
+#' @export
+
 createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL, last_event = NULL) {
   colony = vector(mode = "list",  length = 9)
   names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers", "last_event")
@@ -31,17 +56,52 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
   if (!is.null(last_event)) {
     colony$last_event = "new_colony"
   }
+  class(colony) <- "Colony"
   return(colony)
 } 
-# we will likely need queen age too - but that should go into colony$queen$misc slot!
-#can also look at hive "strength" based on number of colony workers 
+# TODO: we will likely need queen age too - but that should go into colony$queen$misc slot!
+# TODO: can also look at hive "strength" based on number of colony workers
 
-#Drone creation (making them haplodiploid)
+#=======================================================================
+# createDrones
+# =======================================================================
+#' @rdname createDrones
+#' @method createDrones
+#' @title Creates drones of the colony as double haploids
+#' @usage \method{createDrones}(colony, nDrones)
+#' @description Creates the specified number of drones in the colony
+#'       \as double haploids from the current queen and adds them in
+#'       \ the \code{colony$drones} slot.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nDrones Number of drones to create
+#'
+#' @example inst/examples/examples_createDrones.R
+#'
+#' @export
+
 createDrones = function(colony, nDrones){
   colony$drones = makeDH(pop = colony$queen, nDH = nDrones)
 }
 
-#Drone congregation area of the base population made in colony_list 
+#=======================================================================
+# Create DCA
+# =======================================================================
+#' @rdname createDCA
+#' @method createDCA
+#' @title Creates a drone congregation area (DCA) from the list of colonies
+#' @usage \method{createDCA}(colony_list, colonyIDs)
+#' @description Creates a drone congregation area (DCA) from selected colonies.
+#' The function takes the list of all the colonies and a vector of IDs of the selected ones.
+#' The function returns a combined population of drones.
+#' @seealso \code{\link[??????]{select_colonies}}
+#' @param colony_list
+#' @param colonyIDs
+#'
+#' @example inst/examples/examples_createDrones.R
+#'
+#' @return Single AlphaSim population object of drones from all the selected colonies.
+#' @export
+
 createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be better
   dca_colony_list = select_colonies(colony_list, colonyIDs)
   DCA = lapply(X = dca_colony_list, FUN = function(z) z$drones)  
@@ -49,6 +109,28 @@ createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be bette
   
   return(popList = DCA)
 }
+
+#=======================================================================
+# Cross colony
+# =======================================================================
+#' @rdname crossColony
+#' @method crossColony
+#' @title Crosses a colony with a virgin queen to the population of drones.
+#' @usage \method{crossColony}(colony, drone_pop, nFathers, nWorkers_created, nDrones_created)
+#' @description Crosses a colony with a virgin queen to the population of drones,
+#' \creates workers, drones and a new virgin queen and write them to the correspodning
+#' \slots of the colony object.
+#' @seealso \code{\link[??????]{createColony}}
+#' @param colony
+#' @param drone_pop
+#' @param nFathers
+#' @param nWorkers_created
+#' @param nDrones_created
+
+#'
+#' @example inst/examples/examples_crossColony.R
+#'
+#' @export
 
 #JANA: INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!!
 crossColony = function(colony, drone_pop, nFathers, nWorkers_created, nDrones_created) {
@@ -62,15 +144,31 @@ crossColony = function(colony, drone_pop, nFathers, nWorkers_created, nDrones_cr
   
   colony$drones = createDrones(colony, nDrones_created)
   colony$virgin_queen = selectInd(colony$workers, nInd = 1, use = "rand") #Jana: edited - simpler this way
-  
 }
 
-
+#=======================================================================
+# Swarm
+# =======================================================================
+#' @rdname swarm
+#' @method swarm
+#' @title Replicates the swarming process and produces two colonies.
+#' @usage \method{createSwarm}(colony, per_swarm)
+#' @description Replicates the swarming of the colony - the process in which
+#' a part of the workers leave with the old queen and creates a new colony,
+#' while a part of the workers stay with a new queen and the old drones.
+#' @seealso \code{\link[??????]{createColony}}
+#' @param colony
+#' @param per_swarm
+#'
+#' @example inst/examples/examples_swarm.R
+#' @return Two colonies, one with the new queen and proportion of workers and
+#' one with the old queen and proportion of workers.
+#' @export
 # Generate a swarm and modify the existing colony  # colony - list, colony
 # little honey
 # younger queens swarm less
 # build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
-createSwarm = function(colony, per_swarm) {
+swarm = function(colony, per_swarm) {
   # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
   noWorkersSwarm = round(colony$workers$nInd * per_swarm, 0)
   # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
@@ -105,14 +203,44 @@ createSwarm = function(colony, per_swarm) {
 }
 
 
+#=======================================================================
+# Supersede
+# =======================================================================
+#' @rdname supersede
+#' @method supersede
+#' @title Replicates the supersedure and replaces the queen with the virgin queen.
+#' @usage \method{supersedure}(colony)
+#' @description Replicates the process of supersedure, where the
+#' queen is replaced by a new virgin queen. The workers and the drones stay
+#' in the colony.
+#' @seealso \code{\link[??????]{supersedure}}
+#' @param colony
+#'
+#' @example inst/examples/examples_supersedure.R
+#' @export
 
-#Splitting of the hive during supersedure and new queen made              
-supersedure = function(colony) {
+#Splitting of the hive during supersedure and new queen made    --> Jana: Don't set the new
+# queen yet since it has to be the offsrping of new drones
+supersede = function(colony) {
   colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
 }
 
 
-
+#=======================================================================
+# Split colony
+# =======================================================================
+#' @rdname splitColony
+#' @method splitColony
+#' @title Split the colony in two colonies.
+#' @usage \method{splitColony}(colony, per_split)
+#' @description Split the colony in two colonies - one with the old queen and
+#' a part of workers and one with the new virgin queen, a part of workers and drones.
+#' @seealso \code{\link[??????]{splitColony}}
+#' @param colony
+#' @param per_split
+#'
+#' @example inst/examples/examples_splitColony.R
+#' @export
 splitColony = function(colony, per_split) {
   # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
   noWorkersSplit = round(colony$workers$nInd * per_split, 0)
@@ -143,8 +271,23 @@ splitColony = function(colony, per_split) {
   return(list(colony = colony, splitColony = splitColony))
 }
 
-
-buildUpColony = function(colony, per_workers_increase, nDrones) {
+#=======================================================================
+# Build up colony
+# =======================================================================
+#' @rdname buildUpColony
+#' @method buildUpColony
+#' @title Build up the number of workers and drones in the colony.
+#' @usage \method{splitColony}(colony, per_split)
+#' @description Build up the number of workers and drones in the colony.
+#' Build up would usually happen after swarming or spliting of the colony,
+#' @param colony
+#' @param per_workers_increase
+#' @param addDrones
+#' @param nDrones_created
+#'
+#' @example inst/examples/examples_buildUpColony.R
+#' @export
+buildUpColony = function(colony, per_workers_increase, addDrones = TRUE, nDrones) {
   #builtColony = colony() Jana: you don't need this! COlony is an input parameter!!!! We are just changing the existing one, not creating a new one!
   nNewWorkers = round(colony$workers@nInd * per_workers_increase, 0)
   newWorkers = randCross2(females = colony$queen, males = colony$fathers, nCrosses = nNewWorkers)
@@ -152,10 +295,23 @@ buildUpColony = function(colony, per_workers_increase, nDrones) {
   colony$drones = createDrones(colony, nDrones) #TODO: variable drone pop number 
 }  
 
-# TODO: this isn't working yet!
-select_colonies <- function(colony_list, colony_ids) {
+#=======================================================================
+# Select colonies
+# =======================================================================
+#' @rdname selectColonies
+#' @method selectColonies
+#' @title Select the colonies from the colony list based on IDs.
+#' @usage \method{selectColonies}(colony_list, colony_ids)
+#' @description Select the colonies from the list of all colonies based
+#' on colony IDs and return a list of selected colonies.
+#' @param colony_list
+#' @param colony_ids
+#'
+#' @example inst/examples/examples_selectColonies.R
+#' @return A list of selected colonies.
+#' @export
+selectColonies <- function(colony_list, colony_ids) {
   sel_colony_list = colony_list[sapply(colony_list, FUN = function(x) x$id %in% colony_ids)]
-  #sel_colony_list = sel_colony_list[sapply(sel_colony, FUN = function(x) !is.null(x))]
   return(sel_colony_list)
 }
 
