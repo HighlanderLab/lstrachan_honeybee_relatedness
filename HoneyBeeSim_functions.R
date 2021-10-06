@@ -1,12 +1,100 @@
 #For function storage/ developement
 
 #-----------------------------------------------------------------------
-# Print plotSummaryAlphaPart
+# Create colony list
+#-----------------------------------------------------------------------
+#' @title ColonyList
+#'
+#' @description
+#' The ColonyList represents the list of the colonies.
+#' It is designed to behave like a list of colonies.
+#'
+#' @param x a 'ColonyList' object
+#' @param i index of populations or colonies
+#'
+#' @slot colony list of \code{\link{Colony-class}} and/or
+#' \code{ColonyList-class}
+#'
+#'
+#' @export
+setClass("ColonyList",
+         slots=c(colonies="list"))
+
+
+#' @describeIn ColonyList Extract ColonyList by index
+setMethod("[",
+          signature(x = "ColonyList"),
+          function(x, i){
+            x@colonies = x@colonies[i]
+            return(x)
+          }
+)
+
+#' @describeIn ColonyList Extract Colony by index
+setMethod("[[",
+          signature(x = "ColonyList"),
+          function (x, i){
+            return(x@colonies[[i]])
+          }
+
+#' @describeIn ColonyLIst Combine multiple ColonyLists
+setMethod("c",
+          signature(x = "ColonyList"),
+          function (x, ...){
+            for(y in list(...)){
+              if(class(y)=="NULL"){
+                # Do nothing
+              }else{
+                if(class(y)=="Colony"){
+                  x@colonies = c(x@colonies, y)
+                }else{
+                  stopifnot(class(y)=="MegaPop")
+                  x@colonies = c(x@colonies, y@colonies)
+                }
+              }
+            }
+            return(x)
+          }
+)
+
+
+#' @title Create new ColonyList
+#'
+#' @description
+#' Creates a new \code{\link{ColonyList-class}} from one or more
+#' \code{\link{Colony-class}} and/or \code{\link{ColonyList-class}}
+#' objects.
+#'
+#' @param ... one or more \code{\link{Colony-class}} and/or
+#' \code{\link{ColonyList-class}} objects.
+#'
+#' @return Returns an object of \code{\link{MegaPop-class}}
+#'
+#' @examples
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=2, nChr=1, segSites=10)
+#'
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' SP$addTraitA(10)
+#'
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' megaPop = newMegaPop(pop=pop)
+#'
+#' @export
+createColonyList = function(...){
+  input = list(...)
+  class = sapply(input, "class")
+  stopifnot(all(class=="Colony" | class=="MegaPop"))
+
+#-----------------------------------------------------------------------
+# Create colony
 #-----------------------------------------------------------------------
 #' @rdname createColony
 #' @method createColony
 #' @title Creates a honeybee colony
-##' @usage \method{print}{plotSummaryAlphaPart}(x, ask, ...)
+#' @usage \method{createColony}(id, location, queen, drones, workers, virgin_queen, fathers, pheno, last_event)
 #' @description Creates a honeybee colony as a list with the following elements:
 #'   \id, location, queen, drones, workers, cirgin_queens, pheno, fathers, ans last event
 #'   \All elements of the list, expect for \code{last_even}, are assumed NULL if not specified
@@ -23,10 +111,21 @@
 #'
 #' @example inst/examples/examples_createColony.R
 #' @return Returns AlphaSimR class "Colony" object.
-##' @useDynLib AlphaPart, .registration = TRUE
 #' @export
 
-createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, pheno = NULL, fathers = NULL, last_event = NULL) {
+setClass("Colony",
+         slots=c(id="character",
+                 location="integer",
+                 queen="Pop-class",
+                 drones="Pop-class",
+                 workers="Pop-class",
+                 virgin_queens="Pop-class",
+                 fathers="Pop-class",
+                 pheno="matrix",
+                 last_event="character"
+                 ))
+
+createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, workers = NULL, virgin_queens = NULL, fathers = NULL, pheno = NULL, last_event = NULL) {
   colony = vector(mode = "list",  length = 9)
   names(colony) = c("id", "location", "queen", "drones", "workers", "virgin_queens", "pheno", "fathers", "last_event")
   if (!is.null(id)) {
@@ -81,8 +180,40 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 
 createDrones = function(colony, nDrones){
   colony$drones = makeDH(pop = colony$queen, nDH = nDrones)
+  #TODO: return
 }
 
+#=======================================================================
+# createWorkers
+# =======================================================================
+#' @rdname createWorkers
+#' @method createWorkers
+#' @title Creates workers of the colony
+#' @usage \method{createWorkers}(colony, nWorkers)
+#' @description Creates the specified number of worker in the colony
+#'       \by mating the current queen and the fathers and adds them in
+#'       \ the \code{colony$workers} slot.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nDrones Number of workers to create
+#'
+#' @example inst/examples/examples_createDrones.R
+#'
+#' @export
+
+createWorkers = function(colony, nWorkers){
+    if (is.null(colony$queen)) {
+      stop("Missing queen!") 
+    }
+    if (is.null(colony$fathers)) {
+      stop("Missing fathers!")
+    }
+
+    colony$workers = randCross2(females = colony$queen,
+                                males = colony$fathers,
+                                nCrosses = nWorkers)
+
+  #TODO: return
+}
 #=======================================================================
 # Create DCA
 # =======================================================================
@@ -102,11 +233,11 @@ createDrones = function(colony, nDrones){
 #' @return Single AlphaSim population object of drones from all the selected colonies.
 #' @export
 
-createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be better
-  dca_colony_list = select_colonies(colony_list, colonyIDs)
+createDCA = function(colony_list = NULL, colonyIDs = NULL) {
+  dca_colony_list = selectColonies(colony_list, colonyIDs)
   DCA = lapply(X = dca_colony_list, FUN = function(z) z$drones)  
   DCA = mergePops(popList = DCA)
-  
+  print(paste0("Created a DCA with ", DCA@nInd, " drones."))
   return(popList = DCA)
 }
 
@@ -121,29 +252,51 @@ createDCA = function(colony_list = NULL, colonyIDs = NULL) { # Would it be bette
 #' \creates workers, drones and a new virgin queen and write them to the correspodning
 #' \slots of the colony object.
 #' @seealso \code{\link[??????]{createColony}}
-#' @param colony
-#' @param drone_pop
-#' @param nFathers
-#' @param nWorkers_created
-#' @param nDrones_created
+#' @param colony INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!!
+#' @param fathers
+#' @param nWorkers
+#' @param nDrones
 
 #'
 #' @example inst/examples/examples_crossColony.R
 #'
 #' @export
 
-#JANA: INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!!
-crossColony = function(colony, drone_pop, nFathers, nWorkers_created, nDrones_created) {
-  #TODO: do we mate the virgin queen or set the new before this???????
-  #The drone pop can be created with the createDCA - but that is a separate step
-  #1) Write the fathers into the colony$fathers slot
-  colony$fathers = drone_pop[sample(drone_pop@id, nFathers, replace = FALSE)]
-  #2) Create the workers and write them in the worker slot
-  colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
-  colony$workers = randCross2(females = colony$queen, males = drone_pop, nCrosses = nWorkers_created)
+crossColony = function(colony, fathers, nWorkers, nDrones) {
+  if (all(is.null(colony$virgin_queens), is.null(colony$queen))) {
+    stop("No queen or virgin queen!")
+  }
+  #IF the colony is queenless - select a queen from the virgin queen - if not, mate the current queen!!!
+  if (is.null(colony$queen)) {
+    colony$queen = selectInd(colony$virgin_queens, nInd = 1, use = "rand")
+   }
+
+  colony$workers = createWorkers(colony, nWorkers)
+  colony$drones = createDrones(colony, nDrones)
+  colony$virgin_queen = selectInd(colony$workers, nInd = 1, use = "rand")
+}
+
+
+#=======================================================================
+# Select Fathers
+#NOT SURE WHETHER WE NEED THIS BUT JUST TO NOTE THIS HAS TO BE MADE SOMEWHERE IN THE SIMULATION!
+# =======================================================================
+selectFathersFromDCA = function(DCA, nFathers) {
+    return(selectInd(DCA, nInd = nFathers, use = "rand"))
+}
+
+
+#=======================================================================
+# Extract Individuals from a cast - this could be used for example to extract virgin queens
+#NOT SURE WHETHER WE NEED THIS BUT COULD BE USEFUL!!!
+# =======================================================================
+extractIndFromCast = function(colony, cast, nInd) {
+  if (nInd > colony[[cast]]@nInd) {
+    stop(paste0("Not enough individuals in ", cast, " ! " ,
+                nInd, " required, but ", colony[[cast]]@nInd, " available."))
+  }
   
-  colony$drones = createDrones(colony, nDrones_created)
-  colony$virgin_queen = selectInd(colony$workers, nInd = 1, use = "rand") #Jana: edited - simpler this way
+  return(selectInd(colony[[cast]], nInd = nInd, use = "rand"))
 }
 
 #=======================================================================
@@ -184,14 +337,14 @@ swarm = function(colony, per_swarm) {
   swarm$virgin_queen = selectInd(swarm$workers, nInd = 1, use = "rand")
     # there won't be any drones this season
 
-  # Set a new queen 
+  # Set a new queen
     #Jana: the new queen becomes the virgin_queen --> the new virgin queen will be set by crossColony
-  colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
+  #olony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
   # Set new set of workers to the original colony (which is just a subset of the original set)
   colony$workers = colony$workers[!sel_workers]
 
   #Jana: This is not ok, since this has to come from the new fathers!!!
-  #colony$virgin_queen = colony[sample(x = colony$workers,size = 1, repace = FALSE)] 
+  #colony$virgin_queen = colony[sample(x = colony$workers,size = 1, repace = FALSE)]
   
   # drones stay from the previous queen
   # possibly more code here - do we do mating of the new virgin queen here in this function? 
@@ -287,13 +440,61 @@ splitColony = function(colony, per_split) {
 #'
 #' @example inst/examples/examples_buildUpColony.R
 #' @export
+#' 
 buildUpColony = function(colony, per_workers_increase, addDrones = TRUE, nDrones) {
   #builtColony = colony() Jana: you don't need this! COlony is an input parameter!!!! We are just changing the existing one, not creating a new one!
   nNewWorkers = round(colony$workers@nInd * per_workers_increase, 0)
   newWorkers = randCross2(females = colony$queen, males = colony$fathers, nCrosses = nNewWorkers)
-  colony$workers = mergePop(colony$workers, colony$newWorkers)
+  colony$workers = createWorkers() #TODO ##mergePop(colony$workers, newWorkers)
   colony$drones = createDrones(colony, nDrones) #TODO: variable drone pop number 
 }  
+
+
+#=======================================================================
+# Replace workers - MAYBE WE DON?T NEED THIS SINCE WE HAVE createWorker
+# =======================================================================
+#' @rdname replaceWorkers
+#' @method replaceWorkers
+#' @title
+#' @usage
+#' @description
+#' @param colony
+#' @param nWorkers COULD BE "all" - replaces all workers, or a number!!!!
+#' @param
+#'
+#' @example
+#' @export
+
+replaceWorkers = function(colony, nWorkers) {
+  if (nWorkers == "all") {
+    nWorkers = colony$workers@nInd
+  }
+
+  colony$workers = createWorkers(colony, nWorkers)
+}
+
+#=======================================================================
+# Replace drones - MAYBE WE DON?T NEED THIS SINCE WE HAVE createDrone
+# =======================================================================
+#' @rdname
+#' @method
+#' @title
+#' @usage
+#' @description
+#' @param colony
+#' @param nWorkers COULD BE "all" - replaces all drones, or a number!!!!
+#' @param
+#'
+#' @example
+#' @export
+
+replaceDrones = function(colony, nDrones) {
+  if (nDrones == "all") {
+    nDrones = colony$drones@nInd
+  }
+
+  colony$drones = createDrones(colony, nDrones)
+}
 
 #=======================================================================
 # Select colonies
@@ -310,6 +511,7 @@ buildUpColony = function(colony, per_workers_increase, addDrones = TRUE, nDrones
 #' @example inst/examples/examples_selectColonies.R
 #' @return A list of selected colonies.
 #' @export
+#' 
 selectColonies <- function(colony_list, colony_ids) {
   sel_colony_list = colony_list[sapply(colony_list, FUN = function(x) x$id %in% colony_ids)]
   return(sel_colony_list)
@@ -323,16 +525,16 @@ selectColonies <- function(colony_list, colony_ids) {
 
 #Things to add in the future/ check list 
 #genetic model --> they have either infinitesimal or finite (we don't have to worry about this)
---> #simulate queen and worker effects (yet to do)
-  --> #simulate demographic history (in progress)
+ #simulate queen and worker effects (yet to do)
+   #simulate demographic history (in progress)
   #population --> specify the size of the population (#colonies/y)
-  --> #simulate passive population (not actively selected but exchanged queens/drones with the selected)
-  --> #specify the rates of exchange between selected and non-selected (we can control this within the breeding program
-  --> #specify min/max age of queen to produce queens/drones
-  --> #culling ages
+    #simulate passive population (not actively selected but exchanged queens/drones with the selected)
+    #specify the rates of exchange between selected and non-selected (we can control this within the breeding program
+    #specify min/max age of queen to produce queens/drones
+    #culling ages
   #mating --> specify how queen of the breding and passive populations mate - free mating, AI, breeding stations
-  --> #decide how many drones are involved
-  --> #For mating stations specify - drone producting queens on mating stations, whether they are related, and how secure is the mating station (probability of a drone in the DCa coming from the mating stations hives)
+    #decide how many drones are involved
+    #For mating stations specify - drone producting queens on mating stations, whether they are related, and how secure is the mating station (probability of a drone in the DCa coming from the mating stations hives)
   #selection - rates of queen selection
-  - #how many sisters from the same sister group (within/across family selection)
-  - #perform: phenotypic, genotypic, random selection on selection based on EBVs
+    #how many sisters from the same sister group (within/across family selection)
+    #perform: phenotypic, genotypic, random selection on selection based on EBVs
