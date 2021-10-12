@@ -1,10 +1,10 @@
 #For function storage/ developement
 
 #-----------------------------------------------------------------------
-# Create colony list
+# Class colony list
 #-----------------------------------------------------------------------
 #' @title ColonyList
-#'
+#' #'
 #' @description
 #' The ColonyList represents the list of the colonies.
 #' It is designed to behave like a list of colonies.
@@ -36,6 +36,7 @@ setMethod("[[",
           function (x, i){
             return(x@colonies[[i]])
           }
+)
 
 #' @describeIn ColonyLIst Combine multiple ColonyLists
 setMethod("c",
@@ -68,25 +69,38 @@ setMethod("c",
 #' @param ... one or more \code{\link{Colony-class}} and/or
 #' \code{\link{ColonyList-class}} objects.
 #'
-#' @return Returns an object of \code{\link{MegaPop-class}}
+#' @return Returns an empty object of \code{\link{ColonyList-class}}
 #'
 #' @examples
-#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=2, nChr=1, segSites=10)
-#'
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' SP$addTraitA(10)
-#'
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' megaPop = newMegaPop(pop=pop)
-#'
 #' @export
+
 createColonyList = function(...){
   input = list(...)
   class = sapply(input, "class")
-  stopifnot(all(class=="Colony" | class=="MegaPop"))
+  stopifnot(all(class=="Colony" | class=="ColonyList") | all(class=="NULL"))
+  output = new("ColonyList", colonies=input)
+  return(output)
+}
+
+#' @title Add colony to the ColonyList
+#'
+#' @description
+#'
+#' @param 
+#'
+#' @return 
+#'
+#' @examples
+#' @export
+
+addColonyToTheColonyList= function(colony, colonyList){
+  if (class(colony) != "Colony") {
+    message("The colony parameter is not a Colony object.")
+  }
+  colonyList = createColonyList(colonyList@colonies, colony)
+  return(output)
+}
+
 
 #-----------------------------------------------------------------------
 # Create colony
