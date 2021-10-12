@@ -109,10 +109,12 @@ addColonyToTheColonyList= function(colony, colonyList){
 #' @method createColony
 #' @title Creates a honeybee colony
 #' @usage \method{createColony}(id, location, queen, drones, workers, virgin_queen, fathers, pheno, last_event)
-#' @description Creates a honeybee colony as a list with the following elements:
-#'   \id, location, queen, drones, workers, cirgin_queens, pheno, fathers, ans last event
+#' @description List. Creates a honeybee colony as a list with the following elements:
+#'   \id location, queen, drones, workers, virgin_queens, pheno, fathers, and last event
 #'   \All elements of the list, expect for \code{last_even}, are assumed NULL if not specified
 #'   \otherwise. \code{last_event} is set to "new_colony".
+#'   # TODO: we will likely need queen age too - but that should go into colony$queen$misc slot!
+     # TODO: can also look at hive "strength" based on number of colony workers
 #' @param id ID of the colony.
 #' @param location Location of the colony.
 #' @param queen AlphaSimR individual object to become the queen of the colony.
@@ -172,8 +174,7 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
   class(colony) <- "Colony"
   return(colony)
 } 
-# TODO: we will likely need queen age too - but that should go into colony$queen$misc slot!
-# TODO: can also look at hive "strength" based on number of colony workers
+
 
 #=======================================================================
 # createDrones
@@ -185,8 +186,8 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 #' @description Creates the specified number of drones in the colony
 #'       \as double haploids from the current queen and adds them in
 #'       \ the \code{colony$drones} slot.
-#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Number of drones to create
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nDrones Numeric. Number of drones to create
 #'
 #' @example inst/examples/examples_createDrones.R
 #'
@@ -204,11 +205,11 @@ createDrones = function(colony, nDrones){
 #' @method createWorkers
 #' @title Creates workers of the colony
 #' @usage \method{createWorkers}(colony, nWorkers)
-#' @description Creates the specified number of worker in the colony
+#' @description Creates the specified number of workers in the colony
 #'       \by mating the current queen and the fathers and adds them in
 #'       \ the \code{colony$workers} slot.
-#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Number of workers to create
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nDrones Numeric. Number of drones to create
 #'
 #' @example inst/examples/examples_createDrones.R
 #'
@@ -261,15 +262,17 @@ createDCA = function(colony_list = NULL, colonyIDs = NULL) {
 #' @rdname crossColony
 #' @method crossColony
 #' @title Crosses a colony with a virgin queen to the population of drones.
-#' @usage \method{crossColony}(colony, drone_pop, nFathers, nWorkers_created, nDrones_created)
+#' @usage \method{crossColony}(colony, fathers, nWorkers, nDrones)
 #' @description Crosses a colony with a virgin queen to the population of drones,
-#' \creates workers, drones and a new virgin queen and write them to the correspodning
+#' \creates workers, drones and a new virgin queen and write them to the corresponding
 #' \slots of the colony object.
+#' #IF the colony is queenless - select a queen from the virgin queen - if not, mate the current queen!!!
 #' @seealso \code{\link[??????]{createColony}}
-#' @param colony INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!!
-#' @param fathers
-#' @param nWorkers
-#' @param nDrones
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call :
+#'               INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!! 
+#' @param fathers Pop Class. Father group taken from Colony object from the \code{createColony(...)} call 
+#' @param nWorkers Numeric.Number of workers to create
+#' @param nDrones Numeric. Number of drones to create
 
 #'
 #' @example inst/examples/examples_crossColony.R
@@ -280,7 +283,6 @@ crossColony = function(colony, fathers, nWorkers, nDrones) {
   if (all(is.null(colony$virgin_queens), is.null(colony$queen))) {
     stop("No queen or virgin queen!")
   }
-  #IF the colony is queenless - select a queen from the virgin queen - if not, mate the current queen!!!
   if (is.null(colony$queen)) {
     colony$queen = selectInd(colony$virgin_queens, nInd = 1, use = "rand")
    }
@@ -295,6 +297,20 @@ crossColony = function(colony, fathers, nWorkers, nDrones) {
 # Select Fathers
 #NOT SURE WHETHER WE NEED THIS BUT JUST TO NOTE THIS HAS TO BE MADE SOMEWHERE IN THE SIMULATION!
 # =======================================================================
+#' @rdname SelectFathersfromDCA
+#' @method SelectFathersfromDCA
+#' @title Selects and stores fathers from DCA to mate with queen 
+#' @usage \method{SelectFathersfromDCA}(DCA, nFathers)
+#' @description Selects a number individuals from DCA at random to become fathers 
+#'              # These fathers will go on to mate with a virgin queen and create a new colony 
+#'              # By storing the fathers you can keep track of the pedigree of the colonies
+#' @param DCA Poplist. AlphaSimR DCA object from the \code{createDCA(...)} call
+#' @param nFathers Numeric. Number of fathers to create 
+#'
+#' @example inst/examples/examples_SelectFathersfromDCA.R
+#' 
+#' @export
+
 selectFathersFromDCA = function(DCA, nFathers) {
     return(selectInd(DCA, nInd = nFathers, use = "rand"))
 }
@@ -319,52 +335,50 @@ extractIndFromCast = function(colony, cast, nInd) {
 #' @rdname swarm
 #' @method swarm
 #' @title Replicates the swarming process and produces two colonies.
-#' @usage \method{createSwarm}(colony, per_swarm)
-#' @description Replicates the swarming of the colony - the process in which
+#' @usage \method{createSwarm}(colony, perSwarm)
+#' @description List. Replicates the swarming of the colony - the process in which
 #' a part of the workers leave with the old queen and creates a new colony,
 #' while a part of the workers stay with a new queen and the old drones.
+#' 1. Compute the number of workers that will leave with the swarm 
+#' 2. Compute the number of workers that will stay in the original colony
+#' 3. Identify which workers will swarm and which will stay with the original colony
+#'       - returns TRUE if workers swarm and FALSE if workers stay
+#'       # TODO: give ids of workers that will leave with the swarm
+#' 4. Create a new colony entity that represents the swarm and set its queen and workers
+#'     ,all the drones stay in the original colony
+#' 5. Set new set of workers to the original colony (which is just a subset of the original set)
+#'    - The new queen becomes the virgin queen. The new virgin queen will be set by crossColony function 
+#'       #colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
+#'  6. Change the status of the colony 
+#'      #TODO: better names for this but we have to know which one stayed and which one left due to the drones
+#'      #TODO: do we want to have some information about the link (i.e. mother_colony=?")
+
 #' @seealso \code{\link[??????]{createColony}}
-#' @param colony
-#' @param per_swarm
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param perSwarm Numeric. Percentage of colony that will swarm
 #'
 #' @example inst/examples/examples_swarm.R
 #' @return Two colonies, one with the new queen and proportion of workers and
 #' one with the old queen and proportion of workers.
 #' @export
-# Generate a swarm and modify the existing colony  # colony - list, colony
-# little honey
-# younger queens swarm less
-# build-up after swarm depends on season - should this be an extra function / or will this be in country scripts?
-swarm = function(colony, per_swarm) {
-  # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
-  noWorkersSwarm = round(colony$workers$nInd * per_swarm, 0)
-  # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
+
+swarm = function(colony, perSwarm) {
+  noWorkersSwarm = round(colony$workers$nInd * perSwarm, 0)
+  
   noWorkersStay = colony$workers$nInd - noWorkersSwarm
-  # Which workers swarm
-  workersSwarmId = sample(x = colony$workers@id, size = noWorkersSwarm, replace = FALSE) # TODO gives ids of workers that will leave with the swarm
-  # Which workers stay
-  workersStayId = colony$workers@id %in% sel_workers # tells which workers will leave (TRUE) and which won't (FALSE)
-  # Create a new colony entity that represents the swarm and set its queen and workers, all the drones stay in the original colony
+  
+  workersSwarmId = sample(x = colony$workers@id, size = noWorkersSwarm, replace = FALSE) 
+  workersStayId = colony$workers@id %in% sel_workers
+ 
   swarm = createColony()
   swarm$queen = colony$queen 
   swarm$workers = colony$workers[workersSwarmId]
   swarm$virgin_queen = selectInd(swarm$workers, nInd = 1, use = "rand")
-    # there won't be any drones this season
 
-  # Set a new queen
-    #Jana: the new queen becomes the virgin_queen --> the new virgin queen will be set by crossColony
-  #olony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
-  # Set new set of workers to the original colony (which is just a subset of the original set)
   colony$workers = colony$workers[!sel_workers]
 
-  #Jana: This is not ok, since this has to come from the new fathers!!!
-  #colony$virgin_queen = colony[sample(x = colony$workers,size = 1, repace = FALSE)]
-  
-  # drones stay from the previous queen
-  # possibly more code here - do we do mating of the new virgin queen here in this function? 
-  #Change the status of the colony
-  colony$last_even = "swarmStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
-  swarm$last_even = "swarmLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
+  colony$last_even = "swarmStay" 
+  swarm$last_even = "swarmLeave" 
   
   return(list(colony = colony, swarm = swarm))
 }
@@ -375,19 +389,18 @@ swarm = function(colony, per_swarm) {
 # =======================================================================
 #' @rdname supersede
 #' @method supersede
-#' @title Replicates the supersedure and replaces the queen with the virgin queen.
+#' @title Replicates a supersedure of the colony and replaces the queen with a virgin queen.
 #' @usage \method{supersedure}(colony)
 #' @description Replicates the process of supersedure, where the
 #' queen is replaced by a new virgin queen. The workers and the drones stay
 #' in the colony.
+#'      # Jana: Don't set the new queen yet since it has to be the offsrping of new drones
 #' @seealso \code{\link[??????]{supersedure}}
-#' @param colony
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
 #'
 #' @example inst/examples/examples_supersedure.R
 #' @export
 
-#Splitting of the hive during supersedure and new queen made    --> Jana: Don't set the new
-# queen yet since it has to be the offsrping of new drones
 supersede = function(colony) {
   colony$queen = selectInd(colony$virgin_queens,  nInd = 1, use = "rand")
 }
@@ -403,7 +416,7 @@ supersede = function(colony) {
 #' @description Split the colony in two colonies - one with the old queen and
 #' a part of workers and one with the new virgin queen, a part of workers and drones.
 #' @seealso \code{\link[??????]{splitColony}}
-#' @param colony
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
 #' @param per_split
 #'
 #' @example inst/examples/examples_splitColony.R
@@ -446,21 +459,22 @@ splitColony = function(colony, per_split) {
 #' @title Build up the number of workers and drones in the colony.
 #' @usage \method{splitColony}(colony, per_split)
 #' @description Build up the number of workers and drones in the colony.
-#' Build up would usually happen after swarming or spliting of the colony,
-#' @param colony
-#' @param per_workers_increase
-#' @param addDrones
-#' @param nDrones_created
+#' Build up would usually happen after swarming or spliting of the colony.
+#'    #TODO ##mergePop(colony$workers, newWorkers)
+#'    #TODO: variable drone pop number
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param perWorkersIncrease Numeric. Percentage increase of worker population
+#' @param addDrones Logical. TRUE if drones are added to the colony 
+#' @param nDrones Numeric. Number of drones to create
 #'
 #' @example inst/examples/examples_buildUpColony.R
 #' @export
 #' 
-buildUpColony = function(colony, per_workers_increase, addDrones = TRUE, nDrones) {
-  #builtColony = colony() Jana: you don't need this! COlony is an input parameter!!!! We are just changing the existing one, not creating a new one!
-  nNewWorkers = round(colony$workers@nInd * per_workers_increase, 0)
+buildUpColony = function(colony, perWorkersIncrease, addDrones = TRUE, nDrones) {
+  nNewWorkers = round(colony$workers@nInd * perWorkersIncrease, 0)
   newWorkers = randCross2(females = colony$queen, males = colony$fathers, nCrosses = nNewWorkers)
-  colony$workers = createWorkers() #TODO ##mergePop(colony$workers, newWorkers)
-  colony$drones = createDrones(colony, nDrones) #TODO: variable drone pop number 
+  colony$workers = createWorkers() 
+  colony$drones = createDrones(colony, nDrones)  
 }  
 
 
@@ -469,14 +483,14 @@ buildUpColony = function(colony, per_workers_increase, addDrones = TRUE, nDrones
 # =======================================================================
 #' @rdname replaceWorkers
 #' @method replaceWorkers
-#' @title
-#' @usage
-#' @description
-#' @param colony
-#' @param nWorkers COULD BE "all" - replaces all workers, or a number!!!!
-#' @param
+#' @title Replaces workers with new workers with new genetic information 
+#' @usage \method{replaceWorkers}(colony, nWorkers)
+#' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
+#'              workers will be replaced to account for the new queen and fathers
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nWorkers Numeric. Number of workers to create (could be "ALL" or a numeric)
 #'
-#' @example
+#' @example inst/examples/examples_replaceWorkers.R
 #' @export
 
 replaceWorkers = function(colony, nWorkers) {
@@ -490,16 +504,16 @@ replaceWorkers = function(colony, nWorkers) {
 #=======================================================================
 # Replace drones - MAYBE WE DON?T NEED THIS SINCE WE HAVE createDrone
 # =======================================================================
-#' @rdname
-#' @method
-#' @title
-#' @usage
-#' @description
-#' @param colony
-#' @param nWorkers COULD BE "all" - replaces all drones, or a number!!!!
-#' @param
+#' @rdname replaceDrones
+#' @method replaceDrones
+#' @title Replaces drone with new drone with new genetic information 
+#' @usage \method{replaceDones}(colony, nDrones)
+#' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
+#'              drones will be replaced to account for the new queen and fathers
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nDrones Numeric. Number of drones to create (could be "ALL" or a numeric)
 #'
-#' @example
+#' @example inst/examples/examples_replaceDrones.R
 #' @export
 
 replaceDrones = function(colony, nDrones) {
@@ -519,7 +533,7 @@ replaceDrones = function(colony, nDrones) {
 #' @usage \method{selectColonies}(colony_list, colony_ids)
 #' @description Select the colonies from the list of all colonies based
 #' on colony IDs and return a list of selected colonies.
-#' @param colony_list
+#' @param colony_list 
 #' @param colony_ids
 #'
 #' @example inst/examples/examples_selectColonies.R
@@ -527,8 +541,8 @@ replaceDrones = function(colony, nDrones) {
 #' @export
 #' 
 selectColonies <- function(colony_list, colony_ids) {
-  sel_colony_list = colony_list[sapply(colony_list, FUN = function(x) x$id %in% colony_ids)]
-  return(sel_colony_list)
+  selColonyList = colony_list[sapply(colony_list, FUN = function(x) x$id %in% colony_ids)]
+  return(selColonyList)
 }
 
 # setPheno = function() {} # keep this one commented for now, we need some object-oriented magic for this to work on our colony and not to clash with AlphaSimR:::setPheno()
