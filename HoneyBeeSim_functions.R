@@ -195,6 +195,12 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
     }
   }  
   
+  if (!is.null(queen) & !is.null(fathers)) {
+    virgin_queens <- randCross2(females = queen,
+                                males = fathers,
+                                nCrosses = 1)
+  }
+  
  output = new("Colony",
               id=as.character(id),
               location=as.character(location),
@@ -417,7 +423,14 @@ extractIndFromCast = function(colony, cast, nInd) {
 #' one with the old queen and proportion of workers.
 #' @export
 
-swarmColony = function(colony, perSwarm) {
+swarmColony = function(colony, perSwarm, crossQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0) {
+  if (is.null(colony@virgin_queens)) {
+    stop("Virgin queen not present in the colony, cannot swarm")
+  }
+  if (is.null(colony@drones)) {
+    warming("No drones present in the colony!")
+  }
+  
   noWorkersSwarm = round(colony@workers@nInd * perSwarm, 0)
   noWorkersStay = colony@workers@nInd - noWorkersSwarm
   workersSwarmId = sample(x = colony@workers@id, size = noWorkersSwarm, replace = FALSE) 
@@ -430,12 +443,22 @@ swarmColony = function(colony, perSwarm) {
   newColony@id = newColony@virgin_queens@id
   newColony@location = colony@location
   
+  if (crossQueen) {
+    if (is.null(fathers)) {
+      stop("No fathers present, cannot mate the queen!")
+    }
+    newColony@queen <- newColony@virgin_queens
+    newColony@fathers <- fathers
+    newColony@workers <- addWorkers(newColony, nWorkers)
+    newColony@drones <- addRones(newColony, nDrones)
+    newColony@virgin_queen <- createWorkers(newColony, 1)
+  }
+  
   swarm = colony
   swarm@workers = colony@workers[workersSwarmId]
   swarm@virgin_queens = selectInd(swarm@workers, nInd = 1, use = "rand")
   swarm@drones = NULL
   swarm@location = NULL
-
 
 
   newColony@last_event = "swarmStay" 
@@ -463,10 +486,22 @@ swarmColony = function(colony, perSwarm) {
 #' @example inst/examples/examples_supersedure.R
 #' @export
 
-supersedeColony = function(colony) {
-  colony@queen = selectInd(colony@virgin_queens,  nInd = 1, use = "rand")
-  colony@virgin_queens = selectInd(swarm@workers, nInd = 1, use = "rand")
-  colony@id = colony@queen@id
+supersedeColony = function(colony, crossQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0) {
+  colony@virgin_queen = selectInd(colony@virgin_queens,  nInd = 1, use = "rand")
+  colony@id = colony@queen@id #HWAT DO WE DO WITH THE ID?????
+  
+  if (crossQueen) {
+    if (is.null(fathers)) {
+      stop("No fathers present, cannot mate the queen!")
+    }
+    colony$queen <- colony@virgin_queens
+    colony@fathers <- fathers
+    colony@workers <- addWorkers(colony, nWorkers) #TODO: THID ADDS DRONES AND WORKERS IN!!! NOT REPLACE THEM ALL!!
+    colony@drones <- addRones(colony, nDrones)
+    colony@virgin_queens <- createWorkers(colony, 1)
+  }
+  
+  
   return(colony)
 }
 
@@ -486,7 +521,7 @@ supersedeColony = function(colony) {
 #'
 #' @example inst/examples/examples_splitColony.R
 #' @export
-splitColony = function(colony, perSplit) {
+splitColony = function(colony, perSplit, newQueen = NULL, crossQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0) {
   # Compute the number of workers that will leave with the swarm (per_swarm is the % of workers that will swarm)
   noWorkersSplit = round(colony@workers@nInd * perSplit, 0)
   # Compute the number of workers that will stay in the original colony (better to do it this way due to rounding issues)
@@ -502,6 +537,20 @@ splitColony = function(colony, perSplit) {
   # Set new set of workers to the original colony (which is just a subset of the original set)
   colony@workers = colony@workers[workersStayId]
 
+  if (!is.null(newQueen)) {
+    splitColony@virgin_queens <- newQueen
+    if (crossQueen) {
+      if (is.null(fathers)) {
+        stop("No fathers present, cannot mate the queen!")
+      }
+      splitColony@queen <- splitColony@virgin_queens
+      splitColony@fathers <- fathers
+      splitColony@workers <- addWorkers(splitColony, nWorkers)
+      splitColony@drones <- addRones(splitColony, nDrones)
+      splitColony@virgin_queens <- createWorkers(splitColony, 1)
+    }
+  }
+  
   #Change the status of the colony
   colony@last_event = "splitStay" #TODO: better names for this but we have to know which one stayed and which one left due to the drones
   splitColony@last_event = "splitLeave" #TODO: do we want to have some information about the link (i.e. mother_colony=?")
