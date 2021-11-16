@@ -147,15 +147,20 @@
 #'   \otherwise. \code{last_event} is set to "new_colony".
 #'   # TODO: we will likely need queen age too - but that should go into colony@queen@misc slot!
      # TODO: can also look at hive "strength" based on number of colony workers
-#' @param id ID of the colony.
-#' @param location Location of the colony.
-#' @param queen AlphaSimR individual object to become the queen of the colony.
-#' @param drones AlphaSimR population object to become the drones of the colony.
-#' @param workers AlphaSimR population object to become the workers of the colony.
-#' @param virgin_queens AlphaSimR individual or population object to become the virgin queen(s) of the colony.
-#' @param pheno
-#' @param fathers AlphaSimR population object of the fathers of the colony - i.e. the drones the queen mated with (semen in spermatheca)
-#' @param last_event Last event of the colony. Default is set to "new_colony", other possible values are TODO?????
+#' @slot id ID of the colony.
+#' @slot location Numeric, location of the colony (x, y).
+#' @slot queen AlphaSimR population object to become the queen of the colony.
+#' @slot drones AlphaSimR population object to become the drones of the colony.
+#' @slot workers AlphaSimR population object to become the workers of the colony.
+#' @slot virgin_queens AlphaSimR individual or population object to become the virgin queen(s) of the colony.
+#' @slot pheno A matrix of the phenotypes of the colony
+#' @slot swarm Logical, whether the colony has swarmed
+#' @slot split Logical, whether the colony has split
+#' @slot supersedure Logical, whether the colony has superseded
+#' @slot collapse Logical, whether the colony has collapsed
+#' @slot production Logical, whether the colony produces hive products
+#' @slot last_event Character, the last event of the colony #TODO: WE probably don't need this
+#' @slot misc A list, normally empty and exists solely as an open slot available for uses to store extra information about individuals.
 #'
 #' @example inst/examples/examples_createColony.R
 #' @return Returns AlphaSimR class "Colony" object.
@@ -204,18 +209,46 @@ setMethod("show",
 #' @title Create new Colony
 #' 
 #' @description
-#' Creates a new \code{\link{Colony}} 
+#' Creates a new \code{\link{Colony}}.
+#' The function is intended for creating initial colonies from 
+#' 'FOUNDERPOP' created by \code{\link{runMacs}}.
 #'
-#' @param 
+#' @param id Character, the ID of the colony, which equals the ID of the queen of not stated otherwise.
+#' @param location Numeric, location of the colony (x, y).
+#' @param queen AlphaSimR population object to become the queen of the colony.
+#' @param drones AlphaSimR population object to become the drones of the colony.
+#' @param workers AlphaSimR population object to become the workers of the colony.
+#' @param virgin_queens AlphaSimR individual or population object to become the virgin queen(s) of the colony.
+#' @param pheno A matrix of the phenotypes of the colony
+#' @param swarm Logical, whether the colony has swarmed
+#' @param split Logical, whether the colony has split
+#' @param supersedure Logical, whether the colony has superseded
+#' @param collapse Logical, whether the colony has collapsed
+#' @param production Logical, whether the colony produces hive products
+#' @param last_event Character, the last event of the colony #TODO: WE probably don't need this
+#' @param misc A list, normally empty and exists solely as an open slot available for uses to store extra information about individuals.
+#'
 #'
 #' @return Returns an object of \code{\link{Colony}}
 #' 
 #' @examples 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony2 = createColony(virgin_queens = base[16])
+#' 
+#' @return AlphaSim Colony object.
 #' 
 #' @export
 
-
-#TODO: do we want to check for any conditions when creating it??????
 createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, 
                         workers = NULL, virgin_queens = NULL, fathers = NULL, 
                         pheno = NULL, swarm = FALSE, split = FALSE, supersedure =FALSE,
@@ -273,15 +306,28 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 #' @rdname createWorkers
 #' @method createWorkers
 #' @title Creates workers of the colony
-#' @usage \method{createWorkers}(colony, nWorkers)
+#' @usage \method{createWorkers}(colony, nInd)
 #' @description Creates the specified number of workers in the colony
-#'       \by mating the current queen and the fathers and adds them in
-#'       \ the \code{colony@workers} slot.
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Integer. Number of drones to create
+#'       \by mating the current queen and the fathers in the \code{colony@queen@misc$fathers} slot.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, number of workers to create
 #'
-#' @example inst/examples/examples_createDrones.R
-#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' 
+#' @return AlphaSim population object of created workers.
+#' 
 #' @export
 
 createWorkers = function(colony, nInd){
@@ -304,15 +350,28 @@ createWorkers = function(colony, nInd){
 #' @rdname createDrones
 #' @method createDrones
 #' @title Creates drones of the colony as double haploids
-#' @usage \method{createDrones}(colony, nDrones)
+#' @usage \method{createDrones}(colony, nInd)
 #' @description Creates the specified number of drones in the colony
-#'       \as double haploids from the current queen and adds them in
-#'       \ the \code{colony@drones} slot.
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Integer. Number of drones to create
+#'       \as double haploids from the current queen.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, the umber of drones to create.
 #'
-#' @example inst/examples/examples_createDrones.R
-#'
+#' @example
+#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' colony1@drones = createDrones(colony, nInd = 200)
+#' 
+#' @return AlphaSim population object of created drones.
 #' @export
 
 createDrones = function(colony, nInd){
@@ -330,21 +389,32 @@ createDrones = function(colony, nInd){
 #' @rdname createDCA
 #' @method createDCA
 #' @title Creates a drone congregation area (DCA) from the list of colonies
-#' @usage \method{createDCA}(colony_list, colonyIDs)
+#' @usage \method{createDCA}(c(colonies))
 #' @description Creates a drone congregation area (DCA) from selected colonies.
-#' The function takes the list of all the colonies and a vector of IDs of the selected ones.
-#' The function returns a combined population of drones.
+#' The function takes a vector of the colonies and returns a combined population of drones.
 #' @seealso \code{\link[??????]{select_colonies}}
-#' @param colonies 
-#' @param colonyIDs
+#' @param colonies A vector of colonies, each of AlphaSimR Colony object
 #'
-#' @example inst/examples/examples_createDrones.R
-#'
-#' @return Single AlphaSim population object of drones from all the selected colonies.
+#' @example
+#'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony2 = createColony(virgin_queens = base[16])
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' 
+#' @return Single AlphaSim population object of drones from the provided colonies.
 #' @export
 
 createDCA = function(colonies) {
-  #dcaColonyList = selectColonies(colonyList, colonyIDs)
   DCA = lapply(X = colonies, FUN = function(z) z@drones)  
   DCA = mergePops(popList = DCA)
   print(paste0("Created a DCA with ", DCA@nInd, " drones."))
@@ -353,20 +423,35 @@ createDCA = function(colonies) {
 
 
 #=======================================================================
-# Select Fathers
-#NOT SURE WHETHER WE NEED THIS BUT JUST TO NOTE THIS HAS TO BE MADE SOMEWHERE IN THE SIMULATION!
+# pullDronesFromDCA
 # =======================================================================
-#' @rdname SelectFathersfromDCA
-#' @method SelectFathersfromDCA
-#' @title Selects and stores fathers from DCA to mate with queen 
-#' @usage \method{SelectFathersfromDCA}(DCA, nFathers)
-#' @description Selects a number individuals from DCA at random to become fathers 
-#'              # These fathers will go on to mate with a virgin queen and create a new colony 
-#'              # By storing the fathers you can keep track of the pedigree of the colonies
-#' @param DCA Poplist. AlphaSimR DCA object from the \code{createDCA(...)} call
-#' @param nFathers Integer. Number of fathers to create 
+#' @rdname pullDronesFromDCA
+#' @method pullDronesFromDCA
+#' @title Pulls the drones from the DCA
+#' @usage \method{pullDronesFromDCA}(DCA, nInd)
+#' @description  Pulls a specified number of drones from the DCA and updates the DCA
+#' @param DCA AlphaSimR population object created with \code{createDCA(...)} call
+#' @param nInd Integer, the number of drones to pull from the DCA
 #'
-#' @example inst/examples/examples_SelectFathersfromDCA.R
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony2 = createColony(virgin_queens = base[16])
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' fathers = pullDronesTheDCA(DCA, n = 14)
+#' 
+#' @return A list with two elements. The first element is the AlphaSimR population object of
+#' selected drones. The second element is the updated DCA with the selected drones removed.
 #' 
 #' @export
 
@@ -380,8 +465,68 @@ pullDronesFromDCA = function(DCA, nInd) {
 }
 
 #=======================================================================
+# Set the queen age
+# =======================================================================
+#' @rdname setQueensYOB
+#' @method setQueensYOB
+#' @title Set the queen's year of birth
+#' @usage \method{setQueenYOB}(colony)
+#' @description Set the year of birth of the queen in the \code{colony@queen@misc$yearOfBirth} slot
+#' @param colony AlphaSimR population object
+#' @param year Integer, the year of the birth of the queen
+#' 
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' setQueenAge(colony, 1)
+#' 
+#' @return AlphaSimR colony object
+#' 
+#' @export
+
+setQueenYOB <- function(colony, year) {
+  colony@queen@misc$yearOfBirth <- year
+  return(colony)
+}
+
+#=======================================================================
 # Extract the year of birth of the queen
 # =======================================================================
+#' @rdname extractQueenYOB
+#' @method extractQueenYOB
+#' @title Extract the queen's year of birth
+#' @usage \method{extractQueenYOB}(colony)
+#' @description Extract the year of birth of the queen \code{colony@queen@misc$yearOfBirth} slot
+#' @param colony AlphaSimR population object
+#' 
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' setQueenAge(colony, 1)
+#' extractQueenYOB(colony)
+#' 
+#' @return Integer, the year of birth of the queen.
+#' 
+#' @export
+#' 
 extractQueenYOB <- function(colony) {
   return(colony@queen@misc$yearOfBirth)
 }
@@ -389,6 +534,34 @@ extractQueenYOB <- function(colony) {
 #=======================================================================
 # Compute the age of the queen
 # =======================================================================
+#' @rdname computeQueenAge
+#' @method computeQueenAge
+#' @title COmputer the queen's age in years
+#' @usage \method{computeQueenAge}(colony, year)
+#' @description Compute the age of the queen from the \code{colony@queen@misc$yearOfBirth} slot
+#' @param colony AlphaSimR population object
+#' @param currentYear Integer, current year
+#' 
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' setQueenAge(colony, year = 1)
+#' extractQueenYOB(colony)
+#' computerQueenAge(colony, currentYear = 5)
+#' 
+#' @return Integer, the age of the queen.
+#' 
+#' @export
+#' 
 computeQueenAge <- function(colony, currentYear) {
   return(currentYear - colony@queen@misc$yearOfBirth)
 }
@@ -398,14 +571,30 @@ computeQueenAge <- function(colony, currentYear) {
 # =======================================================================
 #' @rdname addWorkers
 #' @method addWorkers
-#' @title 
-#' @usage 
-#' @description 
-#'    THIS DOES NOT REPLACE THE EXISTING ANIMALS!!!
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nWorkersAdd
+#' @title Add workers to the colony
+#' @usage \method{addWorkers}(colony, nInd)
+#' @description Create workers and store them in the \code{colony@workers} slot. If there is
+#' already some workers present in the hive, the function will not overwrite them but instead 
+#' combine the newly created and the existing workers. The function returns the updated colony.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, number of workers to add.
 #'
-#' @example inst/examples/examples_addWorkers.R
+#' @example 
+#' Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addWorkers(colony1, nInd = 2000)
+#' 
+#' @return Updated AlphaSimR Colony object
+#' 
 #' @export
 #' 
 addWorkers = function(colony, nInd) {
@@ -425,15 +614,32 @@ addWorkers = function(colony, nInd) {
 #' @rdname addDrones
 #' @method addDrones
 #' @title 
-#' @usage 
-#' @description 
-#'    THIS DOES NOT REPLACE THE EXISTING ANIMALS!!!
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDronesAdd
+#' @usage \method{addDrones}(colony, nInd)
+#' @description Create drones and store them in the \code{colony@drones} slot. If there is
+#' already some drones present in the hive, the function will not overwrite them but instead 
+#' combine the newly created and the existing drones The function returns the updated colony.
+#' @param colony AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, number of drones to add.
 #'
-#' @example inst/examples/examples_addDrones.R
-#' @export
-#'a
+#' @example 
+#' Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addWorkers(colony1, nInd = 2000)
+#' colony1 = addDrones(colony, nInd = 100)
+#' 
+#' @return Updated AlphaSimR Colony object
+#' 
+#'@export
+
 addDrones <- function(colony, nInd) {
   newDrones = createDrones(colony, nInd)
   if (!is.null(colony@drones)) {
@@ -451,14 +657,31 @@ addDrones <- function(colony, nInd) {
 # =======================================================================
 #' @rdname replaceWorkers
 #' @method replaceWorkers
-#' @title Replaces workers with new workers with new genetic information 
-#' @usage \method{replaceWorkers}(colony, nWorkers)
-#' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
-#'              workers will be replaced to account for the new queen and fathers
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nWorkers Integer. OPTIONAL! Default set to current number of workers in the colony.
+#' @title Replaces a proportion workers with new workers with new genetic information 
+#' @usage \method{replaceWorkers}(colony, p)
+#' @description Replace a proportion of workers in the new with new workers from the same queen and same fathers.
+#' A user would want to replace a proportion (or all) of workers after swarming and supersedure or
+#' due to the short-life span of the workers.#' 
+#' @param colony AlphaSimR Colony object.
+#' @param p Numeric, proportion of workers to be replaced with new ones.
 #'
-#' @example inst/examples/examples_replaceWorkers.R
+#' @example
+#' #' Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addWorkers(colony1, nInd = 2000)
+#' colony1 = replaceWorkers(colony1, p = 0.2)
+#' 
+#' @return Updated AlphaSimR Colony object
+#'  
 #' @export
 
 replaceWorkers = function(colony, p = 1) {
@@ -481,13 +704,30 @@ replaceWorkers = function(colony, p = 1) {
 #' @rdname replaceDrones
 #' @method replaceDrones
 #' @title Replaces drone with new drone with new genetic information 
-#' @usage \method{replaceDones}(colony, nDrones)
-#' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
-#'              drones will be replaced to account for the new queen and fathers
-#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Integer. OPTIONAL! Default set to current number of drones in the colony.
+#' @usage \method{replaceWorkers}(colony, p)
+#' @description Replace a proportion of drones in the new with new drones from the same queen.
+#' A user would want to replace a proportion (or all) of drones after swarming and supersedure or
+#' due to the short-life span of the drones.
+#' @param colony AlphaSimR Colony object.
+#' @param p Numeric, proportion of drones to be replaced with new ones.
 #'
-#' @example inst/examples/examples_replaceDrones.R
+#' @example
+#' #' Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addDrones(colony1, nInd = 2000)
+#' colony1 = replaceDrones(colony1, p = 0.2)
+#' 
+#' @return Updated AlphaSimR Colony object
+#'  
 #' @export
 
 replaceDrones = function(colony, p=1) {
@@ -640,9 +880,9 @@ collapseColony <- function(colony) {
 #' @param nDrones Integer. Number of drones present in the colony 
 #' @param swarm Location Integer. X,Y coordinates of newly made swarmed hive
 #'
-#' @example inst/examples/examples_swarmColony.R
-#' @return Two AlphaSim population objects, one colony is with the new queen and proportion of workers and
-#' the other has the old queen and proportion of workers.
+#' @example inst/examples/examples_swarm.R
+#' @return Two colonies, one with the new queen and proportion of workers and
+#' one with the old queen and proportion of workers.
 #' @export
 
 swarmColony = function(colony, pSwarm, crossVirginQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0, swarmLocation = NULL) {
