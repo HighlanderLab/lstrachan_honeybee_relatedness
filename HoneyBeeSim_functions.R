@@ -375,6 +375,7 @@ pullDronesFromDCA = function(DCA, nInd) {
   sel = DCA@id %in% selectedDronesID
   selectedDrones = DCA[sel]
   updatedDCA = DCA[!sel]
+  message(paste0("Selected ", nDrones, " fathers from DCA"))
   return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
 }
 
@@ -414,6 +415,7 @@ addWorkers = function(colony, nInd) {
   } else {
     colony@workers = newWorkers
   }
+  print(paste0(nWorkersAdd, " workers added to the colony"))
   return(colony)
 }  
 
@@ -439,6 +441,7 @@ addDrones <- function(colony, nInd) {
   } else {
     colony@drones = newDrones
   }
+  print(paste0(nDronesAdd, " drones added to the colony"))
   return(colony)
 }  
 
