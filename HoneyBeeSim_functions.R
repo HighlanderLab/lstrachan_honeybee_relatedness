@@ -278,7 +278,7 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 #'       \by mating the current queen and the fathers and adds them in
 #'       \ the \code{colony@workers} slot.
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Numeric. Number of drones to create
+#' @param nDrones Integer. Number of drones to create
 #'
 #' @example inst/examples/examples_createDrones.R
 #'
@@ -309,7 +309,7 @@ createWorkers = function(colony, nInd){
 #'       \as double haploids from the current queen and adds them in
 #'       \ the \code{colony@drones} slot.
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Numeric. Number of drones to create
+#' @param nDrones Integer. Number of drones to create
 #'
 #' @example inst/examples/examples_createDrones.R
 #'
@@ -364,7 +364,7 @@ createDCA = function(colonies) {
 #'              # These fathers will go on to mate with a virgin queen and create a new colony 
 #'              # By storing the fathers you can keep track of the pedigree of the colonies
 #' @param DCA Poplist. AlphaSimR DCA object from the \code{createDCA(...)} call
-#' @param nFathers Numeric. Number of fathers to create 
+#' @param nFathers Integer. Number of fathers to create 
 #'
 #' @example inst/examples/examples_SelectFathersfromDCA.R
 #' 
@@ -456,7 +456,7 @@ addDrones <- function(colony, nInd) {
 #' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
 #'              workers will be replaced to account for the new queen and fathers
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nWorkers Numeric. OPTIONAL! Default set to current number of workers in the colony.
+#' @param nWorkers Integer. OPTIONAL! Default set to current number of workers in the colony.
 #'
 #' @example inst/examples/examples_replaceWorkers.R
 #' @export
@@ -485,7 +485,7 @@ replaceWorkers = function(colony, p = 1) {
 #' @description If new genetic information is added to the colony (in the case of supersedure or a swarm),
 #'              drones will be replaced to account for the new queen and fathers
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param nDrones Numeric. OPTIONAL! Default set to current number of drones in the colony.
+#' @param nDrones Integer. OPTIONAL! Default set to current number of drones in the colony.
 #'
 #' @example inst/examples/examples_replaceDrones.R
 #' @export
@@ -508,6 +508,22 @@ replaceDrones = function(colony, p=1) {
 # Extract Individuals from a cast - this could be used for example to extract virgin queens
 # NOT SURE WHETHER WE NEED THIS BUT COULD BE USEFUL!!!
 # =======================================================================
+#' @rdname pullIndFromCaste
+#' @method pullIndFromCaste
+#' @title Pulls a number of individuals from any caste group 
+#' @usage \method{pullIndFromCaste}(colony, caste, nInd)
+#' @description Pulls and separates a random number of individuals from any caste group. 
+#' Two list groups are created, the group of pulled individuals and the colony.
+#' 
+#'@seealso \code{\link[??????]{pullIndFromCaste}}
+#'@param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#'@param caste Character. Replicating the caste class structure present in the hive (queen, drones, workers etc)
+#'@nInd Integer. Number of individuals to be pulled from the caste 
+#'
+#'@example inst/examples/examples_pullIndFromCaste.R
+#'@return Two AlphaSim population objects of the colony and the group of pulled individuals.
+#'@export 
+#'
 pullIndFromCaste = function(colony, caste, nInd) {
   if (nInd > slot(colony, caste)@nInd) {
     stop(paste0("Not enough individuals in ", caste, " ! " ,
@@ -529,22 +545,22 @@ pullIndFromCaste = function(colony, caste, nInd) {
 # =======================================================================
 #' @rdname crossColony
 #' @method crossColony
-#' @title Crosses a colony with a virgin queen to the population of drones.
+#' @title Crosses a colony with a virgin queen to a group of fathers pulled from the DCA.
 #' @usage \method{crossColony}(colony, fathers, nWorkers, nDrones)
-#' @description Crosses a colony with a virgin queen to the population of drones,
+#' @description Crosses a colony with a virgin queen to a group of fathers pulled from the DCA
 #' \creates workers, drones and a new virgin queen and write them to the corresponding
 #' \slots of the colony object.
 #' #IF the colony is queenless - select a queen from the virgin queen - if not, mate the current queen!!!
 #' @seealso \code{\link[??????]{createColony}}
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call :
 #'               INPUT SHOULD BE A COLONY WITH A VIRGIN QUEEN!!!!! 
-#' @param fathers Pop Class. Father group taken from Colony object from the \code{createColony(...)} call 
-#' @param nWorkers Numeric.Number of workers to create
-#' @param nDrones Numeric. Number of drones to create
+#' @param fathers Pop Class. Father group pulled from the DCA. 
+#' @param nWorkers Integer.Number of workers to create
+#' @param nDrones Integer. Number of drones to create
 
 #'
 #' @example inst/examples/examples_crossColony.R
-#'
+#' @return Single AlphaSim population object of a mated colony
 #' @export
 
 crossColony = function(colony, fathers=NULL, nWorkers=0, nDrones=0) {
@@ -582,6 +598,19 @@ crossColony = function(colony, fathers=NULL, nWorkers=0, nDrones=0) {
 #=======================================================================
 # Collapse of the colony
 # =======================================================================
+#' @rdname collapseColony 
+#' @method collapseColony 
+#' @title Replicates colony collapse
+#' @usage \method{collapseColony}(colony)
+#' @description Replicates the collapse of a colony. This can be due to winter losses, disease or other factors.
+#'  
+#' @seealso \code{\link[??????]{collapseColony}}
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' 
+#' @example inst/examples/examples_collapseColony.R
+#' @return Single AlphaSim population object of collapsed colony
+#' @export
+#' 
 collapseColony <- function(colony) {
   colony@collapse <- TRUE
   return(colony)
@@ -590,34 +619,30 @@ collapseColony <- function(colony) {
 #=======================================================================
 # Swarm
 # =======================================================================
-#' @rdname swarm
-#' @method swarm
+#' @rdname swarmColony 
+#' @method swarmColony 
 #' @title Replicates the swarming process and produces two colonies.
-#' @usage \method{createSwarm}(colony, perSwarm)
+#' @usage \method{swarmColony}(colony, pSwarm, crossVirginQueen. fathers, nWorkers, nDrones, swarmLocation)
 #' @description List. Replicates the swarming of the colony - the process in which
-#' a part of the workers leave with the old queen and creates a new colony,
+#' a part of the workers leave with the old queen and creates a new colony (the swarm),
 #' while a part of the workers stay with a new queen and the old drones.
-#' 1. Compute the number of workers that will leave with the swarm 
-#' 2. Compute the number of workers that will stay in the original colony
-#' 3. Identify which workers will swarm and which will stay with the original colony
-#'       - returns TRUE if workers swarm and FALSE if workers stay
-#'       # TODO: give ids of workers that will leave with the swarm
-#' 4. Create a new colony entity that represents the colony that stays!!! The swarm is the old colony. 
-#' Set the virgin queens for the new colony. All the drones stay at the original location, in the new colony
-#' 5. Set new set of workers to the original colony (which is just a subset of the original set)
-#'    - The new queen becomes the virgin queen. The new virgin queen will be set by crossColony function 
-#'       #colony@queen = selectInd(colony@virgin_queens,  nInd = 1, use = "rand")
-#'  6. Change the status of the colony 
-#'      #TODO: better names for this but we have to know which one stayed and which one left due to the drones
-#'      #TODO: do we want to have some information about the link (i.e. mother_colony=?")
+#' The swarming colony contains the old mated queen,
+#'  a percentage (pSwarm) of the original colonies workers, no drones and a virgin queen is created from the worker population. 
+#'  A new location must be given to the new swarm colony. 
+#'  The colony that stays contains the remaining workers and drones. A virgin queen is selected from the workers and mated if fathers are present. 
 
 #' @seealso \code{\link[??????]{createColony}}
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param perSwarm Numeric. Percentage of colony that will swarm
+#' @param pSwarm Integer. Percentage of colony that will swarm
+#' @param crossVirginQueen Logical. Whether a virgin queen is to be mated 
+#' @param fathers AlphaSimR population object. Number of fathers pulled from the DCA
+#' @param nWorkers Integer. Number of workers present in the colony 
+#' @param nDrones Integer. Number of drones present in the colony 
+#' @param swarm Location Integer. X,Y coordinates of newly made swarmed hive
 #'
-#' @example inst/examples/examples_swarm.R
-#' @return Two colonies, one with the new queen and proportion of workers and
-#' one with the old queen and proportion of workers.
+#' @example inst/examples/examples_swarmColony.R
+#' @return Two AlphaSim population objects, one colony is with the new queen and proportion of workers and
+#' the other has the old queen and proportion of workers.
 #' @export
 
 swarmColony = function(colony, pSwarm, crossVirginQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0, swarmLocation = NULL) {
@@ -678,15 +703,19 @@ swarmColony = function(colony, pSwarm, crossVirginQueen = FALSE, fathers = NULL,
 #' @rdname supersedeColony
 #' @method supersedeColony
 #' @title Replicates a supersedure of the colony and replaces the queen with a virgin queen.
-#' @usage \method{supersedure}(colony)
+#' @usage \method{supersedureColony}(colony, crossVirginQueen, fathers, nWorkers, nDrones)
 #' @description Replicates the process of supersedure, where the
 #' queen is replaced by a new virgin queen. The workers and the drones stay
-#' in the colony.
-#'      # Jana: I DON?T LIKE THIS - now we have a queen that in not mated --> but that should be virgin queen!
+#' in the colony. If no fathers are present, mating of the virgin queen does not occur. 
 #' @seealso \code{\link[??????]{supersedure}}
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param crossVirginQueen Logical. Whether a virgin queen is to be mated 
+#' @param fathers AlphaSimR population object. Number of fathers pulled from the DCA
+#' @param nWorkers Integer. Number of workers present in the colony
+#' @param nDrones Integer. Number of drones present in the colony 
 #'
-#' @example inst/examples/examples_supersedure.R
+#' @example inst/examples/examples_supersedeColony.R
+#' @return Single AlphaSim population object of superseded colony 
 #' @export
 
 supersedeColony = function(colony, crossVirginQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0) {
@@ -720,14 +749,24 @@ supersedeColony = function(colony, crossVirginQueen = FALSE, fathers = NULL, nWo
 #' @rdname splitColony
 #' @method splitColony
 #' @title Split the colony in two colonies.
-#' @usage \method{splitColony}(colony, per_split)
-#' @description Split the colony in two colonies - one with the old queen and
-#' a part of workers and drones, and one a part of workers and NO QUEEN!!!!
+#' @usage \method{splitColony}(colony, pSplit, newQueen, crossVirginQueen, fathers, nWorkers, nDrones, splitLocation)
+#' @description Spit the colony into two new colonies to prevent swarming (in managed populations) 
+#' - one colony is with the old queen and a part of the workers and drones (this is the remaining colony)
+#' - the split colony is taken to a new location with part of the workers. 
+#'  A new mated queen can be introduced to the split colony. 
+#'  If no new queen is introduced, a virgin queen must be present to mate with fathers from DCA and continue colony  
 #' @seealso \code{\link[??????]{splitColony}}
 #' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
-#' @param per_split
+#' @param pSplit Integer. Percentage of hive to split 
+#' @param newQueen AlphaSimR population object. A new mated queen is brought into the colony from other source 
+#' @param crossVirginQueen Logical. If no mated queen is introduced, a virgin queen must be present to mate and continue colony 
+#' @param fathers AlphaSimR population object. Number of fathers pulled from the DCA
+#' @param nWorkers Integer. Number of workers present in the colony 
+#' @param nDrones Integer. Number of drones present in the colony 
+#' @param splitLocation Integer. X,Y coordinates of newly made split hive 
 #'
 #' @example inst/examples/examples_splitColony.R
+#' @return Two AlphaSim population objects of the split colony and the remaining colony 
 #' @export
 splitColony = function(colony, pSplit, newQueen = NULL, crossVirginQueen = FALSE, fathers = NULL, nWorkers = 0, nDrones = 0, splitLocation = NULL) {
   nWorkersSplit = round(colony@workers@nInd * pSplit, 0)
