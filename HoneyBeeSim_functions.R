@@ -238,7 +238,7 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
               drones=drones,
               workers=workers,
               virgin_queens=virgin_queens,
-              pheno=matrix(
+              pheno=matrix(),
                           #ncol=simParam@nTraits),
               swarm=swarm,
               split=split,
@@ -361,6 +361,7 @@ pullDronesFromDCA = function(DCA, nDrones) {
   sel = DCA@id %in% selectedDronesID
   selectedDrones = DCA[sel]
   updatedDCA = DCA[!sel]
+  message(paste0("Selected ", nDrones, " fathers from DCA"))
   return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
 }
 
@@ -388,6 +389,7 @@ addWorkers = function(colony, nWorkersAdd) {
   } else {
     colony@workers = newWorkers
   }
+  print(paste0(nWorkersAdd, " workers added to the colony"))
   return(colony)
 }  
 
@@ -413,6 +415,7 @@ addDrones <- function(colony, nDronesAdd) {
   } else {
     colony@drones = newDrones
   }
+  print(paste0(nDronesAdd, " drones added to the colony"))
   return(colony)
 }  
 
