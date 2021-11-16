@@ -1,22 +1,30 @@
 #For function storage/ developement
 #TODOs
-#1) Prevent mother-son mating
-#2) Add year of birth of the queen
+
+#1) Prevent mother-son mating: probably some mother-son mating in nature as well - so that's fine
+
+# Functions
 #3) Revise Pull individuals from the caste (update the cast)
-#4) Create a function that create multiple virgin queens
-#5) THink about providing informative messages for the functions
-#6) Think of a good names for the swarmed colony (the one that)
-#7) Think about removing workers and drones in "instantaneous" functions (opposite to adding them)
-#9) Create a function to sample the location for the swarm
-#10) Create a function to sample locations within a radius
-#11) Synchonize the print of the Colony with the ALphaSimR Pop
-#12) Create a function for the Loss of the colony
-#13) Replace nDrones/nWorkers with just n / nInd
-#14) Write a function to remove workers/drones
-#15) Put SimParam in the createColony
-#16) Write a setPheno function for the colony
+#4) Create a function that create multiple virgin queens (return colony with multiple virgin queens): Jernej
+#11) Synchonize the print of the Colony with the AlphaSimR Pop: Jana
+#13) Replace nDrones/nWorkers with just n / nInd: Jana
+#14) Write a function to remove workers/drones from the colony
+#15) Put SimParam in the createColony: Jana
 #17) Create a function to extract the YOB
 #18) Create a function to compute the age of the queen
+#9) Create a function to sample the location for the swarm: later
+#10) Create a function to sample locations within a radius: later
+#16) Write a setPheno function for the colony: later
+#12) Create a function for the Loss of the colony
+
+
+# Text
+#5) THink about providing informative messages for the functions: Laura
+#6) Think of a good names for the swarmed colony (the one that stay)
+#"20) Write descriptions for all the functions
+
+# Think
+#7) Think about removing workers and drones in "instantaneous" functions (opposite to adding them)
 #19) THink about replacing phenotypes in the swarm/supersede/split
 
 
@@ -168,7 +176,7 @@ setClass("Colony",
                  swarm="logical",
                  split="logical",
                  supersedure="logical",
-                 loss="logical",
+                 collapse="logical",
                  #rob="logical",
                  production="logical",
                  last_event="character",
@@ -183,11 +191,12 @@ setMethod("show",
                 classLabel(class(object)), "\n")
             cat("Id:", ifelse(!is.null(object@id), object@id, 0),"\n")
             cat("Location:", ifelse(!is.null(object@location), object@location, 0),"\n")
-            cat("No queens:", ifelse(!is.null(object@queen), object@queen@nInd, 0),"\n")
-            cat("No virgin queens:", ifelse(!is.null(object@virgin_queens), object@virgin_queens@nInd, 0),"\n")
-            cat("No drones:", ifelse(!is.null(object@drones), object@drones@nInd, 0),"\n")
-            cat("No workers:", ifelse(!is.null(object@workers), object@workers@nInd, 0), "\n")
-            cat("No fathers:", ifelse(!is.null(object@queen@misc$fathers), object@queen@misc$fathers@nInd, 0), "\n")
+            cat("Queens:", ifelse(!is.null(object@queen), object@queen@nInd, 0),"\n")
+            cat("Virgin queens:", ifelse(!is.null(object@virgin_queens), object@virgin_queens@nInd, 0),"\n")
+            cat("Drones:", ifelse(!is.null(object@drones), object@drones@nInd, 0),"\n")
+            cat("Workers:", ifelse(!is.null(object@workers), object@workers@nInd, 0), "\n")
+            cat("Fathers:", ifelse(!is.null(object@queen@misc$fathers), object@queen@misc$fathers@nInd, 0), "\n")
+            cat("Events:", paste(if(object@swarm) "swarm", if(object@split) "split", if(object@supersedure) "supersede", if(object@collapse) "collapse"), "\n")
             invisible()
           }
 )
@@ -210,9 +219,14 @@ setMethod("show",
 createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL, 
                         workers = NULL, virgin_queens = NULL, fathers = NULL, 
                         pheno = NULL, swarm = FALSE, split = FALSE, supersedure =FALSE,
-                        loss = FALSE, #rob = FALSE,
+                        collapse = FALSE, #rob = FALSE,
                         production = FALSE,
-                        last_event = NULL, yearOfBirth = NULL, misc = NULL) { 
+                        last_event = NULL, yearOfBirth = NULL, misc = NULL,
+                        simParam=NULL) { 
+  
+  if(is.null(simParam)){
+    simParam = get("SP",envir=.GlobalEnv)
+  }
   
   if(is.null(id)){
     if(!is.null(queen)){
@@ -238,12 +252,12 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
               drones=drones,
               workers=workers,
               virgin_queens=virgin_queens,
-              pheno=matrix(
+              pheno=matrix(),
                           #ncol=simParam@nTraits),
               swarm=swarm,
               split=split,
               supersedure=supersedure,
-              loss=loss,
+              collapse=collapse,
               #rob=rob,
               production=production,
               last_event="new_colony",
@@ -270,7 +284,7 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 #'
 #' @export
 
-createWorkers = function(colony, nWorkers){
+createWorkers = function(colony, nInd){
     if (is.null(colony@queen)) {
       stop("Missing queen!") 
     }
@@ -280,7 +294,7 @@ createWorkers = function(colony, nWorkers){
 
     workerPop = randCross2(females = colony@queen,
                            males = colony@queen@misc$fathers,
-                           nCrosses = nWorkers)
+                           nCrosses = nInd)
     return(workerPop)
 }
 
@@ -301,11 +315,11 @@ createWorkers = function(colony, nWorkers){
 #'
 #' @export
 
-createDrones = function(colony, nDrones){
+createDrones = function(colony, nInd){
   if (is.null(colony@queen)) {
     stop("Missing queen!") 
   }
-  dronePop = makeDH(pop = colony@queen, nDH = nDrones)
+  dronePop = makeDH(pop = colony@queen, nDH = nInd)
   return(dronePop)
 }
 
@@ -356,15 +370,27 @@ createDCA = function(colonies) {
 #' 
 #' @export
 
-pullDronesFromDCA = function(DCA, nDrones) {
-  selectedDronesID = sample(DCA@id, size = nDrones, replace = FALSE)
+pullDronesFromDCA = function(DCA, nInd) {
+  selectedDronesID = sample(DCA@id, size = nInd, replace = FALSE)
   sel = DCA@id %in% selectedDronesID
   selectedDrones = DCA[sel]
   updatedDCA = DCA[!sel]
   return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
 }
 
+#=======================================================================
+# Extract the year of birth of the queen
+# =======================================================================
+extractQueenYOB <- function(colony) {
+  return(colony@queen@misc$yearOfBirth)
+}
 
+#=======================================================================
+# Compute the age of the queen
+# =======================================================================
+computeQueenAge <- function(colony, currentYear) {
+  return(currentYear - colony@queen@misc$yearOfBirth)
+}
 
 #=======================================================================
 # addWorkers
@@ -381,8 +407,8 @@ pullDronesFromDCA = function(DCA, nDrones) {
 #' @example inst/examples/examples_addWorkers.R
 #' @export
 #' 
-addWorkers = function(colony, nWorkersAdd) {
-  newWorkers = createWorkers(colony, nWorkersAdd)
+addWorkers = function(colony, nInd) {
+  newWorkers = createWorkers(colony, nInd)
   if (!is.null(colony@workers)) {
     colony@workers = mergePops(list(colony@workers, newWorkers))
   } else {
@@ -406,8 +432,8 @@ addWorkers = function(colony, nWorkersAdd) {
 #' @example inst/examples/examples_addDrones.R
 #' @export
 #'a
-addDrones <- function(colony, nDronesAdd) {
-  newDrones = createDrones(colony, nDronesAdd)
+addDrones <- function(colony, nInd) {
+  newDrones = createDrones(colony, nInd)
   if (!is.null(colony@drones)) {
     colony@drones = mergePops(list(colony@drones, newDrones))
   } else {
@@ -480,13 +506,21 @@ replaceDrones = function(colony, p=1) {
 # NOT SURE WHETHER WE NEED THIS BUT COULD BE USEFUL!!!
 # =======================================================================
 pullIndFromCaste = function(colony, caste, nInd) {
-  if (nInd > slot(colony, cast)@nInd) {
+  if (nInd > slot(colony, caste)@nInd) {
     stop(paste0("Not enough individuals in ", caste, " ! " ,
                 nInd, " required, but ", slot(colony, caste)@nInd, " available."))
   }
-  #TODO 3)
-  return(selectInd(slot(colony, caste), nInd = nInd, use = "rand"))
+  pullId = sample(slot(colony, caste)@id, nInd, replace = F)
+  pullMatch = slot(colony, caste)@id %in% pullId
+  stayMatch = !slot(colony, caste)@id %in% pullId
+  
+  indPull = slot(colony, caste)[pullMatch]
+  indStay = slot(colony, caste)[stayMatch]
+  
+  slot(colony, caste) = indStay
+  return(list(colony = colony, pulledInd = indPull))
 }
+
 #=======================================================================
 # Cross colony
 # =======================================================================
@@ -541,6 +575,14 @@ crossColony = function(colony, fathers=NULL, nWorkers=0, nDrones=0) {
   return(colony)
 }
 
+
+#=======================================================================
+# Collapse of the colony
+# =======================================================================
+collapseColony <- function(colony) {
+  colony@collapse <- TRUE
+  return(colony)
+}
 
 #=======================================================================
 # Swarm
