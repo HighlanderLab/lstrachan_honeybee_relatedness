@@ -1,0 +1,5 @@
+#Rpackage work
+1) SPlit the functions into three scripts: level1, level2, level3
+2) Edit the descriptions
+3) Edit namespace
+4) github repo for the package

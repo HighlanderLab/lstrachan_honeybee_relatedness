@@ -15,7 +15,7 @@ base = newPop(founder)
 # Create colonies 1 and 2
 col1 = createColony(queen = base[1], fathers = base[2:50])
 col1
-col2 = createColony(id = 2, queen = base[51])
+col2 = createColony(queen = base[51])
 col2
 
 #########################################
@@ -34,8 +34,8 @@ DCA <- createDCA(list(col1, col2))
 
 #--- selectFathersFromDCA ---#
 # Select fathers for both colonies
-fathers1 <- selectFathersFromDCA(DCA, 14)
-fathers2 <- selectFathersFromDCA(DCA, 14)
+fathers1 <- pullDronesFromDCA(DCA, 14)
+fathers2 <- pullDronesFromDCA(DCA, 14)
 
 # This could also be done with a more general --- extractIndFromCast ---#
 fathers1 <- extractIndFromCast(col1, "drones", 14)
