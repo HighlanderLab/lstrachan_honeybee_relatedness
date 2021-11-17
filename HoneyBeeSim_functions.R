@@ -9,7 +9,6 @@
 #3) Create a function to sample locations within a radius: later
 #4) Write a setPheno function for the colony: later
 #5) Revise last event slot (whether we use/need it)
-#6) Write a function replaceQueen
 #7) THink about how to handle the colour
 #8) Call setPheno after swarm, split and supersede, crossColony, createColony (follow the AlphaSimR logic of SP parameter vs setPheno)
 #9) Assign csd locus - look Laura's code
@@ -22,7 +21,7 @@
 #14) All functions should test the class and throw a stop (colony, colonies)
 #17) Only set the id when we have the queen!
 #18) All add functions should call create functions
-
+#19) Do we just remove provided qeens and fathers in colony (level2) functions? 
 # Text
 #1) Think about providing informative messages for the functions: Laura
 #2) Think of a good names for the swarmed colony (the one that stay)
