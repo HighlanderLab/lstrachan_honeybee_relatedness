@@ -807,6 +807,106 @@ createVirginQueens = function(colony, nVirginQueens){
 removeWorkers = function(colony, p) {
   if ( p > 1) {
     stop("p can not be higher than 1" )
+  } else if (p < 0) {
+    stop("p can not be less than 0")
+  } else if (p == 1) {
+    colony@workers = NULL
+    warning("All workers removed!")
+  } else {
+    nWorkers = colony@workers@nInd
+    nWorkesNew = round(nWorkers * (1 - p))
+    colony@workers = selectInd(colony@workers, nInd = nWorkersNew, use = "rand")
+  }
+  
+  return(colony)
+}
+
+
+#=======================================================================
+# removeDrones
+# =======================================================================
+#' @rdname removeDrones
+#' @method removeDrones
+#' @title Remove selected percentage of drones
+#' @usage \method{removeWorkers}(colony, nWorkers)
+#' @description To decrese the number of drones for example in winter 
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param p Numeric. 0<=p>=1 .
+#'
+#' @example inst/examples/examples_removeDrones.R
+#' @export
+
+removeDrones = function(colony, p) {
+  if ( p > 1) {
+    stop("p can not be higher than 1" )
+  } else if (p < 0) {
+    stop("p can not be less than 0")
+  } else if (p == 1) {
+    colony@drones = NULL
+    warning("All drones removed!")
+  } else {
+    nDrones = colony@drones@nInd
+    nDronesNew = round(nDrones * (1 - p))
+    colony@drones = selectInd(colony@drones, nInd = nDronesNew, use = "rand")
+  }
+  
+  return(colony)
+}
+
+
+#=======================================================================
+# createVirginQueens
+# =======================================================================
+#' @rdname createVirginQueens
+#' @method createVirginQueens
+#' @title Create additional virgin queens
+#' @usage \method{createVirginQueens}(colony, nVirginQueens)
+#' @description Creates the specified number of virgin queens in the colony
+#'       \by crossing the current queen and the fathers and adds them in
+#'       \ the \code{colony@virgin_queens} slot.
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param nVirginQueens Numeric. Number of virgin queens to create
+#'
+#' @example inst/examples/examples_createDrones.R
+#'
+#' @export
+
+createVirginQueens = function(colony, nVirginQueens){
+  if (is.null(colony@queen)) {
+    stop("Missing queen!") 
+  }
+  if (is.null(colony@queen@misc$fathers)) {
+    stop("Missing fathers!")
+  }
+  
+  virginQueenPop = randCross2(females = colony@queen,
+                              males = colony@queen@misc$fathers,
+                              nCrosses = nVirginQueens)
+  
+  colony@virgin_queens = virginQueenPop
+  
+  return(colony)
+}
+
+
+
+#=======================================================================
+# removeWorkers
+# =======================================================================
+#' @rdname removeWorkers
+#' @method removeWorkers
+#' @title Remove selected percentage of workers
+#' @usage \method{removeWorkers}(colony, p)
+#' @description To decrese the number of workers for example in winter 
+#' @param colony Colony class. AlphaSimR Colony object from the \code{createColony(...)} call
+#' @param p Numeric. 0<=p>=1 .
+#'
+#' @example inst/examples/examples_removeWorkers.R
+#' @export
+
+removeWorkers = function(colony, p) {
+  if ( p > 1) {
+    stop("p can not be higher than 1" )
   } if (p < 0) {
     stop("p can not be less than 0")
   } if (p = 1) {
@@ -852,7 +952,6 @@ removeWorkers = function(colony, p) {
   
   return(colony)
 }
-
 
 
 
