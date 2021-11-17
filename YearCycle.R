@@ -12,25 +12,58 @@ SP = SimParam$new(founder)
 base = newPop(founder)
 
 
+####
+#Parameters
+noFounderColonies = 10
+colonyFullSize = 1000
+p1swarm = 0.05
+p1supersede = 0.05
+p1collapse = 0.10
+p2swarm = 0.01
+p2supersede = p1supersede
+p2collapse = 0.10
+p3collapse = 0.35
+
+
 col <- createColony(queen = base[1],
                     fathers = base[2:16],
                     last_event = "period3")
 col
-
+col1 <- createColony(queen = base[17],
+                    fathers = base[18:28],
+                    last_event = "period3")
+col1
 # Period 1:
 # Create short-living workers 10k-70k
-col <- addWorkers(col, nWorkers = 400)
+col <- addWorkers(col, nInd = 400)
 col
+col1 <- addWorkers(col1, nInd = 300)
+col1
+
 
 # Create drones
-col <- addDrones(col, nDrones = 20)
+col <- addDrones(col, nInd = 20)
 col
+col1 <- addDrones(col1, nInd = 30)
+col1
 
 # Splitting occurs
-#TODO
+splitResult <- splitColony(col, pSplit = 0.3, newQueen = col@virgin_queens,
+                          crossVirginQueen = TRUE, fathers = createDrones(col1, 14))
+col <- splitResult$remnant
+col
+col2 <- splitResult$split
+col2
 
 # Swarming and supersedure occurs (supersedure is successful when drones are present)
-#TODO: Later
+swarmResult = swarmColony(col, pSwarm = 0.1, crossVirginQueen = TRUE, fathers = createDrones(col2, 12), pWorkers = 0.1, pDrones = 0.2)
+col = swarmResult$swarm
+col
+col4 = swarmResult$remnant
+col4
+col1
+col1 <- supersedeColony(col1, crossVirginQueen = TRUE, fathers = createDrones(col2, 12), pWorkers = 0.5, pDrones = 0.5)
+col1
 
 # First opportunity for mating
 # TODO: Queen mated
@@ -63,5 +96,10 @@ col@drones <- NULL
 # Replace workers with long-winter workers
 col@workers  <- NULL
 
+
 # Highest percentage of colony losses
 #TODO: COlony loss
+
+# Reset the events for all the colonies
+col <- resetEvents(col)
+col
