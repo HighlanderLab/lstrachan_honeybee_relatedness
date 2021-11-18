@@ -1,20 +1,33 @@
 #Level 3 Colonies Functions----
 
-
 #Create  Colonies ----
-#' @title Create Colonies
-#'
-#' @description
-#' Creates a new \code{\link{Colonies-class}} from one or more
-#' \code{\link{Colony-class}} and/or \code{\link{Colonies-class}}
-#' objects.
+#' @rdname createColonies
+#' @method createColonies
+#' @title Create a group of empty colonies
+#' @usage \method{createColonies}(..., n )
+#' 
+#' @description  A user will use this function to create groups of empty colonies.  
 #'
 #' @param ... one or more \code{\link{Colony-class}} and/or
 #' \code{\link{Colonies-class}} objects.
+#' @param n Number of colonies to create 
 #'
 #' @return Returns an empty object of \code{\link{Colonies-class}}
 #'
 #' @examples
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create empty colonies 
+#' apiary1 = createColonies( , n = 10)
+#' 
+#' @return (n)Number of empty AlphaSimRBee colony objects grouped into object "Colonies"
 #' @export
 
 createColonies = function(..., n = NULL){
@@ -31,35 +44,69 @@ createColonies = function(..., n = NULL){
 }
 
 #Add colony to Colonies----
-#' @title Add colony to the Colonies
+#' @rdname addColonyToTheColonies
+#' @method addColonyToTheColonies
+#' @title Adds a colony to the group of colonies 
+#' @usage \method{addColonyToTheColonies}(colony, colonies )
+#' 
+#' @description  Adds a colony object into a grouped colonies object. 
+#' For example : A user can use this function to add a new colony to their apiary. 
+#' 
+#' @param colony AlphaSimRBee Colony object
+#' @param Colonies AlphaSimRBee Colonies object containing a list of colonies 
 #'
-#' @description
-#'
-#' @param
-#'
-#' @return
+#' @return An updated AlphaSimRBee Colonies object
 #'
 #' @examples
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create an apiary with 10 mated colonies (contains only queens, fathers and virgin queens)
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' #Build up the colonies to full size by adding workers and drones (drones are 1/10 size of workers)
+#' colonyFullSize = 1000
+#' apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#' 
+#' #Create a single colony 
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addWorkers(colony1, nInd = 2000)
+#' colony1 = addDrones(colony1, nInd = 100)
+#' 
+#' #Add colony to the apiary 
+#' apiary1 = addColonytoTheColonies(colony1, apiary1)
+#' 
+#' @return Updated AlphaSimRBee Colonies object
 #' @export
 
-addColonyToTheColonies= function(colony, Colonies){
-  if (class(colony) != "Colony") {
-    message("The colony parameter is not a Colony object.")
+addColonyToTheColonies= function(colony, colonies){
+  if ("Colony" %in% class(colony)) {
+    message("The colony arguement is not a Colony object.")
   }
-  Colonies@colonies = append(Colonies@colonies, list(colony))
-  return(Colonies)
+  if ("Colonies" %in% class(colonies)){
+    message("The colonies arguement is not a Colonies object")
+  }
+  colonies@colonies = append(colonies@colonies, list(colony))
+  return(colonies)
 }
-
+###############################################################################
 # Select colonies ----
-
 #' @rdname selectColonies
 #' @method selectColonies
 #' @title Select the colonies from the colony list based on IDs.
 #' @usage \method{selectColonies}(colony_list, colony_ids)
+#' 
 #' @description Select the colonies from the list of all colonies based
 #' on colony IDs and return a list of selected colonies.
-#' @param colony_list 
-#' @param colony_ids
+#' 
+#' @param colonies
+#' @param ID
 #'
 #' @example inst/examples/examples_selectColonies.R
 #' @return A list of selected colonies.
