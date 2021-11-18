@@ -368,8 +368,14 @@ reQueenColony <- function(colony, queen) {
 #'@export
 # 
 buildUpColony = function(colony, nWorkers, nDrones) {
-  colony = addWorkers(colony, nInd = (nWorkers - nWorkers(colony)))
-  colony = addDrones(colony, nInd = (nDrones - nDrones(colony)))
+  n = nWorkers - nWorkers(colony)
+  if (n > 0) {
+    colony = addWorkers(colony, nInd = n)
+  }
+  n = nDrones - nDrones(colony)
+  if (n > 0) {
+    colony = addDrones(colony, nInd = n)
+  }
   colony@production = TRUE
   
   return(colony)

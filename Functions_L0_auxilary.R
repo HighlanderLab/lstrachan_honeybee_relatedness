@@ -297,3 +297,47 @@ getIDs <- function(colonies, ID) {
   return(sapply(colonies@colonies, FUN = function(x) x@id))
 }
 
+
+
+# Check whether the colony has split
+hasSplit <- function(x) {
+  if ("Colony" %in% class(x)) {
+    return(x@split)
+  } else if ("Colonies" %in% class(x)) {
+    sapply(x@colonies, FUN = function(z) z@split)
+  } else {
+    stop("x has to be of class Colony or Colonies")
+  }
+}
+
+# Check whether the colony has swarmed
+hasSwarmed <- function(x) {
+  if ("Colony" %in% class(x)) {
+    return(x@swarm)
+  } else if ("Colonies" %in% class(x)) {
+    sapply(x@colonies, FUN = function(z) z@swarm)
+  } else {
+    stop("x has to be of class Colony or Colonies")
+  }
+}
+# Check whether the colony has superseded
+hasSuperseded <- function(x) {
+  if ("Colony" %in% class(x)) {
+    return(x@supersedure)
+  } else if ("Colonies" %in% class(x)) {
+    sapply(x@colonies, FUN = function(z) z@supersedure)
+  } else {
+    stop("x has to be of class Colony or Colonies")
+  }
+}
+
+# Check the production
+isProductive <- function(x) {
+  if ("Colony" %in% class(x)) {
+    return(x@production)
+  } else if ("Colonies" %in% class(x)) {
+    sapply(x@colonies, FUN = function(z) z@production)
+  } else {
+    stop("x has to be of class Colony or Colonies")
+  }
+}

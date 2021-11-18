@@ -1,5 +1,8 @@
 library(AlphaSimR)
-source("/home/jana/lstrachan_honeybee_sim/HoneyBeeSim_functions.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L0_auxilary.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L1_Pop.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L2_Colony.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L3_Colonies.R")
 
 # Founder population - colonies
 #Create founders
@@ -15,42 +18,60 @@ base = newPop(founder)
 #Parameters
 noFounderColonies = 10
 colonyFullSize = 1000
+#Period1
 p1swarm = 0.05
 p1supersede = 0.05
 p1collapse = 0.10
+#Period2
 p2swarm = 0.01
 p2supersede = p1supersede
 p2collapse = 0.10
+#Period3
 p3collapse = 0.35
 #TODO: Change into a vector of probabilites (age 1,2,3 of the queen)
 ################################################################################
 
 #Period1
 #Create 10 mated colonies from the base population
-apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+age1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
 
 #Build-up the colonies
-apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+age1 = buildUpColonies(age1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
 
 #Split all the colonies
-tmp <- splitColonies(apiary1)
-apiary1 <- tmp$remnants
-apiary0 <- tmp$splits
+tmp <- splitColonies(age1)
+age1 <- tmp$remnants
+age0 <- tmp$splits
+
+
+# Swarm a percentage of age1 colonies
+tmp = pullColonies(age1, p = p1swarm)
+age1 = tmp$remainingColonies
+tmp = swarmColonies(tmp$pulledColonies)
+age0 = c(age0, tmp$remnants)
+age1 = c(age1, tmp$swarms)
+
 
 #Create 10 virgin queens
-virginQueens = createVirginQueens(apiary1[[3]], 10)
+virginQueens = createVirginQueens(age1[[3]], nColonies(age0))
 
 # Requeen the splits
-apiary0 <- reQueenColonies(apiary0, queens = virginQueens)
+age0 <- reQueenColonies(age0, queens = virginQueens)
 
 #Mate the split colonies
-DCA = createDCA(apiary1)
-apiary0 = crossColonies(apiary0, DCA, nAvgFathers = 15)
+DCA = createDCA(age1)
+age0 = crossColonies(age0, DCA, nAvgFathers = 15)
 
-#Build-up the splits
-apiary0 = buildUpColonies(apiary0, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#Supersede
+tmp = pullColonies(age1, p = p1supersede)
+age1 = tmp$remainingColonies
+tmp = supersedeColonies(tmp$pulledColonies)
+age0 = c(age0, tmp)
 
-# Swarm a percentage of apiary1 colonies
+
+#Collapse
+age1 = selectColonies(age1, p = 1 - p1collapse)
+
 
 
 ################################################################################
