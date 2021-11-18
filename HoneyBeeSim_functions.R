@@ -605,14 +605,20 @@ pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
 #' 
 #' @export
 
-setQueenYOB <- function(colony, year) {
-  colony@queen@misc$yearOfBirth <- year
-  return(colony)
+setQueenYOB <- function(x, year) {
+  if ("Pop" %in% class(x)) {
+    x@misc$yearOfBirth <- year
+    return(x)
+  } else if ("Colony" %in% class(x)) {
+    if (!is.null(x@queen)) {
+      x@queen@misc$yearOfBirth <- year
+      return(x)
+    }
+  }
 }
 
 
 # Extract the year of birth of the queen
-
 #' @rdname extractQueenYOB
 #' @method extractQueenYOB
 #' @title Extract the queen's year of birth
@@ -674,15 +680,21 @@ extractQueenYOB <- function(colony) {
 #' 
 #' @export
 #' 
-computeQueenAge <- function(colony, currentYear) {
-  return(currentYear - colony@queen@misc$yearOfBirth)
+computeQueenAge <- function(x, currentYear) {
+  if ("Pop" %in% class(x)) {
+    return(currentYear - x@misc$yearOfBirth)
+  } else if ("Colony" %in% class(x)) {
+    if (!is.null(x@queen)) {
+      return(currentYear - x@queen@misc$yearOfBirth)
+    }
+  }
 }
 
 
 
 
-# isQueenMated
 
+# isQueenMated
 isQueenMated <- function(x) {
   if ("Pop" %in% class(x)) {
     return(!is.null(x@misc$fathers))
