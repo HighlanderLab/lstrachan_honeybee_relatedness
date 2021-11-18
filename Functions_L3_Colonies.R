@@ -65,8 +65,20 @@ addColonyToTheColonies= function(colony, Colonies){
 #' @return A list of selected colonies.
 #' @export
 #' 
-selectColonies <- function(colonies, ID) {
-  return(colonies[sapply(colonies@colonies, FUN = function(x) x@id %in% ID)])
+selectColonies <- function(colonies, ID = NULL, p = NULL) {
+  if (!is.null(ID)) {
+    ret = colonies[sapply(colonies@colonies, FUN = function(x) x@id %in% ID)]
+  } else if (!is.null(p)) {
+    lPull <- as.logical(rbinom(n = nColonies(colonies), size = 2, p = p))
+    if (any(lPull)) {
+      ret <- colonies[lPull]
+    } else {
+      ret = NULL
+    }
+  } else {
+    stop("Provide either ID or p!")
+  }
+  return(ret)
 }
 
 
@@ -87,9 +99,24 @@ selectColonies <- function(colonies, ID) {
 #' @return Two lists: a list of selected colonies and an updated inpute colonies
 #' @export
 #' 
-pullColonies <- function(colonies, ID) {
-  pulledColonies <- selectColonies(colonies, ID)
-  remainingColonies <- removeColonies(colonies, ID)
+pullColonies <- function(colonies, ID = NULL, p = NULL) {
+  
+  if (!is.null(ID)) {
+    pulledColonies <- selectColonies(colonies, ID)
+    remainingColonies <- removeColonies(colonies, ID)
+  } else if (!is.null(p)) {
+    lPull <- as.logical(rbinom(n = nColonies(colonies), size = 2, p = p))
+    if (any(lPull)) {
+      ids = getIDs(colonies)
+      pulledColonies <- selectColonies(colonies, ids[lPull])
+      remainingColonies <- removeColonies(colonies, ids[lPull])
+    } else {
+      pulledColonies = createColonies()
+      remainingColonies = colonies
+    }
+  } else {
+    stop("Provide either ID or p!")
+  }
   return(list(pulledColonies = pulledColonies, remainingColonies = remainingColonies))
 }
 
@@ -192,15 +219,14 @@ reQueenColonies = function(colonies, queens) {
 supersedeColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
 ) {
-  nColonies = nColonies(colonies)
-  # if (length(fathers) < nCol) {
-  #   stop("Not enought fathers)
-  # }
+  nCol = nColonies(colonies)
+  if (nCol == 0) {
+    return(NULL)
+  }
   for (colony in 1:nCol) {
     colonies@colonies[[colony]] = supersedeColony(colonies[[colony]])
   }
   return(colonies)
-  
 }
 
 
@@ -212,6 +238,9 @@ swarmColonies <- function(colonies
                           #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
 ) {
   nCol = nColonies(colonies)
+  if (nCol == 0) {
+    return(NULL)
+  }
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
   # }
@@ -233,6 +262,9 @@ splitColonies <- function(colonies
                           #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
 ) {
   nCol = nColonies(colonies)
+  if (nCol == 0) {
+    return(NULL)
+  }
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
   # }
