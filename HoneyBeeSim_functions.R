@@ -15,13 +15,12 @@
 #10) Make csd function in terms of inbreeding
 #11) Add names to colonies in the Colonies (name = colony id)
 #12) Consider adding a combine colony function (puts workers from weak into the strong colony)
-#14) Write a show method for the Colonies
-#15) Write a method for the number of colonies in a list
 #16) Think about use = "rand/something" in the level 3 functions (no need for ID then)
 #14) All functions should test the class and throw a stop (colony, colonies)
 #17) Only set the id when we have the queen!
 #18) All add functions should call create functions
 #19) Do we just remove provided qeens and fathers in colony (level2) functions? 
+
 # Text
 #1) Think about providing informative messages for the functions: Laura
 #2) Think of a good names for the swarmed colony (the one that stay)
@@ -67,7 +66,7 @@ setMethod("[",
 
 #' @describeIn Colonies Extract Colony by index
 setMethod("[[",
-          signature(x = "Colonies", i = "integer"),
+          signature(x = "Colonies"),
           function (x, i){
             return(x@colonies[[i]])
           }
@@ -102,6 +101,16 @@ setMethod("c",
           }
 )
 
+#' @describeIn 
+setMethod("show",
+          signature(object = "Colonies"),
+          function (object){
+            cat("An object of class",
+                classLabel(class(object)), "\n")
+            cat("Number of colonies:", nColonies(object), "\n")
+            invisible()
+          }
+)
 
 #' @title Create new Colonies
 #'
@@ -1412,6 +1421,24 @@ nColonies <- function(colonies) {
 }
 
 #=======================================================================
+# Get colony IDs from the colonies
+# =======================================================================
+#' @rdname getIDs
+#' @method getIDs
+#' @title Get the colonies IDs from the colonies
+#' @usage \method{getIDs}(colonies)
+#' @description Get the colony IDs from the colonies
+#' @param colonies 
+#'
+#' @example 
+#' @return Colony IDs
+#' @export
+#' 
+getIDs <- function(colonies, ID) {
+  return(sapply(colonies@colonies, FUN = function(x) x@id))
+}
+
+#=======================================================================
 # Select colonies
 # =======================================================================
 #' @rdname selectColonies
@@ -1429,6 +1456,30 @@ nColonies <- function(colonies) {
 #' 
 selectColonies <- function(colonies, ID) {
   return(colonies[sapply(colonies@colonies, FUN = function(x) x@id %in% ID)])
+}
+
+
+#=======================================================================
+# Pull colonies
+# =======================================================================
+#' @rdname pullColonies
+#' @method pullColonies
+#' @title Pull the colonies from the colony list based on IDs.
+#' @usage \method{pullColonies}(colonies, colonyIds)
+#' @description Pull the colonies from the list of all colonies based
+#' on colony IDs and return two lists: a list of selected colonies and 
+#' updated original colonies
+#' @param colonies 
+#' @param colonyIDs
+#'
+#' @example 
+#' @return Two lists: a list of selected colonies and an updated inpute colonies
+#' @export
+#' 
+pullColonies <- function(colonies, ID) {
+  pulledColonies <- selectColonies(colonies, ID)
+  remainingColonies <- removeColonies(colonies, ID)
+  return(list(pulledColonies = pulledColonies, remainingColonies = remainingColonies))
 }
 
 #=======================================================================

@@ -1,5 +1,5 @@
 library(AlphaSimR)
-source("HoneyBeeSim_functions.R")
+source("/home/jana/lstrachan_honeybee_sim/HoneyBeeSim_functions.R")
 
 # Founder population - colonies
 #Create founders
@@ -50,8 +50,11 @@ apiary0 = crossColonies(apiary0, DCA, nAvgFathers = 15)
 #Build-up the splits
 apiary0 = buildUpColonies(apiary0, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
 
+# Swarm a percentage of apiary1 colonies
 
 
+################################################################################
+################################################################################
 ################################################################################
 DCA = createFounderDrones(queenPop = base[1:10], nDronesPerQueen = 10)
 DCA
