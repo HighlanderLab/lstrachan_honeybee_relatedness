@@ -1,5 +1,33 @@
 #Level 1 Population Fuctions----
 
+# CreateFounderDrones---- NOT FINISED YET
+
+#' @rdname crateFounderDrones
+#' @method createFounderDrones
+#' @title Creates drones from base population
+#' @usage \method{createFounderDrones}(queenPop, nDronesPerQueen)
+#' @description Creates the specified number of drones that are used for
+#'       \by mating the founder queen in the \code{colony@queen@misc$fathers} slot.
+#' @param queenPop AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @param nDronesPerQueen Integer, number of drones to create
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' 
+#' @return AlphaSim population object of created workers.
+#' 
+#' @export
 # createFounderDrones----
 
 createFounderDrones <- function(queenPop, nDronesPerQueen) {
@@ -58,7 +86,7 @@ createWorkers = function(colony, nInd){
 #' @title Creates drones of the colony as double haploids
 #' @usage \method{createDrones}(colony, nInd)
 #' @description Creates the specified number of drones in the colony
-#'       \as double haploids from the current queen.
+#'       \as double haploids from the current queen \code{colony@queen}.
 #' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
 #' @param nInd Integer, the umber of drones to create.
 #'
