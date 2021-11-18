@@ -6,7 +6,7 @@
 #' @title Returns number of colonies in the colonies object 
 #' @usage \method{nColonies}(colonies)
 #' @description Returns the number of colonies present in the colonies object
-#' @param colonies AlphaSimRBee population object of class "Colonies" 
+#' @param colonies AlphaSimRBee Colonies object from the \code{createColonies(...)} call 
 #'
 #' @example 
 #' #Create founder haplotypes
@@ -191,7 +191,6 @@ isQueenMated <- function(x) {
   }
 }
 
-
 # Extract the queen's year of birth----
 #' @rdname extractQueenYOB
 #' @method extractQueenYOB
@@ -224,6 +223,7 @@ extractQueenYOB <- function(colony) {
 }
 
 
+
 # Compute the age of the queen----
 
 #' @rdname computeQueenAge
@@ -231,7 +231,7 @@ extractQueenYOB <- function(colony) {
 #' @title Compute the queen's age in years
 #' @usage \method{computeQueenAge}(colony, year)
 #' @description Compute the age of the queen from the \code{colony@queen@misc$yearOfBirth} slot
-#' @param colony AlphaSimR population object of class "Colony"
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
 #' @param currentYear Integer, current year
 #' 
 #' @example 
@@ -271,7 +271,7 @@ computeQueenAge <- function(x, currentYear) {
 #' @title Get the colonies IDs from the colonies
 #' @usage \method{getIDs}(colonies)
 #' @description Get the colony IDs from the colonies
-#' @param colonies AlphaSimRBee population object of class "Colonies" 
+#' @param colonies AlphaSimRBee Colonies object from the \code{createColonies(...)} call 
 #'
 #' @example 
 #'  #Create founder haplotypes

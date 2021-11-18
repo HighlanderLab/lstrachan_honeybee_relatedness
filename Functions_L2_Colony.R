@@ -1,8 +1,10 @@
 #Level 2 Colony Fuctions----
 
 
-#Create new Colony ----
-#' @title Create new Colony
+#Create Colony ----
+#' @rdname createColony
+#' @method createColony 
+#' @title Create a new Colony
 #' 
 #' @description
 #' Creates a new \code{\link{Colony}}.
@@ -27,7 +29,7 @@
 #'
 #' @return Returns an object of \code{\link{Colony}}
 #' 
-#' @examples 
+#' @example
 #' #Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
@@ -41,7 +43,7 @@
 #' colony1 = createColony(queen = base[1], fathers = base[2:15])
 #' colony2 = createColony(virgin_queens = base[16])
 #' 
-#' @return AlphaSim Colony object.
+#' @return AlphaSim Colony object of class "Colony" 
 #' 
 #' @export
 
@@ -97,17 +99,16 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
 }
 
 # Set the queen's Year of Birth----
-
 #' @rdname setQueensYOB
 #' @method setQueensYOB
 #' @title Set the queen's year of birth
 #' @usage \method{setQueenYOB}(colony)
 #' @description Set the year of birth of the queen in the \code{colony@queen@misc$yearOfBirth} slot
-#' @param colony AlphaSimR population object
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call 
 #' @param year Integer, the year of the birth of the queen
 #' 
 #' @example 
-#' #'#' #Create founder haplotypes
+#' #Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -137,7 +138,6 @@ setQueenYOB <- function(x, year) {
 }
 
 # addWorkers----
-
 #' @rdname addWorkers
 #' @method addWorkers
 #' @title Add workers to the colony
@@ -179,7 +179,6 @@ addWorkers = function(colony, nInd) {
 
 
 # addDrones----
-
 #' @rdname addDrones
 #' @method addDrones
 #' @title 
@@ -222,6 +221,43 @@ addDrones <- function(colony, nInd) {
 
 # 
 # # reQueenColony----
+#' @rdname reQueenColony
+#' @method reQueenColony
+#' @title  reQueenColony
+#' @usage \method{reQueenColony}(colony, queen)
+#' @description 
+#' 
+#' 
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @param queen 
+#'
+#' @example 
+#' Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' #Create 10 mated colonies from the base population
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' #Build-up the colonies
+#' apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#' 
+#' #Split all the colonies
+#' tmp <- splitColonies(apiary1)
+#' apiary1 <- tmp$remnants
+#' apiary0 <- tmp$splits
+#' 
+#' TO FINISH 
+#' 
+
+#' 
+#' @return Updated AlphaSimRBee Colony object
+#' 
+#'@export
 # 
 reQueenColony <- function(colony, queen) {
   if(!isQueenMated(queen)) {
