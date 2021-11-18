@@ -34,9 +34,9 @@
 #S1) Distribute supersedure/swarming events throughout the year/seasons
 #S2) Distribute colony losses events throughout the year/seasons
 
-#-----------------------------------------------------------------------
+
 # Class Colonies
-#-----------------------------------------------------------------------
+
 #' @title Colonies
 #' #'
 #' @description
@@ -160,9 +160,9 @@ addColonyToTheColonies= function(colony, Colonies){
 }
 
 
-#-----------------------------------------------------------------------
+
 # Create colony
-#-----------------------------------------------------------------------
+
 #' @rdname createColony
 #' @method createColony
 #' @title Creates a honeybee colony
@@ -347,16 +347,16 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
   return(output)
 }
 
-#=======================================================================
+
 # createFounderDrones
-# =======================================================================
+
 createFounderDrones <- function(queenPop, nDronesPerQueen) {
   return(makeDH(queenPop, nDH = nDronesPerQueen))
 }
 
-#=======================================================================
+
 # createWorkers
-# =======================================================================
+
 #' @rdname createWorkers
 #' @method createWorkers
 #' @title Creates workers of the colony
@@ -398,9 +398,9 @@ createWorkers = function(colony, nInd){
     return(workerPop)
 }
 
-#=======================================================================
+
 # createDrones
-# =======================================================================
+
 #' @rdname createDrones
 #' @method createDrones
 #' @title Creates drones of the colony as double haploids
@@ -437,9 +437,9 @@ createDrones = function(colony, nInd){
 }
 
 
-#=======================================================================
+
 # createVirginQueens
-# =======================================================================
+
 #' @rdname createVirginQueens
 #' @method createVirginQueens
 #' @title Creates virgin queen of the colony as double haploids
@@ -472,9 +472,9 @@ createVirginQueens = function(colony, nInd){
 }
 
 
-#=======================================================================
+
 # Create DCA
-# =======================================================================
+
 #' @rdname createDCA
 #' @method createDCA
 #' @title Creates a drone congregation area (DCA) from the list of colonies
@@ -518,9 +518,9 @@ createDCA = function(colonies) {
 }
 
 
-#=======================================================================
+
 # pullDronesFromDCA
-# =======================================================================
+
 #' @rdname pullDronesFromDCA
 #' @method pullDronesFromDCA
 #' @title Pulls the drones from the DCA
@@ -560,9 +560,9 @@ pullDronesFromDCA = function(DCA, nInd) {
   return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
 }
 
-#=======================================================================
+
 # Set the queen age
-# =======================================================================
+
 pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
   nFathers = rpois(n = n, lambda = nAvgFathers)
   if (sum(nFathers) > DCA@nInd) {
@@ -576,9 +576,9 @@ pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
   }
   return(ret)
 }
-#=======================================================================
+
 # Set the queen age
-# =======================================================================
+
 #' @rdname setQueensYOB
 #' @method setQueensYOB
 #' @title Set the queen's year of birth
@@ -610,9 +610,9 @@ setQueenYOB <- function(colony, year) {
   return(colony)
 }
 
-#=======================================================================
+
 # Extract the year of birth of the queen
-# =======================================================================
+
 #' @rdname extractQueenYOB
 #' @method extractQueenYOB
 #' @title Extract the queen's year of birth
@@ -643,9 +643,9 @@ extractQueenYOB <- function(colony) {
   return(colony@queen@misc$yearOfBirth)
 }
 
-#=======================================================================
+
 # Compute the age of the queen
-# =======================================================================
+
 #' @rdname computeQueenAge
 #' @method computeQueenAge
 #' @title COmputer the queen's age in years
@@ -680,9 +680,9 @@ computeQueenAge <- function(colony, currentYear) {
 
 
 
-#=======================================================================
+
 # isQueenMated
-# =======================================================================
+
 isQueenMated <- function(x) {
   if ("Pop" %in% class(x)) {
     return(!is.null(x@misc$fathers))
@@ -698,32 +698,32 @@ isQueenMated <- function(x) {
 
 
 
-#=======================================================================
+
 # nWorkers
-# =======================================================================
+
 nWorkers <- function(colony) {
   n = ifelse(!is.null(colony@workers), colony@workers@nInd, 0)
   return(n)
 }
 
-#=======================================================================
+
 # nDrones
-# =======================================================================
+
 nDrones <- function(colony) {
   n = ifelse(!is.null(colony@drones), colony@drones@nInd, 0)
   return(n)
 }
 
-#=======================================================================
+
 # nVirginQueens
-# =======================================================================
+
 nVirginQueens <- function(colony) {
   n = ifelse(!is.null(colony@virgin_queens), colony@virgin_queens@nInd, 0)
   return(n)
 }
-#=======================================================================
+
 # nFathers
-# =======================================================================
+
 nFathers <- function(colony) {
   if (is.null(colony@queen)) {
     n = 0
@@ -733,9 +733,9 @@ nFathers <- function(colony) {
   return(n)
 }
 
-#=======================================================================
+
 # addWorkers
-# =======================================================================
+
 #' @rdname addWorkers
 #' @method addWorkers
 #' @title Add workers to the colony
@@ -775,9 +775,9 @@ addWorkers = function(colony, nInd) {
   return(colony)
 }  
 
-#=======================================================================
+
 # addDrones
-# =======================================================================
+
 #' @rdname addDrones
 #' @method addDrones
 #' @title 
@@ -818,9 +818,9 @@ addDrones <- function(colony, nInd) {
   return(colony)
 }  
 
-# #=======================================================================
+# 
 # # reQueenColony
-# # =======================================================================
+# 
 reQueenColony <- function(colony, queen) {
   if(!isQueenMated(queen)) {
     colony@virgin_queens = queen
@@ -831,9 +831,9 @@ reQueenColony <- function(colony, queen) {
   return(colony)
 }
 
-# #=======================================================================
+# 
 # # Build up colony (add workers and drones)
-# # =======================================================================
+# 
 buildUpColony = function(colony, nWorkers, nDrones) {
   colony = addWorkers(colony, nInd = (nWorkers - nWorkers(colony)))
   colony = addDrones(colony, nInd = (nDrones - nDrones(colony)))
@@ -844,9 +844,9 @@ buildUpColony = function(colony, nWorkers, nDrones) {
 
 
 
-#=======================================================================
+
 # addVirginQueens
-# =======================================================================
+
 #' @rdname addVirginQueens
 #' @method addVirginQueen
 #' @title Create additional virgin queens
@@ -878,9 +878,9 @@ addVirginQueens = function(colony, nVirginQueens){
   return(colony)
 }
 
-#=======================================================================
+
 # Replace workers - MAYBE WE DON?T NEED THIS SINCE WE HAVE createWorker
-# =======================================================================
+
 #' @rdname replaceWorkers
 #' @method replaceWorkers
 #' @title Replaces a proportion workers with new workers with new genetic information 
@@ -924,9 +924,9 @@ replaceWorkers = function(colony, p = 1) {
   return(colony)
 }
 
-#=======================================================================
+
 # Replace drones - MAYBE WE DON?T NEED THIS SINCE WE HAVE createDrone
-# =======================================================================
+
 #' @rdname replaceDrones
 #' @method replaceDrones
 #' @title Replaces drone with new drone with new genetic information 
@@ -971,9 +971,9 @@ replaceDrones = function(colony, p=1) {
 }
 
 
-#=======================================================================
+
 # removeWorkers
-# =======================================================================
+
 #' @rdname removeWorkers
 #' @method removeWorkers
 #' @title Remove selected percentage of workers
@@ -1003,9 +1003,9 @@ removeWorkers = function(colony, p) {
 }
 
 
-#=======================================================================
+
 # removeDrones
-# =======================================================================
+
 #' @rdname removeDrones
 #' @method removeDrones
 #' @title Remove selected percentage of drones
@@ -1034,9 +1034,9 @@ removeDrones = function(colony, p) {
   return(colony)
 }
 
-#=======================================================================
+
 # pull Individuals from the caste
-# =======================================================================
+
 #' @rdname pullIndFromCaste
 #' @method pullIndFromCaste
 #' @title Pulls a number of individuals from any caste group 
@@ -1069,9 +1069,9 @@ pullIndFromCaste = function(colony, caste, nInd) {
   return(list(colony = colony, pulledInd = indPull))
 }
 
-#=======================================================================
+
 # Reset events
-# =======================================================================
+
 #' @rdname resetEvents
 #' @method resetEvents
 #' @title Reset the swarm, split, supersedure events
@@ -1092,9 +1092,9 @@ resetEvents <- function(colony) {
   return(colony)
 }
 
-#=======================================================================
+
 # Cross the virgin queen
-# =======================================================================
+
 #' @rdname crossVirginQueen
 #' @method crossVirginQueen
 #' @title Crosses a virgin queen to a group drones
@@ -1125,9 +1125,9 @@ crossVirginQueen = function(virginQueen, fathers) {
   return(virginQueen)
 }
 
-#=======================================================================
+
 # Cross colony
-# =======================================================================
+
 #' @rdname crossColony
 #' @method crossColony
 #' @title Crosses a colony with a virgin queen to a group of fathers pulled from the DCA.
@@ -1177,9 +1177,9 @@ crossColony = function(colony, fathers=NULL, nWorkers=0, nDrones=0) {
 }
 
 
-#=======================================================================
+
 # Collapse of the colony
-# =======================================================================
+
 #' @rdname collapseColony 
 #' @method collapseColony 
 #' @title Replicates colony collapse
@@ -1198,9 +1198,9 @@ collapseColony <- function(colony) {
   return(colony)
 }
 
-#=======================================================================
+
 # Swarm
-# =======================================================================
+
 #' @rdname swarmColony 
 #' @method swarmColony 
 #' @title Replicates the swarming process and produces two colonies.
@@ -1281,9 +1281,9 @@ swarmColony = function(colony, pSwarm = 0.5, crossVirginQueen = FALSE, fathers =
 }
 
 
-#=======================================================================
+
 # Supersede
-# =======================================================================
+
 #' @rdname supersedeColony
 #' @method supersedeColony
 #' @title Replicates a supersedure of the colony and replaces the queen with a virgin queen.
@@ -1329,9 +1329,9 @@ supersedeColony = function(colony, crossVirginQueen = FALSE, fathers = NULL,
 }
 
 
-#=======================================================================
+
 # Split colony
-# =======================================================================
+
 #' @rdname splitColony
 #' @method splitColony
 #' @title Split the colony in two colonies.
@@ -1410,9 +1410,9 @@ splitColony = function(colony, pSplit = 0.30, newQueen = NULL, crossVirginQueen 
 
 
 
-#=======================================================================
+
 # Number of colonies
-# =======================================================================
+
 nColonies <- function(colonies) {
   if (!"Colonies" %in% class(colonies)) {
     stop("colonies has to be a class Colonies")
@@ -1420,9 +1420,9 @@ nColonies <- function(colonies) {
   return(length(colonies@colonies))
 }
 
-#=======================================================================
+
 # Get colony IDs from the colonies
-# =======================================================================
+
 #' @rdname getIDs
 #' @method getIDs
 #' @title Get the colonies IDs from the colonies
@@ -1438,9 +1438,9 @@ getIDs <- function(colonies, ID) {
   return(sapply(colonies@colonies, FUN = function(x) x@id))
 }
 
-#=======================================================================
+
 # Select colonies
-# =======================================================================
+
 #' @rdname selectColonies
 #' @method selectColonies
 #' @title Select the colonies from the colony list based on IDs.
@@ -1459,9 +1459,9 @@ selectColonies <- function(colonies, ID) {
 }
 
 
-#=======================================================================
+
 # Pull colonies
-# =======================================================================
+
 #' @rdname pullColonies
 #' @method pullColonies
 #' @title Pull the colonies from the colony list based on IDs.
@@ -1482,9 +1482,9 @@ pullColonies <- function(colonies, ID) {
   return(list(pulledColonies = pulledColonies, remainingColonies = remainingColonies))
 }
 
-#=======================================================================
+
 # Remove colonies
-# =======================================================================
+
 #' @rdname removeColonies
 #' @method removeColonies
 #' @title Remove the colonies from the colony list based on IDs.
@@ -1502,9 +1502,9 @@ removeColonies <- function(colonies, ID) {
   return(colonies[!sapply(colonies@colonies, FUN = function(x) x@id %in% ID)])
 }
 
-#=======================================================================
+
 # Create multiple Virgin colonies 
-# =======================================================================
+
 createMultipleVirginColonies = function(founderPop, nColonies) {
   ret = createColonies(n = nColonies)
   virginQueens = selectInd(founderPop, nInd = nColonies, use = "rand")
@@ -1514,9 +1514,9 @@ createMultipleVirginColonies = function(founderPop, nColonies) {
   return(ret)
 }
 
-#=======================================================================
+
 # Create multiple mated colonies 
-# =======================================================================
+
 createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
   ret = createColonies(n = nColonies)
   queensID = sample(founderPop@id, size = nColonies, replace = FALSE)
@@ -1535,9 +1535,9 @@ createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
 }
  
 
-# #=======================================================================
+# 
 # # Build up colonies (add workers and drones)
-# # =======================================================================
+# 
 buildUpColonies = function(colonies, nWorkers, nDrones) {
   nCol = nColonies(colonies)
   for (colony in 1:nCol) {
@@ -1548,9 +1548,9 @@ buildUpColonies = function(colonies, nWorkers, nDrones) {
   return(colonies)
 }
 
-# #=======================================================================
+# 
 # # reQueen Colonies
-# # =======================================================================
+# 
 reQueenColonies = function(colonies, queens) {
   nCol = nColonies(colonies)
   if (nInd(queens) < nCol) {
@@ -1566,18 +1566,18 @@ reQueenColonies = function(colonies, queens) {
 
 
 
-# #=======================================================================
+# 
 # # Collapse the colonies in the colony list
-# # =======================================================================
+# 
 # collapseColonies <- function(colonies, ID) {
 #   return(removeColonies(colonies, ID))
 # }
 
 
 
-#=======================================================================
+
 # Supersede the colonies
-# =======================================================================
+
 supersedeColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
                               ) {
@@ -1594,9 +1594,9 @@ supersedeColonies <- function(colonies
 
 
 
-#=======================================================================
+
 # Swarm the colonies
-# =======================================================================
+
 swarmColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
                               ) {
@@ -1615,9 +1615,9 @@ swarmColonies <- function(colonies
   
 }
 
-#=======================================================================
+
 # Split the colonies
-# =======================================================================
+
 splitColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
                               ) {
@@ -1635,9 +1635,9 @@ splitColonies <- function(colonies
   return(ret)
   
 }
-#=======================================================================
+
 # Cross the colonies
-# =======================================================================
+
 crossColonies <- function(colonies, DCA, nAvgFathers
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
                               ) {
