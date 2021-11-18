@@ -34,8 +34,8 @@
 #S1) Distribute supersedure/swarming events throughout the year/seasons
 #S2) Distribute colony losses events throughout the year/seasons
 
-
-# Class Colonies
+###############################################################################
+# Class Colonies----
 
 #' @title Colonies
 #' #'
@@ -112,56 +112,10 @@ setMethod("show",
           }
 )
 
-#' @title Create new Colonies
-#'
-#' @description
-#' Creates a new \code{\link{Colonies-class}} from one or more
-#' \code{\link{Colony-class}} and/or \code{\link{Colonies-class}}
-#' objects.
-#'
-#' @param ... one or more \code{\link{Colony-class}} and/or
-#' \code{\link{Colonies-class}} objects.
-#'
-#' @return Returns an empty object of \code{\link{Colonies-class}}
-#'
-#' @examples
-#' @export
-
-createColonies = function(..., n = NULL){
-  if (is.null(n)) {
-    input = list(...)
-    class = sapply(input, "class")
-    stopifnot(all(class=="Colony" | class=="Colonies") | all(class=="NULL"))
-    output = new("Colonies", colonies=input)    
-  } else {
-    output = new("Colonies", colonies=vector(mode = "list", length = n))
-  }
-
-  return(output)
-}
-
-#' @title Add colony to the Colonies
-#'
-#' @description
-#'
-#' @param
-#'
-#' @return
-#'
-#' @examples
-#' @export
-
-addColonyToTheColonies= function(colony, Colonies){
-  if (class(colony) != "Colony") {
-    message("The colony parameter is not a Colony object.")
-  }
-  Colonies@colonies = append(Colonies@colonies, list(colony))
-  return(Colonies)
-}
 
 
 
-# Create colony
+# Class Colony----
 
 #' @rdname createColony
 #' @method createColony
@@ -253,6 +207,456 @@ setMethod("show",
           }
 )
 
+###############################################################################
+#Level 0 Auxilary Fuctions----
+
+# Number of colonies----
+nColonies <- function(colonies) {
+  if (!"Colonies" %in% class(colonies)) {
+    stop("colonies has to be a class Colonies")
+  } 
+  return(length(colonies@colonies))
+}
+
+# nWorkers----
+nWorkers <- function(colony) {
+  n = ifelse(!is.null(colony@workers), colony@workers@nInd, 0)
+  return(n)
+}
+
+
+# nDrones----
+nDrones <- function(colony) {
+  n = ifelse(!is.null(colony@drones), colony@drones@nInd, 0)
+  return(n)
+}
+
+
+# nVirginQueens----
+nVirginQueens <- function(colony) {
+  n = ifelse(!is.null(colony@virgin_queens), colony@virgin_queens@nInd, 0)
+  return(n)
+}
+
+# nFathers----
+nFathers <- function(colony) {
+  if (is.null(colony@queen)) {
+    n = 0
+  } else {
+    n = ifelse(!is.null(colony@queen@misc$fathers), colony@queen@misc$fathers@nInd, 0)
+  }
+  return(n)
+}
+
+# isQueenMated----
+isQueenMated <- function(x) {
+  if ("Pop" %in% class(x)) {
+    return(!is.null(x@misc$fathers))
+  } else if ("Colony" %in% class(x)) {
+    if (!is.null(x@queen)) {
+      return(!is.null(x@queen@misc$fathers))
+    } else {
+      return(FALSE)
+    }
+  }
+}
+
+# Extract the year of birth of the queen----
+#' @rdname extractQueenYOB
+#' @method extractQueenYOB
+#' @title Extract the queen's year of birth
+#' @usage \method{extractQueenYOB}(colony)
+#' @description Extract the year of birth of the queen \code{colony@queen@misc$yearOfBirth} slot
+#' @param colony AlphaSimR population object
+#' 
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' setQueenAge(colony, 1)
+#' extractQueenYOB(colony)
+#' 
+#' @return Integer, the year of birth of the queen.
+#' 
+#' @export
+#' 
+extractQueenYOB <- function(colony) {
+  return(colony@queen@misc$yearOfBirth)
+}
+
+
+
+# Compute the age of the queen----
+
+#' @rdname computeQueenAge
+#' @method computeQueenAge
+#' @title COmputer the queen's age in years
+#' @usage \method{computeQueenAge}(colony, year)
+#' @description Compute the age of the queen from the \code{colony@queen@misc$yearOfBirth} slot
+#' @param colony AlphaSimR population object
+#' @param currentYear Integer, current year
+#' 
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' setQueenAge(colony, year = 1)
+#' extractQueenYOB(colony)
+#' computerQueenAge(colony, currentYear = 5)
+#' 
+#' @return Integer, the age of the queen.
+#' 
+#' @export
+#' 
+computeQueenAge <- function(x, currentYear) {
+  if ("Pop" %in% class(x)) {
+    return(currentYear - x@misc$yearOfBirth)
+  } else if ("Colony" %in% class(x)) {
+    if (!is.null(x@queen)) {
+      return(currentYear - x@queen@misc$yearOfBirth)
+    }
+  }
+}
+
+
+
+
+# Get colony IDs from the colonies----
+#' @rdname getIDs
+#' @method getIDs
+#' @title Get the colonies IDs from the colonies
+#' @usage \method{getIDs}(colonies)
+#' @description Get the colony IDs from the colonies
+#' @param colonies 
+#'
+#' @example 
+#' @return Colony IDs
+#' @export
+#' 
+getIDs <- function(colonies, ID) {
+  return(sapply(colonies@colonies, FUN = function(x) x@id))
+}
+
+###############################################################################
+#Level 1 Population Fuctions----
+
+# createFounderDrones----
+
+createFounderDrones <- function(queenPop, nDronesPerQueen) {
+  return(makeDH(queenPop, nDH = nDronesPerQueen))
+}
+
+
+# createWorkers----
+
+#' @rdname createWorkers
+#' @method createWorkers
+#' @title Creates workers of the colony
+#' @usage \method{createWorkers}(colony, nInd)
+#' @description Creates the specified number of workers in the colony
+#'       \by mating the current queen and the fathers in the \code{colony@queen@misc$fathers} slot.
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, number of workers to create
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' 
+#' @return AlphaSim population object of created workers.
+#' 
+#' @export
+
+createWorkers = function(colony, nInd){
+  if (is.null(colony@queen)) {
+    stop("Missing queen!") 
+  }
+  if (!isQueenMated(colony)) {
+    stop("Missing fathers!")
+  }
+  
+  workerPop = randCross2(females = colony@queen,
+                         males = colony@queen@misc$fathers,
+                         nCrosses = nInd)
+  return(workerPop)
+}
+
+
+# createDrones----
+
+#' @rdname createDrones
+#' @method createDrones
+#' @title Creates drones of the colony as double haploids
+#' @usage \method{createDrones}(colony, nInd)
+#' @description Creates the specified number of drones in the colony
+#'       \as double haploids from the current queen.
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, the umber of drones to create.
+#'
+#' @example
+#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' colony1@drones = createDrones(colony, nInd = 200)
+#' 
+#' @return AlphaSim population object of created drones.
+#' @export
+
+createDrones = function(colony, nInd){
+  if (is.null(colony@queen)) {
+    stop("Missing queen!") 
+  }
+  dronePop = makeDH(pop = colony@queen, nDH = nInd)
+  return(dronePop)
+}
+
+
+
+# createVirginQueens----
+
+#' @rdname createVirginQueens
+#' @method createVirginQueens
+#' @title Creates virgin queen of the colony as double haploids
+#' @usage \method{createVirginQueens}(colony, nInd)
+#' @description Creates the specified number of virgin queen in the colony
+#'       \as double haploids from the current queen.
+#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @param nInd Integer, the number of virgin queens to create.
+#'
+#' @example
+#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' colony1@drones = createDrones(colony, nInd = 200)
+#' 
+#' @return AlphaSim population object of created drones.
+#' @export
+
+createVirginQueens = function(colony, nInd){
+  return(createWorkers(colony, nInd = nInd))
+}
+
+
+
+# Create DCA----
+
+#' @rdname createDCA
+#' @method createDCA
+#' @title Creates a drone congregation area (DCA) from the list of colonies
+#' @usage \method{createDCA}(list(colonies))
+#' @description Creates a drone congregation area (DCA) from selected colonies.
+#' The function takes a vector of the colonies and returns a combined population of drones.
+#' @seealso \code{\link[??????]{select_colonies}}
+#' @param colonies A list of colonies, each of AlphaSimRBee Colony object
+#'
+#' @example
+#'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony2 = createColony(virgin_queens = base[16])
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' 
+#' @return Single AlphaSim population object of drones from the provided colonies.
+#' @export
+
+createDCA = function(colonies) {
+  if ("Colonies" %in% class(colonies)) {
+    DCA = lapply(X = colonies@colonies, FUN = function(z) z@drones) 
+    DCA = mergePops(popList = DCA)
+  } else if ("Colony" %in% class(colonies)) {
+    DCA = colonies@drones
+  } else {
+    stop("Argument colonies must be of class Colonies or Colony")
+  }
+  
+  print(paste0("Created a DCA with ", DCA@nInd, " drones."))
+  return(DCA)
+}
+
+
+
+# pullDronesFromDCA----
+
+#' @rdname pullDronesFromDCA
+#' @method pullDronesFromDCA
+#' @title Pulls the drones from the DCA
+#' @usage \method{pullDronesFromDCA}(DCA, nInd)
+#' @description  Pulls a specified number of drones from the DCA and updates the DCA
+#' @param DCA AlphaSimR population object created with \code{createDCA(...)} call
+#' @param nInd Integer, the number of drones to pull from the DCA
+#'
+#' @example 
+#' #'#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony2 = createColony(virgin_queens = base[16])
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' fathers = pullDronesTheDCA(DCA, n = 14)
+#' 
+#' @return A list with two elements. The first element is the AlphaSimR population object of
+#' selected drones. The second element is the updated DCA with the selected drones removed.
+#' 
+#' @export
+
+pullDronesFromDCA = function(DCA, nInd) {
+  selectedDronesID = sample(DCA@id, size = nInd, replace = FALSE)
+  sel = DCA@id %in% selectedDronesID
+  selectedDrones = DCA[sel]
+  updatedDCA = DCA[!sel]
+  message(paste0("Selected ", nInd, " fathers from DCA"))
+  return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
+}
+
+
+
+# Pull Drone Packages from DCA---- 
+
+pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
+  nFathers = rpois(n = n, lambda = nAvgFathers)
+  if (sum(nFathers) > DCA@nInd) {
+    stop("Not enough drones in the DCA!")
+  }
+  ret = vector(mode = "list", length = n)
+  for (package in 1:n) {
+    DCAresult = pullDronesFromDCA(DCA, nInd = nFathers[package])
+    DCA = DCAresult$DCA
+    ret[[package]] = DCAresult$selectedDrones
+  }
+  return(ret)
+}
+
+# pull Individuals from the caste----
+
+#' @rdname pullIndFromCaste
+#' @method pullIndFromCaste
+#' @title Pulls a number of individuals from any caste group 
+#' @usage \method{pullIndFromCaste}(colony, caste, nInd)
+#' @description Pulls and separates a random number of individuals from any caste group. 
+#' Two list groups are created, the group of pulled individuals and the colony.
+#' 
+#'@seealso \code{\link[??????]{pullIndFromCaste}}
+#'@param colony Colony class. AlphaSimRBee Colony object from the \code{createColony(...)} call
+#'@param caste Character. Replicating the caste class structure present in the hive (queen, drones, workers etc)
+#'@nInd Integer. Number of individuals to be pulled from the caste 
+#'
+#'@example inst/examples/examples_pullIndFromCaste.R
+#'@return Two AlphaSim population objects of the colony and the group of pulled individuals.
+#'@export 
+#'
+pullIndFromCaste = function(colony, caste, nInd) {
+  if (nInd > slot(colony, caste)@nInd) {
+    stop(paste0("Not enough individuals in ", caste, " ! " ,
+                nInd, " required, but ", slot(colony, caste)@nInd, " available."))
+  }
+  pullId = sample(slot(colony, caste)@id, nInd, replace = F)
+  pullMatch = slot(colony, caste)@id %in% pullId
+  stayMatch = !slot(colony, caste)@id %in% pullId
+  
+  indPull = slot(colony, caste)[pullMatch]
+  indStay = slot(colony, caste)[stayMatch]
+  
+  slot(colony, caste) = indStay
+  return(list(colony = colony, pulledInd = indPull))
+}
+
+# Cross the virgin queen----
+
+#' @rdname crossVirginQueen
+#' @method crossVirginQueen
+#' @title Crosses a virgin queen to a group drones
+#' @usage \method{crossVirginQueen}(virginQueen, fathers)
+#' @description Crosses a virgin queen to a group of drones
+#' @param virginQueen AlphaSimR population object
+#' @param fathers AlphaSimR population class. 
+#' 
+#' @example
+#' @return AlphaSim population object of a mated colony
+#' @export
+
+crossVirginQueen = function(virginQueen, fathers) {
+  if (isQueenMated(virginQueen)) {
+    stop("The queen is mated already!")
+  }
+  
+  if (is.null(fathers)) {
+    stop("Missing fathers!")
+  }
+  
+  if (virginQueen@nInd > 1) {
+    stop("#TODO: A function to mate multiple virgin queens at once")
+  }
+  
+  virginQueen@misc$fathers = fathers
+  
+  return(virginQueen)
+}
+
+###############################################################################
+#Level 2 Colony Fuctions----
+
+
+#Create new Colony ----
 #' @title Create new Colony
 #' 
 #' @description
@@ -314,7 +718,7 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
     }
   } 
   
-
+  
   if (!is.null(queen) & !is.null(fathers)) {
     virgin_queens <- randCross2(females = queen,
                                 males = fathers,
@@ -326,258 +730,28 @@ createColony = function(id = NULL, location = NULL, queen = NULL, drones = NULL,
   }
   
   output = new("Colony",
-              id=as.character(id),
-              location=location,
-              queen=queen,
-              drones=drones,
-              workers=workers,
-              virgin_queens=virgin_queens,
-              pheno=matrix(),
-                          #ncol=simParam@nTraits),
-              swarm=swarm,
-              split=split,
-              supersedure=supersedure,
-              collapse=collapse,
-              #rob=rob,
-              production=production,
-              last_event="new_colony",
-              misc=list())
-
-
+               id=as.character(id),
+               location=location,
+               queen=queen,
+               drones=drones,
+               workers=workers,
+               virgin_queens=virgin_queens,
+               pheno=matrix(),
+               #ncol=simParam@nTraits),
+               swarm=swarm,
+               split=split,
+               supersedure=supersedure,
+               collapse=collapse,
+               #rob=rob,
+               production=production,
+               last_event="new_colony",
+               misc=list())
+  
+  
   return(output)
 }
 
-
-# createFounderDrones
-
-createFounderDrones <- function(queenPop, nDronesPerQueen) {
-  return(makeDH(queenPop, nDH = nDronesPerQueen))
-}
-
-
-# createWorkers
-
-#' @rdname createWorkers
-#' @method createWorkers
-#' @title Creates workers of the colony
-#' @usage \method{createWorkers}(colony, nInd)
-#' @description Creates the specified number of workers in the colony
-#'       \by mating the current queen and the fathers in the \code{colony@queen@misc$fathers} slot.
-#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
-#' @param nInd Integer, number of workers to create
-#'
-#' @example 
-#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
-#' 
-#' @return AlphaSim population object of created workers.
-#' 
-#' @export
-
-createWorkers = function(colony, nInd){
-    if (is.null(colony@queen)) {
-      stop("Missing queen!") 
-    }
-    if (!isQueenMated(colony)) {
-      stop("Missing fathers!")
-    }
-
-    workerPop = randCross2(females = colony@queen,
-                           males = colony@queen@misc$fathers,
-                           nCrosses = nInd)
-    return(workerPop)
-}
-
-
-# createDrones
-
-#' @rdname createDrones
-#' @method createDrones
-#' @title Creates drones of the colony as double haploids
-#' @usage \method{createDrones}(colony, nInd)
-#' @description Creates the specified number of drones in the colony
-#'       \as double haploids from the current queen.
-#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
-#' @param nInd Integer, the umber of drones to create.
-#'
-#' @example
-#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
-#' colony1@drones = createDrones(colony, nInd = 200)
-#' 
-#' @return AlphaSim population object of created drones.
-#' @export
-
-createDrones = function(colony, nInd){
-  if (is.null(colony@queen)) {
-    stop("Missing queen!") 
-  }
-  dronePop = makeDH(pop = colony@queen, nDH = nInd)
-  return(dronePop)
-}
-
-
-
-# createVirginQueens
-
-#' @rdname createVirginQueens
-#' @method createVirginQueens
-#' @title Creates virgin queen of the colony as double haploids
-#' @usage \method{createVirginQueens}(colony, nInd)
-#' @description Creates the specified number of virgin queen in the colony
-#'       \as double haploids from the current queen.
-#' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
-#' @param nInd Integer, the number of virgin queens to create.
-#'
-#' @example
-#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
-#' colony1@drones = createDrones(colony, nInd = 200)
-#' 
-#' @return AlphaSim population object of created drones.
-#' @export
-
-createVirginQueens = function(colony, nInd){
-  return(createWorkers(colony, nInd = nInd))
-}
-
-
-
-# Create DCA
-
-#' @rdname createDCA
-#' @method createDCA
-#' @title Creates a drone congregation area (DCA) from the list of colonies
-#' @usage \method{createDCA}(list(colonies))
-#' @description Creates a drone congregation area (DCA) from selected colonies.
-#' The function takes a vector of the colonies and returns a combined population of drones.
-#' @seealso \code{\link[??????]{select_colonies}}
-#' @param colonies A list of colonies, each of AlphaSimRBee Colony object
-#'
-#' @example
-#'#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony2 = createColony(virgin_queens = base[16])
-#' 
-#' DCA = createDCA(c(colony1, colony2))
-#' 
-#' @return Single AlphaSim population object of drones from the provided colonies.
-#' @export
-
-createDCA = function(colonies) {
-  if ("Colonies" %in% class(colonies)) {
-    DCA = lapply(X = colonies@colonies, FUN = function(z) z@drones) 
-    DCA = mergePops(popList = DCA)
-  } else if ("Colony" %in% class(colonies)) {
-    DCA = colonies@drones
-  } else {
-    stop("Argument colonies must be of class Colonies or Colony")
-  }
-
-    print(paste0("Created a DCA with ", DCA@nInd, " drones."))
-  return(DCA)
-}
-
-
-
-# pullDronesFromDCA
-
-#' @rdname pullDronesFromDCA
-#' @method pullDronesFromDCA
-#' @title Pulls the drones from the DCA
-#' @usage \method{pullDronesFromDCA}(DCA, nInd)
-#' @description  Pulls a specified number of drones from the DCA and updates the DCA
-#' @param DCA AlphaSimR population object created with \code{createDCA(...)} call
-#' @param nInd Integer, the number of drones to pull from the DCA
-#'
-#' @example 
-#' #'#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony2 = createColony(virgin_queens = base[16])
-#' 
-#' DCA = createDCA(c(colony1, colony2))
-#' fathers = pullDronesTheDCA(DCA, n = 14)
-#' 
-#' @return A list with two elements. The first element is the AlphaSimR population object of
-#' selected drones. The second element is the updated DCA with the selected drones removed.
-#' 
-#' @export
-
-pullDronesFromDCA = function(DCA, nInd) {
-  selectedDronesID = sample(DCA@id, size = nInd, replace = FALSE)
-  sel = DCA@id %in% selectedDronesID
-  selectedDrones = DCA[sel]
-  updatedDCA = DCA[!sel]
-  message(paste0("Selected ", nInd, " fathers from DCA"))
-  return(list(selectedDrones = selectedDrones, DCA = updatedDCA))
-}
-
-
-# Set the queen age
-
-pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
-  nFathers = rpois(n = n, lambda = nAvgFathers)
-  if (sum(nFathers) > DCA@nInd) {
-    stop("Not enough drones in the DCA!")
-  }
-  ret = vector(mode = "list", length = n)
-  for (package in 1:n) {
-    DCAresult = pullDronesFromDCA(DCA, nInd = nFathers[package])
-    DCA = DCAresult$DCA
-    ret[[package]] = DCAresult$selectedDrones
-  }
-  return(ret)
-}
-
-# Set the queen age
+# Set the queen's Year of Birth----
 
 #' @rdname setQueensYOB
 #' @method setQueensYOB
@@ -617,136 +791,7 @@ setQueenYOB <- function(x, year) {
   }
 }
 
-
-# Extract the year of birth of the queen
-#' @rdname extractQueenYOB
-#' @method extractQueenYOB
-#' @title Extract the queen's year of birth
-#' @usage \method{extractQueenYOB}(colony)
-#' @description Extract the year of birth of the queen \code{colony@queen@misc$yearOfBirth} slot
-#' @param colony AlphaSimR population object
-#' 
-#' @example 
-#' #'#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' setQueenAge(colony, 1)
-#' extractQueenYOB(colony)
-#' 
-#' @return Integer, the year of birth of the queen.
-#' 
-#' @export
-#' 
-extractQueenYOB <- function(colony) {
-  return(colony@queen@misc$yearOfBirth)
-}
-
-
-# Compute the age of the queen
-
-#' @rdname computeQueenAge
-#' @method computeQueenAge
-#' @title COmputer the queen's age in years
-#' @usage \method{computeQueenAge}(colony, year)
-#' @description Compute the age of the queen from the \code{colony@queen@misc$yearOfBirth} slot
-#' @param colony AlphaSimR population object
-#' @param currentYear Integer, current year
-#' 
-#' @example 
-#' #'#' #Create founder haplotypes
-#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
-#' 
-#' #Set simulation parameters
-#' SP = SimParam$new(founderPop)
-#' 
-#' #Create population
-#' pop = newPop(founderPop, simParam=SP)
-#' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' setQueenAge(colony, year = 1)
-#' extractQueenYOB(colony)
-#' computerQueenAge(colony, currentYear = 5)
-#' 
-#' @return Integer, the age of the queen.
-#' 
-#' @export
-#' 
-computeQueenAge <- function(x, currentYear) {
-  if ("Pop" %in% class(x)) {
-    return(currentYear - x@misc$yearOfBirth)
-  } else if ("Colony" %in% class(x)) {
-    if (!is.null(x@queen)) {
-      return(currentYear - x@queen@misc$yearOfBirth)
-    }
-  }
-}
-
-
-
-
-
-# isQueenMated
-isQueenMated <- function(x) {
-  if ("Pop" %in% class(x)) {
-    return(!is.null(x@misc$fathers))
-  } else if ("Colony" %in% class(x)) {
-    if (!is.null(x@queen)) {
-      return(!is.null(x@queen@misc$fathers))
-    } else {
-      return(FALSE)
-    }
-  }
-}
-
-
-
-
-
-# nWorkers
-
-nWorkers <- function(colony) {
-  n = ifelse(!is.null(colony@workers), colony@workers@nInd, 0)
-  return(n)
-}
-
-
-# nDrones
-
-nDrones <- function(colony) {
-  n = ifelse(!is.null(colony@drones), colony@drones@nInd, 0)
-  return(n)
-}
-
-
-# nVirginQueens
-
-nVirginQueens <- function(colony) {
-  n = ifelse(!is.null(colony@virgin_queens), colony@virgin_queens@nInd, 0)
-  return(n)
-}
-
-# nFathers
-
-nFathers <- function(colony) {
-  if (is.null(colony@queen)) {
-    n = 0
-  } else {
-    n = ifelse(!is.null(colony@queen@misc$fathers), colony@queen@misc$fathers@nInd, 0)
-  }
-  return(n)
-}
-
-
-# addWorkers
+# addWorkers----
 
 #' @rdname addWorkers
 #' @method addWorkers
@@ -788,7 +833,7 @@ addWorkers = function(colony, nInd) {
 }  
 
 
-# addDrones
+# addDrones----
 
 #' @rdname addDrones
 #' @method addDrones
@@ -831,7 +876,7 @@ addDrones <- function(colony, nInd) {
 }  
 
 # 
-# # reQueenColony
+# # reQueenColony----
 # 
 reQueenColony <- function(colony, queen) {
   if(!isQueenMated(queen)) {
@@ -844,7 +889,7 @@ reQueenColony <- function(colony, queen) {
 }
 
 # 
-# # Build up colony (add workers and drones)
+# # Build up colony (add workers and drones)----
 # 
 buildUpColony = function(colony, nWorkers, nDrones) {
   colony = addWorkers(colony, nInd = (nWorkers - nWorkers(colony)))
@@ -857,7 +902,7 @@ buildUpColony = function(colony, nWorkers, nDrones) {
 
 
 
-# addVirginQueens
+# addVirginQueens----
 
 #' @rdname addVirginQueens
 #' @method addVirginQueen
@@ -891,7 +936,7 @@ addVirginQueens = function(colony, nVirginQueens){
 }
 
 
-# Replace workers - MAYBE WE DON?T NEED THIS SINCE WE HAVE createWorker
+# Replace workers ----
 
 #' @rdname replaceWorkers
 #' @method replaceWorkers
@@ -937,7 +982,7 @@ replaceWorkers = function(colony, p = 1) {
 }
 
 
-# Replace drones - MAYBE WE DON?T NEED THIS SINCE WE HAVE createDrone
+# Replace drones ----
 
 #' @rdname replaceDrones
 #' @method replaceDrones
@@ -974,7 +1019,7 @@ replaceDrones = function(colony, p=1) {
   if (nDronesReplaced < nDrones) {
     nDronesStay <- nDrones - nDronesReplaced
     colony@drones <- c(selectInd(colony@drones, nInd = nDronesStay, use = "rand"),
-                        createDrones(colony, nInd = nDronesReplaced))
+                       createDrones(colony, nInd = nDronesReplaced))
   } else (
     colony@drones = createDrones(colony, nDronesReplaced)
   )
@@ -984,7 +1029,7 @@ replaceDrones = function(colony, p=1) {
 
 
 
-# removeWorkers
+# removeWorkers----
 
 #' @rdname removeWorkers
 #' @method removeWorkers
@@ -1016,7 +1061,7 @@ removeWorkers = function(colony, p) {
 
 
 
-# removeDrones
+# removeDrones----
 
 #' @rdname removeDrones
 #' @method removeDrones
@@ -1047,42 +1092,7 @@ removeDrones = function(colony, p) {
 }
 
 
-# pull Individuals from the caste
-
-#' @rdname pullIndFromCaste
-#' @method pullIndFromCaste
-#' @title Pulls a number of individuals from any caste group 
-#' @usage \method{pullIndFromCaste}(colony, caste, nInd)
-#' @description Pulls and separates a random number of individuals from any caste group. 
-#' Two list groups are created, the group of pulled individuals and the colony.
-#' 
-#'@seealso \code{\link[??????]{pullIndFromCaste}}
-#'@param colony Colony class. AlphaSimRBee Colony object from the \code{createColony(...)} call
-#'@param caste Character. Replicating the caste class structure present in the hive (queen, drones, workers etc)
-#'@nInd Integer. Number of individuals to be pulled from the caste 
-#'
-#'@example inst/examples/examples_pullIndFromCaste.R
-#'@return Two AlphaSim population objects of the colony and the group of pulled individuals.
-#'@export 
-#'
-pullIndFromCaste = function(colony, caste, nInd) {
-  if (nInd > slot(colony, caste)@nInd) {
-    stop(paste0("Not enough individuals in ", caste, " ! " ,
-                nInd, " required, but ", slot(colony, caste)@nInd, " available."))
-  }
-  pullId = sample(slot(colony, caste)@id, nInd, replace = F)
-  pullMatch = slot(colony, caste)@id %in% pullId
-  stayMatch = !slot(colony, caste)@id %in% pullId
-  
-  indPull = slot(colony, caste)[pullMatch]
-  indStay = slot(colony, caste)[stayMatch]
-  
-  slot(colony, caste) = indStay
-  return(list(colony = colony, pulledInd = indPull))
-}
-
-
-# Reset events
+# Reset events----
 
 #' @rdname resetEvents
 #' @method resetEvents
@@ -1104,41 +1114,7 @@ resetEvents <- function(colony) {
   return(colony)
 }
 
-
-# Cross the virgin queen
-
-#' @rdname crossVirginQueen
-#' @method crossVirginQueen
-#' @title Crosses a virgin queen to a group drones
-#' @usage \method{crossVirginQueen}(virginQueen, fathers)
-#' @description Crosses a virgin queen to a group of drones
-#' @param virginQueen AlphaSimR population object
-#' @param fathers AlphaSimR population class. 
-#' 
-#' @example
-#' @return AlphaSim population object of a mated colony
-#' @export
-
-crossVirginQueen = function(virginQueen, fathers) {
-  if (isQueenMated(virginQueen)) {
-    stop("The queen is mated already!")
-  }
-  
-  if (is.null(fathers)) {
-    stop("Missing fathers!")
-  }
-  
-  if (virginQueen@nInd > 1) {
-    stop("#TODO: A function to mate multiple virgin queens at once")
-  }
-  
-  virginQueen@misc$fathers = fathers
-  
-  return(virginQueen)
-}
-
-
-# Cross colony
+# Cross colony----
 
 #' @rdname crossColony
 #' @method crossColony
@@ -1190,7 +1166,7 @@ crossColony = function(colony, fathers=NULL, nWorkers=0, nDrones=0) {
 
 
 
-# Collapse of the colony
+# Collapse of the colony ----
 
 #' @rdname collapseColony 
 #' @method collapseColony 
@@ -1211,7 +1187,7 @@ collapseColony <- function(colony) {
 }
 
 
-# Swarm
+# Swarm colony ----
 
 #' @rdname swarmColony 
 #' @method swarmColony 
@@ -1252,7 +1228,7 @@ swarmColony = function(colony, pSwarm = 0.5, crossVirginQueen = FALSE, fathers =
   nWorkersStay = colony@workers@nInd - nWorkersSwarm
   workersSwarmId = sample(x = colony@workers@id, size = nWorkersSwarm, replace = FALSE) 
   workersStayId = colony@workers@id[!colony@workers@id %in% workersSwarmId]
-
+  
   remnantColony = createColony()
   remnantColony@virgin_queens = selectInd(colony@virgin_queens, 1, use = "rand")
   remnantColony@workers = colony@workers[workersStayId]
@@ -1276,8 +1252,8 @@ swarmColony = function(colony, pSwarm = 0.5, crossVirginQueen = FALSE, fathers =
   swarm@virgin_queens = selectInd(swarm@workers, nInd = 1, use = "rand")
   swarm@drones = NULL
   swarm@location = swarmLocation
-
-
+  
+  
   remnantColony@last_event = "remnant" 
   swarm@last_event = "swarm" 
   
@@ -1294,7 +1270,7 @@ swarmColony = function(colony, pSwarm = 0.5, crossVirginQueen = FALSE, fathers =
 
 
 
-# Supersede
+# Supersede colony ----
 
 #' @rdname supersedeColony
 #' @method supersedeColony
@@ -1342,7 +1318,7 @@ supersedeColony = function(colony, crossVirginQueen = FALSE, fathers = NULL,
 
 
 
-# Split colony
+# Split colony----
 
 #' @rdname splitColony
 #' @method splitColony
@@ -1375,9 +1351,9 @@ splitColony = function(colony, pSplit = 0.30, newQueen = NULL, crossVirginQueen 
   splitColony = createColony()
   splitColony@workers = colony@workers[workersSplitId]
   splitColony@location = splitLocation
-
+  
   colony@workers = colony@workers[workersStayId]
-
+  
   if (!is.null(newQueen)) {
     if (!isQueenMated(newQueen)) {
       splitColony@virgin_queens <- newQueen
@@ -1402,7 +1378,7 @@ splitColony = function(colony, pSplit = 0.30, newQueen = NULL, crossVirginQueen 
   if (!is.null(splitColony@queen)) {
     splitColony <- replaceWorkers(splitColony, pWorkers)
     splitColony@virgin_queens <- createWorkers(splitColony, 1)
-  
+    
   }
   
   #Change the status of the colony
@@ -1419,39 +1395,60 @@ splitColony = function(colony, pSplit = 0.30, newQueen = NULL, crossVirginQueen 
   return(list(remnant = colony, split = splitColony))
 }
 
+###############################################################################
+#Level 3 Colonies Functions----
 
 
-
-
-# Number of colonies
-
-nColonies <- function(colonies) {
-  if (!"Colonies" %in% class(colonies)) {
-    stop("colonies has to be a class Colonies")
-  } 
-  return(length(colonies@colonies))
-}
-
-
-# Get colony IDs from the colonies
-
-#' @rdname getIDs
-#' @method getIDs
-#' @title Get the colonies IDs from the colonies
-#' @usage \method{getIDs}(colonies)
-#' @description Get the colony IDs from the colonies
-#' @param colonies 
+#Create  Colonies ----
+#' @title Create Colonies
 #'
-#' @example 
-#' @return Colony IDs
+#' @description
+#' Creates a new \code{\link{Colonies-class}} from one or more
+#' \code{\link{Colony-class}} and/or \code{\link{Colonies-class}}
+#' objects.
+#'
+#' @param ... one or more \code{\link{Colony-class}} and/or
+#' \code{\link{Colonies-class}} objects.
+#'
+#' @return Returns an empty object of \code{\link{Colonies-class}}
+#'
+#' @examples
 #' @export
-#' 
-getIDs <- function(colonies, ID) {
-  return(sapply(colonies@colonies, FUN = function(x) x@id))
+
+createColonies = function(..., n = NULL){
+  if (is.null(n)) {
+    input = list(...)
+    class = sapply(input, "class")
+    stopifnot(all(class=="Colony" | class=="Colonies") | all(class=="NULL"))
+    output = new("Colonies", colonies=input)    
+  } else {
+    output = new("Colonies", colonies=vector(mode = "list", length = n))
+  }
+  
+  return(output)
 }
 
+#Add colony to Colonies----
+#' @title Add colony to the Colonies
+#'
+#' @description
+#'
+#' @param
+#'
+#' @return
+#'
+#' @examples
+#' @export
 
-# Select colonies
+addColonyToTheColonies= function(colony, Colonies){
+  if (class(colony) != "Colony") {
+    message("The colony parameter is not a Colony object.")
+  }
+  Colonies@colonies = append(Colonies@colonies, list(colony))
+  return(Colonies)
+}
+
+# Select colonies ----
 
 #' @rdname selectColonies
 #' @method selectColonies
@@ -1472,7 +1469,7 @@ selectColonies <- function(colonies, ID) {
 
 
 
-# Pull colonies
+# Pull colonies ----
 
 #' @rdname pullColonies
 #' @method pullColonies
@@ -1495,7 +1492,7 @@ pullColonies <- function(colonies, ID) {
 }
 
 
-# Remove colonies
+# Remove colonies ----
 
 #' @rdname removeColonies
 #' @method removeColonies
@@ -1515,7 +1512,7 @@ removeColonies <- function(colonies, ID) {
 }
 
 
-# Create multiple Virgin colonies 
+# Create multiple Virgin colonies ----
 
 createMultipleVirginColonies = function(founderPop, nColonies) {
   ret = createColonies(n = nColonies)
@@ -1527,7 +1524,7 @@ createMultipleVirginColonies = function(founderPop, nColonies) {
 }
 
 
-# Create multiple mated colonies 
+# Create multiple mated colonies ----
 
 createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
   ret = createColonies(n = nColonies)
@@ -1545,15 +1542,15 @@ createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
   
   return(ret)
 }
- 
+
 
 # 
-# # Build up colonies (add workers and drones)
+# # Build up colonies (add workers and drones)----
 # 
 buildUpColonies = function(colonies, nWorkers, nDrones) {
   nCol = nColonies(colonies)
   for (colony in 1:nCol) {
-  colonies@colonies[[colony]] = buildUpColony(colony = colonies[[colony]], 
+    colonies@colonies[[colony]] = buildUpColony(colony = colonies[[colony]], 
                                                 nWorkers = nWorkers,
                                                 nDrones = nDrones) 
   }
@@ -1561,7 +1558,7 @@ buildUpColonies = function(colonies, nWorkers, nDrones) {
 }
 
 # 
-# # reQueen Colonies
+# # reQueen Colonies----
 # 
 reQueenColonies = function(colonies, queens) {
   nCol = nColonies(colonies)
@@ -1569,8 +1566,8 @@ reQueenColonies = function(colonies, queens) {
     stop("Not enough queens!")
   }
   for (colony in 1:nCol) {
-  colonies@colonies[[colony]] = reQueenColony(colony = colonies[[colony]], 
-                                              queen = queens[colony]) 
+    colonies@colonies[[colony]] = reQueenColony(colony = colonies[[colony]], 
+                                                queen = queens[colony]) 
   }
   return(colonies)
 }
@@ -1578,8 +1575,8 @@ reQueenColonies = function(colonies, queens) {
 
 
 
-# 
-# # Collapse the colonies in the colony list
+
+# # Collapse the colonies----
 # 
 # collapseColonies <- function(colonies, ID) {
 #   return(removeColonies(colonies, ID))
@@ -1588,11 +1585,11 @@ reQueenColonies = function(colonies, queens) {
 
 
 
-# Supersede the colonies
+# Supersede the colonies----
 
 supersedeColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
-                              ) {
+) {
   nColonies = nColonies(colonies)
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
@@ -1607,11 +1604,11 @@ supersedeColonies <- function(colonies
 
 
 
-# Swarm the colonies
+# Swarm the colonies----
 
 swarmColonies <- function(colonies
-                              #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
-                              ) {
+                          #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
+) {
   nCol = nColonies(colonies)
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
@@ -1628,11 +1625,11 @@ swarmColonies <- function(colonies
 }
 
 
-# Split the colonies
+# Split the colonies----
 
 splitColonies <- function(colonies
-                              #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
-                              ) {
+                          #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
+) {
   nCol = nColonies(colonies)
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
@@ -1648,11 +1645,11 @@ splitColonies <- function(colonies
   
 }
 
-# Cross the colonies
+# Cross the colonies----
 
 crossColonies <- function(colonies, DCA, nAvgFathers
-                              #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
-                              ) {
+                          #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
+) {
   nCol = nColonies(colonies)
   # if (length(fathers) < nCol) {
   #   stop("Not enought fathers)
@@ -1664,13 +1661,13 @@ crossColonies <- function(colonies, DCA, nAvgFathers
   for (colony in 1:nCol) {
     ret@colonies[[colony]] <- crossColony(colonies[[colony]],
                                           fathers = fatherPackages[[colony]]
-                                          )
+    )
   }
   return(ret)
   
 }
 
-
+###############################################################################
 
 
 
