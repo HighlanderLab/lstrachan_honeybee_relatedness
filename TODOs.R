@@ -22,6 +22,7 @@
 #19) Do we just remove provided qeens and fathers in colony (level2) functions? 
 #20) CHange value 10 in createMultipleMatedColonies (put in the arguments?)
 #21) Revise collapse slot and functions (should we just remove them?)
+#22) Check the sequence of events (before turning production on) - think about event table (3x3x3 matrix for 3 events)
 
 # Text
 #1) Think about providing informative messages for the functions: Laura
