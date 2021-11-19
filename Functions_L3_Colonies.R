@@ -53,7 +53,7 @@ createColonies = function(..., n = NULL){
 #' For example : A user can use this function to add a new colony to their apiary. 
 #' 
 #' @param colony AlphaSimRBee Colony object
-#' @param Colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
 #'
 #' @return An updated AlphaSimRBee Colonies object
 #'
@@ -95,7 +95,7 @@ addColonyToTheColonies= function(colony, colonies){
   colonies@colonies = append(colonies@colonies, list(colony))
   return(colonies)
 }
-###############################################################################
+
 # Select colonies ----
 #' @rdname selectColonies
 #' @method selectColonies
@@ -105,10 +105,32 @@ addColonyToTheColonies= function(colony, colonies){
 #' @description Select the colonies from the list of all colonies based
 #' on colony IDs and return a list of selected colonies.
 #' 
-#' @param colonies
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
 #' @param ID
 #'
 #' @example inst/examples/examples_selectColonies.R
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create an apiary with 10 mated colonies (contains only queens, fathers and virgin queens)
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' #Build up the colonies to full size by adding workers and drones (drones are 1/10 size of workers)
+#' colonyFullSize = 1000
+#' apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#' 
+#' #Check colony IDs in colony 
+#' apiary@colonies
+#' 
+#' #Select colonies with IDs 8, 40 and 45 
+#' chosenColonies = selectColonies(apiary1, ID = c(8,40,45))
+#'
 #' @return A list of selected colonies.
 #' @export
 #' 
@@ -131,7 +153,6 @@ selectColonies <- function(colonies, ID = NULL, p = NULL) {
 
 
 # Pull colonies ----
-
 #' @rdname pullColonies
 #' @method pullColonies
 #' @title Pull the colonies from the colony list based on IDs.
@@ -140,9 +161,33 @@ selectColonies <- function(colonies, ID = NULL, p = NULL) {
 #' on colony IDs and return two lists: a list of selected colonies and 
 #' updated original colonies
 #' @param colonies 
-#' @param colonyIDs
+#' @param ID
 #'
 #' @example 
+#' #' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create an apiary with 10 mated colonies (contains only queens, fathers and virgin queens)
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' #Build up the colonies to full size by adding workers and drones (drones are 1/10 size of workers)
+#' colonyFullSize = 1000
+#' apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#' 
+#' #Check colony IDs in colony 
+#' apiary@colonies
+#' 
+#' #Pull colonies with IDs 8, 40 and 45 to create two separate groups of colonies (apiaries)
+#' tmp = pullColonies(apiary1, ID = c(8,40,45))
+#' apiary1 = tmp$remainingColonies
+#' apiary2 = tmp$pulledColonies
+#' 
 #' @return Two lists: a list of selected colonies and an updated inpute colonies
 #' @export
 #' 
@@ -169,7 +214,6 @@ pullColonies <- function(colonies, ID = NULL, p = NULL) {
 
 
 # Remove colonies ----
-
 #' @rdname removeColonies
 #' @method removeColonies
 #' @title Remove the colonies from the colony list based on IDs.
