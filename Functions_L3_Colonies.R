@@ -301,3 +301,12 @@ crossColonies <- function(colonies, DCA, nAvgFathers
   
 }
 
+# Set Pheno colonies ----
+setPhenoColonies <- function(colonies, FUN = NULL, ...) {
+  nCol = nColonies(colonies)
+  for (colony in 1:nCol) {
+    colonies@colonies[[colony]] <- setPhenoColony(colonies[[colony]],
+                                                  FUN = FUN, ...)
+  }
+  return(colonies)
+}

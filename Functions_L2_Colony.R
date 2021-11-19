@@ -850,3 +850,13 @@ splitColony = function(colony, pSplit = 0.30, newQueen = NULL, crossVirginQueen 
   return(list(remnant = colony, split = splitColony))
 }
 
+# Set Pheno colony----
+setPhenoColony = function(colony, FUN = NULL, ...) {
+  colony@queen = setPheno(colony@queen, ...)
+  colony@workers = setPheno(colony@workers, ...)
+  colony@drones = setPheno(colony@drones, ...)
+  if (!is.null(FUN)) { 
+    colony@pheno = FUN(colony, ...)
+  }
+  return(colony)
+}
