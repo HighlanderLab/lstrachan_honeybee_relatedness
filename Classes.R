@@ -65,6 +65,7 @@ setMethod("c",
           }
 )
 
+
 #' @describeIn 
 setMethod("show",
           signature(object = "Colonies"),
