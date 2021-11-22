@@ -2,7 +2,10 @@
 
 
 #Create  Colonies ----
-#' @title Create Colonies
+#' @rdname createColonies
+#' @method createColonies
+#' @title 
+#' @usage \method {createColonies}(..., n)
 #'
 #' @description
 #' Creates a new \code{\link{Colonies-class}} from one or more
@@ -11,6 +14,7 @@
 #'
 #' @param ... one or more \code{\link{Colony-class}} and/or
 #' \code{\link{Colonies-class}} objects.
+#' @param n Number of colony-class objects to add to the colonies-class object 
 #'
 #' @return Returns an empty object of \code{\link{Colonies-class}}
 #'
@@ -34,16 +38,37 @@ createColonies = function(..., n = NULL){
 #' @rdname addColonyToTheColonies
 #' @method addColonyToTheColonies
 #' @title Adds a colony to the group of colonies 
-#' @usage \method{addColonyToTheColonies}(colony, colonies )
+#' @usage \method{addColonyToTheColonies}(colony, colonies)
 #' 
 #' @description  Adds a colony object into a grouped colonies object. 
 #' For example : A user can use this function to add a new colony to their apiary. 
 #' 
 #' @param colony AlphaSimRBee Colony object
 #' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
-#' @return
+#' @return Updated AlphaSimRBee Colonies object
 #'
 #' @examples
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Create colonies 
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#' 
+#' #Creates colony
+#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' colony1 = addWorkers(colony1, nInd = 2000)
+#' 
+#' #Add colony1 to apiary1 
+#' apiary1= addColonyToTheColonies(colony1, apiary1)
+#' 
+#' @return Updated AlphaSimRBee Colonies object
 #' @export
 
 addColonyToTheColonies= function(colony, Colonies){
@@ -55,15 +80,16 @@ addColonyToTheColonies= function(colony, Colonies){
 }
 
 # Select colonies ----
-
 #' @rdname selectColonies
 #' @method selectColonies
 #' @title Select the colonies from the colony list based on IDs.
-#' @usage \method{selectColonies}(colony_list, colony_ids)
+#' @usage \method{selectColonies}(colonies, IDs)
+#' 
 #' @description Select the colonies from the list of all colonies based
 #' on colony IDs and return a list of selected colonies.
+#' 
 #' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
-#' @param ID
+#' @param ID IDs of "colony" class objects listed in the "colonies" object 
 
 #' @example inst/examples/examples_selectColonies.R
 #' #Create founder haplotypes
@@ -113,15 +139,18 @@ selectColonies <- function(colonies, ID = NULL, p = NULL) {
 #' @rdname pullColonies
 #' @method pullColonies
 #' @title Pull the colonies from the colony list based on IDs.
-#' @usage \method{pullColonies}(colonies, colonyIds)
+#' @usage \method{pullColonies}(colonies,ID, p)
+#' 
 #' @description Pull the colonies from the list of all colonies based
 #' on colony IDs and return two lists: a list of selected colonies and 
 #' updated original colonies
-#' @param colonies 
-#' @param ID
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param ID IDs of "colony" class objects listed in the "colonies" object
+#' @param p Percentage of colonies to pull out of the "colonies" list object 
 #'
 #' @example 
-#' #' #Create founder haplotypes
+#' #Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -175,14 +204,39 @@ pullColonies <- function(colonies, ID = NULL, p = NULL) {
 #' @rdname removeColonies
 #' @method removeColonies
 #' @title Remove the colonies from the colony list based on IDs.
-#' @usage \method{removeColonies}(colony_list, colony_ids)
+#' @usage \method{removeColonies}(colonies, ID)
+#' 
 #' @description Remove the colonies from the list of all colonies based
 #' on colony IDs and return a list of remaining colonies.
-#' @param colony_list 
-#' @param colony_ids
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param ID IDs of "colony" class objects listed in the "colonies" object
 #'
 #' @example 
-#' @return A list of remaining colonies.
+#' #' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create an apiary with 10 mated colonies (contains only queens, fathers and virgin queens)
+#' apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' #Build up the colonies to full size by adding workers and drones (drones are 1/10 size of workers)
+#' colonyFullSize = 1000
+#' apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#' 
+#' #Check colony IDs in colony 
+#' apiary@colonies
+#' 
+#' #Remove colonies with IDs 8, 40 and 45 
+#' apiary1 = removeColonies(apiary1, ID = c(8,40,45))
+#' 
+#' 
+#' @return A list of remaining colonies. Updated AlphaSimRBee Colonies object
 #' @export
 #' 
 removeColonies <- function(colonies, ID) {
@@ -191,6 +245,34 @@ removeColonies <- function(colonies, ID) {
 
 
 # Create multiple Virgin colonies ----
+#' @rdname createMultipleVirginColonies
+#' @method createMultipleVirginColonies
+#' @title Create a list object of class "colonies" containing only unmated virgin queens 
+#' @usage \method{createMultipleVirginColonies}(colonies, ID)
+#' 
+#' @description The function is intended for creating initial colonies from 
+#' 'FOUNDERPOP'. The user can create a list containing their desired number of colonies (nColonies). 
+#' All colonies created are populated with un-mated virgin queens, no other members of the caste are 
+#' present and must be populated in further steps.
+#' 
+#' @param founderPop The initial founder population 
+#' @param nColonies Number of colonies the use wants to create 
+#'
+#' @example 
+#' #' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleVirginColonies(founderPop = base, nColonies = 10)
+#' 
+#' @return A AlphaSimRBee Colonies object
+#' @export
 
 createMultipleVirginColonies = function(founderPop, nColonies) {
   ret = createColonies(n = nColonies)
@@ -203,6 +285,34 @@ createMultipleVirginColonies = function(founderPop, nColonies) {
 
 
 # Create multiple mated colonies ----
+#' @rdname createMultipleMatedColonies
+#' @method createMultipleMatedColonies
+#' @title Create a list object of class "colonies" containing mated queens, virgin queens and fathers 
+#' @usage \method{createMultipleMatedColonies}(founderPop, nColonies, nAvgFathers)
+#' 
+#' @description The function is intended for creating initial colonies from 
+#' 'FOUNDERPOP'. The user can create a list containing their desired number of colonies (nColonies). 
+#' The colonies created contain a mated queen, a virgin queen and fathers (varying number surrounding the nAvgFathers)
+#' 
+#' @param founderPop The initial founder population 
+#' @param nColonies Number of colonies the use wants to create 
+#' @param nAvgFathers Average number of fathers that mates with a queen
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#' 
+#' @return A AlphaSimRBee Colonies object
+#' @export
 
 createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
   ret = createColonies(n = nColonies)
@@ -217,13 +327,44 @@ createMultipleMatedColonies = function(founderPop, nColonies, nAvgFathers) {
     ret@colonies[[colony]] = createColony(queen = queens[colony], 
                                           fathers = fatherPackages[[colony]])
   }
-  
   return(ret)
 }
 
 
 # 
 # # Build up colonies (add workers and drones)----
+#' @rdname buildUpColonies
+#' @method buildUpColonies
+#' @title  Build up Colonies by adding workers and drones 
+#' @usage \method{buildUpColonies}(colonies, nWorkers, nDrones)
+#' 
+#' @description Workers and drones are added to the colonies to build them
+#' up to the number of desired workers and drones (nWorkers and nDrones).
+#' For example: a user may build up colonies in the Period 1 and if events such as split or swarming
+#' occur. 
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param nWorkers Desired number of workers wanted in the colonies 
+#' @param nDrones Desired number of drones wanted in the colonies
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
 # 
 buildUpColonies = function(colonies, nWorkers, nDrones) {
   nCol = nColonies(colonies)
@@ -237,6 +378,47 @@ buildUpColonies = function(colonies, nWorkers, nDrones) {
 
 # 
 # # reQueen Colonies----
+#' @rdname reQueenColonies
+#' @method reQueenColonies
+#' @title  reQueen Colonies 
+#' @usage \method{reQueenColonies}(colonies, queens)
+#' 
+#' @description: Add a new queen/virgin queen into the queens slot of the colonies. 
+#' For example: this can be used to re-queen swarmed or split colonies where no queens are present. 
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param queens Selected individuals to insert into the queen slot of the colony object 
+#' 
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#'  #Split all the colonies
+#'  tmp = splitColonies(apiary1)
+#'  apiary1 = tmp$remnants
+#'  splitcolonies = tmp$splits
+#'  
+#'  #Create 10 virgin queens
+#'  virginQueens = createVirginQueens(apiary1[[10]], nColonies(splitcolonies))
+#'  
+#'  # Requeen the splits
+#'  splitcolonies = reQueenColonies(splitcolonies, queens = virginQueens)
+
+#'  
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
 # 
 reQueenColonies = function(colonies, queens) {
   nCol = nColonies(colonies)
@@ -251,10 +433,21 @@ reQueenColonies = function(colonies, queens) {
 }
 
 
-
-
-# 
 # # Collapse the colonies----
+#' @rdname collapseColonies 
+#' @method collapseColonies
+#' @title  collapseColonies  
+#' @usage \method{collapseColonies}(colonies, ID)
+#' 
+#' @description:  
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies
+#' @param ID IDs of "colony" class objects listed in the "colonies" object 
+#' 
+#' @example 
+#' 
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
 # 
 # collapseColonies <- function(colonies, ID) {
 #   return(removeColonies(colonies, ID))
@@ -264,6 +457,41 @@ reQueenColonies = function(colonies, queens) {
 
 
 # Supersede the colonies----
+#' @rdname supersedeColonies
+#' @method supersedeColonies
+#' @title  supersedeColonies 
+#' @usage \method{supersedeColonies}(colonies, crossVirginQueen, fathers, pWorkers, pDrones)
+#' 
+#' @description:  Replicates the process of supersedure, where the
+#' queen is replaced by a new virgin queen. The workers and the drones stay
+#' in the colonies. If no fathers are present, mating of the virgin queen does not occur. 
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param crossVirginQueen
+#' @param fathers
+#' @param pWorkers
+#' @param pDrones
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#'  TODO FINISH EXAMPLE 
+#'  
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
 
 supersedeColonies <- function(colonies
                               #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
@@ -282,6 +510,46 @@ supersedeColonies <- function(colonies
 
 
 # Swarm the colonies----
+#' @rdname swarmColonies
+#' @method swarmColonies
+#' @title  swarmColonies 
+#' @usage \method{swarmColonies}(colonies, crossVirginQueen, fathers, pWorkers, pDrones)
+#' 
+#' @description: Replicates the swarming of the colonies - the process in which
+#' a part of the workers leave with the old queen and creates a new colony (the swarm),
+#' while a part of the workers stay with a new queen and the old drones.
+#' The swarming colony contains the old mated queen, a percentage (pSwarm)
+#' of the original colony's workers, no drones and a virgin queen is created from the worker population. 
+#' A new location must be given to the new swarm colony. 
+#' The colony that stays contains the remaining workers and drones. 
+#' A virgin queen is selected from the workers and mated if fathers are present.
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param crossVirginQueen
+#' @param fathers
+#' @param pWorkers
+#' @param pDrones
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#'  TODO FINISH EXAMPLE 
+#'  
+#' @return Two AlphaSim population objects of the swarmed colonies and the remaining colonies
+#' @export
 
 swarmColonies <- function(colonies
                           #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
@@ -306,6 +574,45 @@ swarmColonies <- function(colonies
 
 
 # Split the colonies----
+#' @rdname splitColonies
+#' @method splitColonies
+#' @title  splitColonies 
+#' @usage \method{splitColonies}(colonies, crossVirginQueen, fathers, pWorkers, pDrones)
+#' 
+#' @description: Two AlphaSim population objects of the split colonies and the remaining colonies are created.
+#' Spit the colony into two new colonies to prevent swarming (in managed populations) 
+#' - one colony is with the old queen and a part of the workers and drones (this is the remaining colony)
+#' - the split colony is taken to a new location with part of the workers. 
+#'  A new mated queen can be introduced to the split colony. 
+#'  If no new queen is introduced, a virgin queen must be present to mate with fathers from DCA and continue colony  
+#' 
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param crossVirginQueen
+#' @param fathers
+#' @param pWorkers
+#' @param pDrones
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#'  TODO FINISH EXAMPLE 
+#'  
+#' @return Two AlphaSim population objects of the split colonies and the remaining colonies
+#' @export
 
 splitColonies <- function(colonies
                           #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
@@ -329,6 +636,44 @@ splitColonies <- function(colonies
 }
 
 # Cross the colonies----
+#' @rdname crossColonies
+#' @method crossColonies
+#' @title  crossColonies 
+#' @usage \method{crossColonies}(colonies, DCA, nAvgFathers, crossVirginQueen, fathers, pWorkers, pDrones)
+#' 
+#' @description:  Crosses colonies with a virgin queen to a group of fathers pulled from the DCA
+#' \creates workers, drones and a new virgin queen and write them to the corresponding
+#' \slots of the colonies object.
+#' #IF the colonies are queen-less - select a queen from the virgin queen - if not, mate the current queen!!!
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param crossVirginQueen
+#' @param fathers
+#' @param pWorkers
+#' @param pDrones
+#' @param DCA 
+#' @param nAvgFathers 
+#'
+#' @example 
+#' #Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' base = newPop(founderPop, simParam=SP)
+#' 
+#' #Create 10 virgin queen colonies 
+#'  apiary1 = createMultipleMatedColonies(founderPop = base, nColonies = 10, nAvgFathers = 15)
+#'  
+#' #Build up colonies by adding 1000 workers and 100 drones to each colony in the "colonies" list 
+#'  apiary1 = buildUpColonies(apiary1, nWorkers = 1000, nDrones = 100)
+#'  
+#'  TODO FINISH
+#'  
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
 
 crossColonies <- function(colonies, DCA, nAvgFathers
                           #, crossVirginQueen = FALSE, fathers = NULL, pWorkers = 1, pDrones = 1
@@ -351,6 +696,21 @@ crossColonies <- function(colonies, DCA, nAvgFathers
 }
 
 # Set Pheno colonies ----
+#' @rdname setPhenoColonies
+#' @method setPhenoColonies
+#' @title  setPhenoColonies 
+#' @usage \method{setPhenoColonies}(colonies, FUN, ...)
+#' 
+#' @description:  
+#' 
+#' @param colonies AlphaSimRBee Colonies object containing a list of colonies 
+#' @param FUN
+#' @param ...
+#'
+#' @example 
+#' @return An updated AlphaSimRBee Colonies object
+#' @export
+#' 
 setPhenoColonies <- function(colonies, FUN = NULL, ...) {
   nCol = nColonies(colonies)
   for (colony in 1:nCol) {
