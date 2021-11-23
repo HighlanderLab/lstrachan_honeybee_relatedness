@@ -1,5 +1,30 @@
 library(AlphaSimR)
-source("/home/jana/lstrachan_honeybee_sim/HoneyBeeSim_functions.R")
+source("/home/jana/lstrachan_honeybee_sim/Classes.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L0_auxilary.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L1_Pop.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L2_Colony.R")
+source("/home/jana/lstrachan_honeybee_sim/Functions_L3_Colonies.R")
+
+
+####
+#Parameters
+nFounderColonies = 10
+nWorkersFull = 100
+nAvgFathers = 2
+
+
+#Period1
+p1swarm = 0.05
+p1supersede = 0.05
+p1collapse = 0.10
+#Period2
+p2swarm = 0.01
+p2supersede = p1supersede
+p2collapse = 0.10
+#Period3
+p3collapse = 0.35
+#TODO: Change into a vector of probabilites (age 1,2,3 of the queen)
+################################################################################
 
 # Founder population - colonies
 #Create founders
@@ -9,206 +34,95 @@ founder = quickHaplo(n = 1000,
 
 #Create base population
 SP = SimParam$new(founder)
+#Add traits: honey yield
+# Queen and average worker effect cov
+covA = matrix(data = c( 1.0, -0.5,
+                       -0.5,  2.0),
+              nrow = 2)
+# Queen and individual worker effect
+covA = matrix(data = c(covA[1,1], covA[1,2],
+                       covA[2,1], covA[2,2]*nWorkersFull),
+              nrow = 2)
+covA
+
+SP$addTraitA(nQtlPerChr = 10, 
+             mean = c(0, 0), 
+             var = diag(covA), 
+             corA = cov2cor(covA))
+covE = covA
+covE[1,2] <- covE[2,1] <- 0
 base = newPop(founder)
 
-####
-#Parameters
-noFounderColonies = 10
-colonyFullSize = 1000
-p1swarm = 0.05
-p1supersede = 0.05
-p1collapse = 0.10
-p2swarm = 0.01
-p2supersede = p1supersede
-p2collapse = 0.10
-p3collapse = 0.35
-#TODO: Change into a vector of probabilites (age 1,2,3 of the queen)
-################################################################################
+
 
 #Period1
 #Create 10 mated colonies from the base population
-apiary1 = createMultipleMatedColonies(base, nColonies = 10, nAvgFathers = 15)
+age1 = createMultipleMatedColonies(base, nColonies = nFounderColonies, nAvgFathers = nAvgFathers)
 
 #Build-up the colonies
-apiary1 = buildUpColonies(apiary1, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+age1 = buildUpColonies(age1, nWorkers = nWorkersFull, nDrones = nWorkersFull * 0.1)
 
 #Split all the colonies
-tmp <- splitColonies(apiary1)
-apiary1 <- tmp$remnants
-apiary0 <- tmp$splits
+tmp <- splitColonies(age1)
+age1 <- tmp$remnants
+age0p1 <- tmp$splits
 
 #Create 10 virgin queens
-virginQueens = createVirginQueens(apiary1[[3]], 10)
+virginQueens = createVirginQueens(age1[[3]], nColonies(age0p1))
 
 # Requeen the splits
-apiary0 <- reQueenColonies(apiary0, queens = virginQueens)
+age0p1 <- reQueenColonies(age0p1, queens = virginQueens)
+
+# Swarm a percentage of age1 colonies
+tmp = pullColonies(age1, p = p1swarm)
+age1 = tmp$remainingColonies
+tmp = swarmColonies(tmp$pulledColonies)
+age0p1 = c(age0p1, tmp$remnants)
+age1 = c(age1, tmp$swarms)
+
+#Supersede
+tmp = pullColonies(age1, p = p1supersede)
+age1 = tmp$remainingColonies
+tmp = supersedeColonies(tmp$pulledColonies)
+age0p1 = c(age0p1, tmp)
 
 #Mate the split colonies
-DCA = createDCA(apiary1)
-apiary0 = crossColonies(apiary0, DCA, nAvgFathers = 15)
+DCA = createDCA(age1)
+age0p1 = crossColonies(age0p1, DCA, nAvgFathers = nAvgFathers)
 
-#Build-up the splits
-apiary0 = buildUpColonies(apiary0, nWorkers = colonyFullSize, nDrones = colonyFullSize * 0.1)
+#Collapse
+age1 = selectColonies(age1, p = 1 - p1collapse)
 
-# Swarm a percentage of apiary1 colonies
+#Period2
+# Swarm a percentage of age1 colonies
+tmp = pullColonies(age1, p = p2swarm)
+age1 = tmp$remainingColonies
+tmp = swarmColonies(tmp$pulledColonies)
+age0p2 = tmp$remnants
+age1 = c(age1, tmp$swarms)
 
+#Supersede
+tmp = pullColonies(age1, p = p2supersede)
+age1 = tmp$remainingColonies
+tmp = supersedeColonies(tmp$pulledColonies)
+age0p2 = c(age0p2, tmp)
 
-################################################################################
-################################################################################
-################################################################################
-DCA = createFounderDrones(queenPop = base[1:10], nDronesPerQueen = 10)
-DCA
+#Mate the split colonies
+DCA = createDCA(age1)
+age0p2 = crossColonies(age0p2, DCA, nAvgFathers = nAvgFathers)
 
+#Phenotype
+age1 = setPhenoColonies(age1, varE = covE)
 
+phenoColony = function(x) {
+  x@queen@pheno[, 1] + colMeans(x@workers@pheno[, 2, drop = FALSE])
+}
+age1pheno = setPhenoColonies(age1, FUN = phenoColony, varE = covE)
+ 
+# phenoColony = function(x) {
+#   cbind(x@queen@pheno[, "honey_yield_Q"] + colMeans(x@workers@pheno[, "honey_yield_W", drop = FALSE]),
+#         x@queen@pheno[, "swarm_Q"]       + colMeans(x@workers@pheno[, "swarm_W",       drop = FALSE]))
+# }
 
-
-###########################################################
-#Period 1
-###########################################################
-
-
-
-
-
-#Create 3 colonies
-DCAresult = pullDronesFromDCA(DCA, 14)
-DCA = DCAresult$DCA
-col1 = createColony(queen = base[11], fathers = DCAresult$selectedDrones)
-DCAresult = pullDronesFromDCA(DCA, 12)
-DCA = DCAresult$DCA
-col2 = createColony(queen = base[12], fathers = DCAresult$selectedDrones)
-DCAresult = pullDronesFromDCA(DCA, 15)
-DCA = DCAresult$DCA
-col3 = createColony(queen = base[13], fathers = DCAresult$selectedDrones)
-DCA
-
-
-# Add workers and drones
-col1 = addWorkers(col1, nInd = colonyFullSize)
-col2 = addWorkers(col2, nInd = colonyFullSize)
-col3 = addWorkers(col3, nInd = colonyFullSize)
-col1 = addDrones(col1, nInd = colonyFullSize*0.1)
-col2 = addDrones(col2, nInd = colonyFullSize*0.1)
-col3 = addDrones(col3, nInd = colonyFullSize*0.1)
-
-
-# Create virgin queens for the splits
-col3 = addVirginQueens(col3, nVirginQueens = 3)
-tmp = pullIndFromCaste(col3, "virgin_queens", 3)
-col3 = tmp$colony
-virgin_queens = tmp$pulledInd
-virgin_queens
-
-# Create DCA from colonies 1 - 3
-DCA = createDCA(list(col1, col2, col3))
-DCA
-
-# Split all the colonies
-DCAresult = pullDronesFromDCA(DCA, nInd = 11)
-DCA = DCAresult$DCA
-col1split <- splitColony(col1,
-                         pSplit = 0.3,
-                         newQueen = virgin_queens[1],
-                         crossVirginQueen = TRUE,
-                         fathers = DCAresult$selectedDrones)
-col1 = col1split$remnant
-col4 = col1split$split
-col1
-col4
-
-DCAresult = pullDronesFromDCA(DCA, nInd = 13)
-DCA = DCAresult$DCA
-col2split <- splitColony(col2,
-                         pSplit = 0.2,
-                         newQueen = virgin_queens[2],
-                         crossVirginQueen = TRUE,
-                         fathers = DCAresult$selectedDrones)
-col2 = col2split$remnant
-col5 = col2split$split
-col2
-col5
-
-DCAresult = pullDronesFromDCA(DCA, nInd = 16)
-DCA = DCAresult$DCA
-col3split <- splitColony(col3,
-                         pSplit = 0.25,
-                         newQueen = virgin_queens[3],
-                         crossVirginQueen = TRUE,
-                         fathers = DCAresult$selectedDrones)
-col3 = col3split$remnant
-col6 = col3split$split
-col3
-col6
-
-# 
-
-# Period 1:
-# Create short-living workers 10k-70k
-col <- addWorkers(col, nInd = 400)
-col
-col1 <- addWorkers(col1, nInd = 300)
-col1
-
-
-# Create drones
-col <- addDrones(col, nInd = 20)
-col
-col1 <- addDrones(col1, nInd = 30)
-col1
-
-# Splitting occurs
-splitResult <- splitColony(col, pSplit = 0.3, newQueen = col@virgin_queens,
-                          crossVirginQueen = TRUE, fathers = createDrones(col1, 14))
-col <- splitResult$remnant
-col
-col2 <- splitResult$split
-col2
-
-# Swarming and supersedure occurs (supersedure is successful when drones are present)
-swarmResult = swarmColony(col, pSwarm = 0.1, crossVirginQueen = TRUE, fathers = createDrones(col2, 12), pWorkers = 0.1, pDrones = 0.2)
-col = swarmResult$swarm
-col
-col4 = swarmResult$remnant
-col4
-col1
-col1 <- supersedeColony(col1, crossVirginQueen = TRUE, fathers = createDrones(col2, 12), pWorkers = 0.5, pDrones = 0.5)
-col1
-
-# First opportunity for mating
-# TODO: Queen mated
-# TODO: Colony loss
-
-# Colony losses (p)
-#TODO: Later
-
-# Period 2:
-# Replace ½ / 2/3 / all of spring workers and drones
-col <- replaceWorkers(col)
-col <- replaceDrones(col)
-col
-
-
-# Swarming and supersedure occurs at a lower percentage (supersedure is successful when drones are present)
-#TODO: Later
-
-# Production period (all except development)
-#TODO: Later
-
-# Colony losses (p)
-#TODO: Later
-
-# Period 3:
-# Remove drones
-col@drones <- NULL
-
-# Reduce number of workers
-# Replace workers with long-winter workers
-col@workers  <- NULL
-
-
-# Highest percentage of colony losses
-#TODO: COlony loss
-
-# Reset the events for all the colonies
-col <- resetEvents(col)
-col
+#Collapse
+age1 = selectColonies(age1, p = 1 - p2collapse)
