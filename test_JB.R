@@ -9,4 +9,6 @@ library(AlphaSimR)
  #Create population
  pop = newPop(founderPop, simParam=SP)
 
-
+ #Creates colony
+colony1 = createColony(queen = pop[1])
+colony1@queen@fathers = createFounderDrones(pop, nDronesPerQueen = 17)
