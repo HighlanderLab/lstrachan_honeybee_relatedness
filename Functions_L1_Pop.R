@@ -6,9 +6,9 @@
 #' @method createFounderDrones
 #' @title Creates drones from base population
 #' @usage \method{createFounderDrones}(queenPop, nDronesPerQueen)
-#' @description Creates the specified number of drones that are used for
-#'       \by mating the founder queen in the \code{colony@queen@misc$fathers} slot.
-#' @param queenPop AlphaSimRBee Colony object from the \code{createColony(...)} call
+#' @description Creates population of drones from base population.
+#'       \Drones are created as double haploids. Founder drones are used when crating colonies to be used as fathers.
+#' @param queenPop AlphaSimRBee Colony object from the \code{createColony(...)}
 #' @param nDronesPerQueen Integer, number of drones to create
 #'
 #' @example 
@@ -21,11 +21,10 @@
 #' #Create population
 #' pop = newPop(founderPop, simParam=SP)
 #' 
-#' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
+#' founderDrones = createFounderDrones(pop[2:110], nDronesPerQueen = 100)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
 #' 
-#' @return AlphaSim population object of created workers.
+#' @return AlphaSim population object of created drones.
 #' 
 #' @export
 # createFounderDrones----
@@ -57,7 +56,10 @@ createFounderDrones <- function(queenPop, nDronesPerQueen) {
 #' pop = newPop(founderPop, simParam=SP)
 #' 
 #' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' 
+#' #Creat workers
 #' colony1@workers = createWorkers(colony1, nInd = 1000)
 #' 
 #' @return AlphaSim population object of created workers.
@@ -91,7 +93,7 @@ createWorkers = function(colony, nInd){
 #' @param nInd Integer, the umber of drones to create.
 #'
 #' @example
-#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
+#' # Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -101,9 +103,11 @@ createWorkers = function(colony, nInd){
 #' pop = newPop(founderPop, simParam=SP)
 #' 
 #' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
-#' colony1@drones = createDrones(colony, nInd = 200)
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' 
+#' #Create drones
+#' colony1@drones = createDrones(colony1, nInd = 200)
 #' 
 #' @return AlphaSim population object of created drones.
 #' @export
@@ -122,15 +126,15 @@ createDrones = function(colony, nInd){
 
 #' @rdname createVirginQueens
 #' @method createVirginQueens
-#' @title Creates virgin queen of the colony as double haploids
+#' @title Creates virgin queen 
 #' @usage \method{createVirginQueens}(colony, nInd)
-#' @description Creates the specified number of virgin queen in the colony
-#'       \as double haploids from the current queen.
+#' @description Creates the specified number of virgin queens in the colony
+#'        \by mating the current queen and the fathers in the \code{colony@queen@misc$fathers} slot.
 #' @param colony AlphaSimRBee Colony object from the \code{createColony(...)} call
 #' @param nInd Integer, the number of virgin queens to create.
 #'
 #' @example
-#' #' colony1 <- createColony(queen = base[1], fatehrs )#' #Create founder haplotypes
+#' # Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -140,11 +144,13 @@ createDrones = function(colony, nInd){
 #' pop = newPop(founderPop, simParam=SP)
 #' 
 #' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony1@workers = createWorkers(colony1, nInd = 1000)
-#' colony1@drones = createDrones(colony, nInd = 200)
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
 #' 
-#' @return AlphaSim population object of created drones.
+#' #Crate virgin queens
+#' colony1@virgin_queens = createVirginQueens(colony1, nInd = 17)
+#' 
+#' @return AlphaSim population object of created virgin queens.
 #' @export
 
 createVirginQueens = function(colony, nInd){
@@ -165,7 +171,7 @@ createVirginQueens = function(colony, nInd){
 #' @param colonies A list of colonies, each of AlphaSimRBee Colony object
 #'
 #' @example
-#'#' #Create founder haplotypes
+#'# Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -175,8 +181,13 @@ createVirginQueens = function(colony, nInd){
 #' pop = newPop(founderPop, simParam=SP)
 #' 
 #' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony2 = createColony(virgin_queens = base[16])
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' colony2 = createColony(queen = pop[2], fathers = founderDrones[18:37])
+#' 
+#' #Create drones that will be in DCA
+#' colony1@drones = createDrones(colony1, nInd = 300)
+#' colony2@drones = createDrones(colony2, nInd = 300)
 #' 
 #' DCA = createDCA(c(colony1, colony2))
 #' 
@@ -205,12 +216,13 @@ createDCA = function(colonies) {
 #' @method pullDronesFromDCA
 #' @title Pulls the drones from the DCA
 #' @usage \method{pullDronesFromDCA}(DCA, nInd)
-#' @description  Pulls a specified number of drones from the DCA and updates the DCA
+#' @description  Pulls a specified number of drones from the DCA and updates the DCA.
+#'               Selected drones are removed from DCA.
 #' @param DCA AlphaSimR population object created with \code{createDCA(...)} call
 #' @param nInd Integer, the number of drones to pull from the DCA
 #'
 #' @example 
-#' #'#' #Create founder haplotypes
+#' # Create founder haplotypes
 #' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
 #' 
 #' #Set simulation parameters
@@ -220,11 +232,18 @@ createDCA = function(colonies) {
 #' pop = newPop(founderPop, simParam=SP)
 #' 
 #' #Creates colony
-#' colony1 = createColony(queen = base[1], fathers = base[2:15])
-#' colony2 = createColony(virgin_queens = base[16])
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' colony2 = createColony(queen = pop[2], fathers = founderDrones[18:37])
+#' 
+#' #Create drones that will be in DCA
+#' colony1@drones = createDrones(colony1, nInd = 300)
+#' colony2@drones = createDrones(colony2, nInd = 300)
 #' 
 #' DCA = createDCA(c(colony1, colony2))
-#' fathers = pullDronesTheDCA(DCA, n = 14)
+#' 
+#' # Pull drones from DCA
+#'fathers =  pullDronesFromDCA(DCA, nInd = 19)
 #' 
 #' @return A list with two elements. The first element is the AlphaSimR population object of
 #' selected drones. The second element is the updated DCA with the selected drones removed.
@@ -244,6 +263,46 @@ pullDronesFromDCA = function(DCA, nInd) {
 
 # Pull Drone Packages from DCA---- 
 
+#' @rdname pullDronePackagesFromDCA
+#' @method pullDronePackagesFromDCA
+#' @title Pulls a drone package from DCA 
+#' @usage \method{pullDronePackagesFromDCA}(DCA, n, nAvgFathers)
+#' @description Pulls the packages of drones from DCA. Each package is then used to cros colonies.
+#'              Number of drones in package is sampled from the Poisson distribution 
+#'              with the average = nAvgFathers. Selected drones are removed from DCA.
+#'@seealso \code{\link[??????]{pullIndFromCaste}}
+#'@param  DCA object of class pop. AlphaSimRBee Colony object from the \code{createColony(...)} call
+#'@param n Integer. Number of the packages that needs to be created.
+#'@param nAvgFathers Integer. The average number of drones that will be in the package.
+#'
+#'@example 
+#'# Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' colony2 = createColony(queen = pop[2], fathers = founderDrones[18:37])
+#' 
+#' #Create drones that will be in DCA
+#' colony1@drones = createDrones(colony1, nInd = 300)
+#' colony2@drones = createDrones(colony2, nInd = 300)
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' 
+#' #pull drone packages from DCA
+#'dronePack = pullDronePackagesFromDCA(DCA, n = 7, nAvgFathers = 19)
+#'
+#'@return Two AlphaSim population objects of the colony and the group of pulled individuals.
+#'@export 
+#'
+
 pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
   nFathers = rpois(n = n, lambda = nAvgFathers)
   if (sum(nFathers) > DCA@nInd) {
@@ -262,7 +321,7 @@ pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
 
 #' @rdname pullIndFromCaste
 #' @method pullIndFromCaste
-#' @title Pulls a number of individuals from any caste group 
+#' @title Randomly pulls a number of individuals from any caste group. 
 #' @usage \method{pullIndFromCaste}(colony, caste, nInd)
 #' @description Pulls and separates a random number of individuals from any caste group. 
 #' Two list groups are created, the group of pulled individuals and the colony.
@@ -273,6 +332,25 @@ pullDronePackagesFromDCA <- function(DCA, n, nAvgFathers) {
 #'@nInd Integer. Number of individuals to be pulled from the caste 
 #'
 #'@example inst/examples/examples_pullIndFromCaste.R
+#'Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' 
+#' #Create drones 
+#' colony1@drones = createDrones(colony1, nInd = 300)
+#' 
+#' # Pull individuals from the caste
+#' indDrone = pullIndFromCaste(colony1, caste = 'drones', nInd = 1)
+#' 
 #'@return Two AlphaSim population objects of the colony and the group of pulled individuals.
 #'@export 
 #'
@@ -296,14 +374,42 @@ pullIndFromCaste = function(colony, caste, nInd) {
 
 #' @rdname crossVirginQueen
 #' @method crossVirginQueen
-#' @title Crosses a virgin queen to a group drones
+#' @title Crosses a virgin queen to a group drones.
 #' @usage \method{crossVirginQueen}(virginQueen, fathers)
 #' @description Crosses a virgin queen to a group of drones
 #' @param virginQueen AlphaSimR population object
 #' @param fathers AlphaSimR population class. 
 #' 
 #' @example
-#' @return AlphaSim population object of a mated colony
+#' # Create founder haplotypes
+#' founderPop = quickHaplo(nInd=200, nChr=1, segSites=10)
+#' 
+#' #Set simulation parameters
+#' SP = SimParam$new(founderPop)
+#' 
+#' #Create population
+#' pop = newPop(founderPop, simParam=SP)
+#' 
+#' #Creates colony
+#' founderDrones = createFounderDrones(pop[3:200], nDronesPerQueen = 17)
+#' colony1 = createColony(queen = pop[1], fathers = founderDrones[1:17])
+#' colony2 = createColony(queen = pop[2], fathers = founderDrones[18:37])
+#' 
+#' #Create drones that will be in DCA
+#' colony1@drones = createDrones(colony1, nInd = 300)
+#' colony2@drones = createDrones(colony2, nInd = 300)
+#' 
+#' DCA = createDCA(c(colony1, colony2))
+#' 
+#' #pull drone packages from DCA
+#' dronePack = pullDronePackagesFromDCA(DCA, n = 7, nAvgFathers = 19)
+#'
+#'# Cross the virgin queen
+#'
+#' virginQueen = colony1@virgin_queens
+#' queen = crossVirginQueen(virginQueen, fathers = dronePack[4])
+#'
+#' @return AlphaSim population object of a mated queen
 #' @export
 
 crossVirginQueen = function(virginQueen, fathers) {
