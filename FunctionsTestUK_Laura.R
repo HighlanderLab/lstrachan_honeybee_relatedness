@@ -1,83 +1,104 @@
 library(AlphaSimR)
-source("~/Desktop/GitHub/lstrachan_honeybee_sim/HoneyBeeSim_functions.R")
+source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L0_auxilary.R")
+source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L1_Pop.R")
+source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L2_Colony.R")
+source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L3_Colonies.R")
+source("~/Desktop/GitHub/lstrachan_honeybee_sim/Classes.R")
 
-#Create founder population ----
+########################       Global parameters        ########################
 
-founder_population = quickHaplo(nInd = 1000, nChr = 16, ploidy = 2L,
-                                inbred = FALSE, segSites = 1000)
+nFounderColonies = 10
+nWorkersFull = 1000
+nAvgFathers = 17
 
-#Create base population
+#Events percentages (based on Period)
+#Period1
+p1swarm = 0.05
+p1supersede = 0.05
+p1collapse = 0.10
+#Period2
+p2swarm = 0.01
+p2supersede = p1supersede
+p2collapse = 0.10
+#Period3
+p3collapse = 0.35
+#TODO: Change into a vector of probabilities (age 1,2,3 of the queen)
+
+
+##################     Initial simulation set-up         #######################
+
+#Create founder population
+founder_population = quickHaplo(nInd = 1000,
+                                nChr = 16,
+                                ploidy = 2L,
+                                inbred = FALSE, 
+                                segSites = 1000)
+
+#Add simulation parameters 
 SP = SimParam$new(founder_population) 
-SP$addTraitA(nQtlPerChr = 1000)
+
+#Add traits: honey yield
+# Queen and average worker effect covariance 
+covA = matrix(data = c( 1.0, -0.5,
+                        -0.5,  2.0),
+              nrow = 2)
+# Queen and individual worker effect
+covA = matrix(data = c(covA[1,1], covA[1,2],
+                       covA[2,1], covA[2,2]*nWorkersFull),
+              nrow = 2)
+covA
+
+SP$addTraitA(nQtlPerChr = 10, 
+             mean = c(0, 0), 
+             var = diag(covA), 
+             corA = cov2cor(covA))
+covE = covA
+covE[1,2] <- covE[2,1] <- 0
+
+#Create base population 
 base = newPop(founder_population)
 
-#Create colonies -made 5 colonies 
-col1 = createColony(id = 1, queen = base[1])
-col2 = createColony(id = 2, queen = base[200])
-col3 = createColony(id = 3, queen = base [20])
-col4 = createColony(id = 4, queen = base [53])
-col5 = createColony(id = 5, queen = base [643])
-#check colonies
-#col?
-#can't have fathers at this stage if you need to crossColony with DCA fathers
+####################             Period 1- Year 1        #######################
+
+#Create 10 mated colonies from the base population
+age1= createMultipleMatedColonies(base, nColonies = nFounderColonies, nAvgFathers = nAvgFathers)
+
+#Build-up the colonies
+age1= buildUpColonies(age1, nWorkers = nWorkersFull, nDrones = nWorkersFull * 0.1)
+
+#Split all of the colonies----
+tmp <- splitColonies(age1)
+age1 <- tmp$remnants
+age0p1 <- tmp$splits
+
+#Create 10 virgin queens (Vqueens taken from hive 3 in age1)
+virginQueens = createVirginQueens(age1[[3]], nColonies(age0p1))
+
+# Requeen the splits
+age0p1 <- reQueenColonies(age0p1, queens = virginQueens)
+
+# Swarm a percentage of age1 colonies----
+tmp = pullColonies(age1, p = p1swarm)
+age1 = tmp$remainingColonies
+tmp = swarmColonies(tmp$pulledColonies)
+age0p1 = c(age0p1, tmp$remnants)
+age1 = c(age1, tmp$swarms)
+
+#Supersede a percentage of age1 colonies----
+tmp = pullColonies(age1, p = p1supersede)
+age1 = tmp$remainingColonies
+tmp = supersedeColonies(tmp$pulledColonies)
+age0p1 = c(age0p1, tmp)
+
+#Mate the age0 virgin queens----
+DCA = createDCA(age1)
+age0p1 = crossColonies(age0p1, DCA, nAvgFathers = nAvgFathers)
+
+#Collapse a percentage of age1 colonies----
+age1 = selectColonies(age1, p = 1 - p1collapse)
+
+####################             Period 2- Year 1        #######################
 
 
-#populate drones - range from 200-300 drones per colony 
-col1@drones = createDrones(colony = col1, nDrones = 200)
-col2@drones = createDrones(colony = col2, nDrones = 300)
-col3@drones = createDrones(colony = col3, nDrones = 250)
-col4@drones = createDrones(colony = col4, nDrones = 225)
-col5@drones = createDrones(colony = col5, nDrones= 275)
-#check drones
-#col?@drones
 
 
-#createDCA
-DCA <- createDCA(list(col1, col2, col3, col4, col5))
-DCA
-
-#select fathers from the DCA - range from 16-20 fathers 
-fathers1 = selectFathersFromDCA(DCA, nFathers = 16)
-fathers2 = selectFathersFromDCA(DCA, nFathers = 17)
-fathers3 = selectFathersFromDCA(DCA, nFathers = 18)
-fathers4 = selectFathersFromDCA(DCA, nFathers = 19)
-fathers5 = selectFathersFromDCA(DCA, nFathers = 20)
-#check fathers
-#fathers?
-  
-#cross founder colonies with corresponding fathers , workers range 1000-1500, drones range 50-60
-col1 = crossColony(colony = col1, fathers = fathers1, nWorkers = 1000, nDrones = 50)
-col2 = crossColony(colony = col2, fathers = fathers2, nWorkers = 1250, nDrones = 60)
-col3 = crossColony(colony = col3, fathers = fathers3, nWorkers = 1500, nDrones = 50)  
-col4 = crossColony(colony = col4, fathers = fathers4, nWorkers = 1300, nDrones = 55)
-col5 = crossColony(colony = col5, fathers = fathers5, nWorkers = 1400, nDrones = 58)
-#check colony
-#col? 
-
-#First year ----
-#colonies 1 +2 swarm, colony 3 supersedure,colony 4 nothing happens, colony 5 dies
-#this year chance of swarm is 0.6 
-swarm1 = swarmColony(col1, perSwarm=0.6)
-col1 = swarm1$swarm #same ID, no location 
-col6 = swarm1$newColony  #has new Id but location 1 
-swarm2 = swarmColony(col2, perSwarm=0.6)
-col2 = swarm2$swarm
-col7 = swarm2$newColony
-
-
-#col6 and col7 must both be crossed using crossColony 
-fathers6 = selectFathersFromDCA(DCA, nFathers = 21)
-col6 = crossColony(colony = col6, fathers = fathers6, nWorkers = 1200, nDrones =50)
-fathers7 = selectFathersFromDCA(DCA, nFathers = 21)
-col7 = crossColony(colony = col7, fathers = fathers7, nWorkers = 1400, nDrones =55)
-
-#build up swarmed colonies (col1, col2)
-col1 = addWorkers(col1, nWorkersAdd = 500)
-col1 = addDrones(col1, nDrones = 50)
-col2 = addWorkers(col2, nWorkersAdd = 500)
-col2 = addDrones(col2, nDrones = 50)
-
-#col3 supersedure 
-col3 = supersedeColony(col3)
-
-#TODO: create wintercolonylosses fuction - removes from colonyList 
