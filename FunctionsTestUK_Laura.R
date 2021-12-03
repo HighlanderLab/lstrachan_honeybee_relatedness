@@ -1,6 +1,6 @@
 library(AlphaSimR)
 source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L0_auxilary.R")
-source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L1_Pop.R")
+source("~/Desktop/GitHub/AlphaSimRBee/AlphaSimRBee/R/Functions_L1_Pop.R")
 source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L2_Colony.R")
 source("~/Desktop/GitHub/lstrachan_honeybee_sim/Functions_L3_Colonies.R")
 source("~/Desktop/GitHub/lstrachan_honeybee_sim/Classes.R")
