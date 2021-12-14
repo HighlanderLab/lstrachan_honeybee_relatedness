@@ -1,16 +1,20 @@
 library(AlphaSimR)
-source("~/JANA/github/AlphaSimRBee/AlphaSimRBee/R/Classes.R")
-source("~/JANA/github/AlphaSimRBee/AlphaSimRBee/R/Functions_L0_auxilary.R")
-source("~/JANA/github/AlphaSimRBee/AlphaSimRBee/R/Functions_L1_Pop.R")
-source("~/JANA/github/AlphaSimRBee/AlphaSimRBee/R/Functions_L2_Colony.R")
-source("~/JANA/github/AlphaSimRBee/AlphaSimRBee/R/Functions_L3_Colonies.R")
+library(ggplot2)
+library(tictoc)
+
+source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Classes.R")
+source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L0_auxilary.R")
+source('C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L1_Pop.R')
+source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L2_Colony.R")
+source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L3_Colonies.R")
 
 
 ####
 #Parameters
 nFounderColonies = 20
-nWorkersFull = 1000
+nWorkersFull = 20000
 nAvgFathers = 15
+apiarySize = 20
 
 
 #Period1
@@ -22,11 +26,21 @@ p2swarm = 0.01
 p2supersede = p1supersede
 p2collapse = 0.10
 #Period3
-p3collapseAge0 = 0.10
-p3collapseAge1 = 0.25
+p3collapseAge0 = 0.25
+p3collapseAge1 = 0.3
 #TODO: Change into a vector of probabilites (age 1,2,3 of the queen)
 ################################################################################
-
+# create df for recording the number of age0 and age1 colonies and for recording cpu time
+loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
+noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
+################################################################################
+# loop over everything to make reps
+for (Rep in 1:5){
+################################################################################
+ # mesure cpu time 
+  
+tic('20y loop')  
+################################################################################  
 # Founder population - colonies
 #Create founders
 founder = quickHaplo(n = 1000,
@@ -59,9 +73,9 @@ base = newPop(founder)
 #Period1
 #Create 10 mated colonies from the base population
 
-for (year in 1:2) {
+for (year in 1:20) {
   if (year == 1) {
-    age1 = createMultipleMatedColonies(base, nColonies = nFounderColonies, nAvgFathers = nAvgFathers)
+    age1 = createMatedColonies(base, nColonies = nFounderColonies, nAvgFathers = nAvgFathers)
   } else {
     age2 = age1
     age1 = age0
@@ -70,6 +84,7 @@ for (year in 1:2) {
     age0p2 = NULL
   }
 
+  
   #########################################################################
   #Period1
   #########################################################################
@@ -93,7 +108,7 @@ for (year in 1:2) {
     age0p1 <- c(age0p1, tmp$splits)
   }
     
-  #Create 10 virgin queens
+  #Create virgin queens
   #Sample colony for the virgin queens
   virginDonor <- sample(1:nColonies(age1), size = 1)
   virginQueens = createVirginQueens(age1[[virginDonor]], nColonies(age0p1))
@@ -124,7 +139,7 @@ for (year in 1:2) {
   age0p1 = c(age0p1, tmp)
   
   if (year > 1) {
-    #Supersede age 1 collonies
+    #Supersede age 2 collonies
     tmp = pullColonies(age2, p = p1supersede)
     age2 = tmp$remainingColonies
     tmp = supersedeColonies(tmp$pulledColonies)
@@ -214,8 +229,38 @@ for (year in 1:2) {
   age0 <- selectColonies(age0, p = (1 - p3collapseAge0))
   age1 <- selectColonies(age1, p = (1 - p3collapseAge1))
   age2 = NULL #We don't need this but just to show the workflow!!!
-
-}
+ 
+   # Maintain the constant number of colonies
+  # održimo age1 v celoti, age0 swarmed in do apiarySize dopolnimo s spliti. Ostale splite zbrišemo
+   
+   if ((nColonies(age0) + nColonies(age1)) > apiarySize) {  # check if the sum of all colonies is grater than apiary size, if yes enter the loop
+    
+    
+      IDsplits = getId(age0)[hasSplit(age0)] # get the IDs of age 0 that are splits
+      spliti0 = pullColonies(age0, ID = IDsplits) # pull the splits out of age 0
+      age0split = spliti0$pulledColonies # create an object for age 0 splits
+      age0swarm = spliti0$remainingColonies # create an object for swarms and superseded colonies
+    # age0 = NULL
+      age0needed = apiarySize - nColonies(age1) # calculate the number of age 0 colonies that are needed to fill up the apiary
+      splitsNeeded = age0needed - nColonies(age0swarm) # calculate the number of splits needed
+      
+      if (age0needed <= nColonies(age0swarm)) { # check if the number of age 0 colonies needed is lower or equal to age 0 swarms
+        swarmID = sample(getId(age0swarm), age0needed) # if yes, select the ids of swarms that will stay in apiary
+        swarmTMP = pullColonies(age0swarm, ID = swarmID) # pull out those selected age0 swarms
+        age0 = swarmTMP$pulledColonies # put selected swarms to age 0 object
+        
+      } else if (age0needed > nColonies(age0swarm)) { # in case when age 0 needed is grater than number of swarm select splits
+        nSplitsNeeded = age0needed - nColonies(age0swarm) # calculate the number of splits needed
+        splitID = sample(getId(age0split), nSplitsNeeded) # select ids of splits
+        splitTMP = pullColonies(age0split, ID = splitID) # pull the splits 
+        splits = splitTMP$pulledColonies # select pulled splits 
+        age0 = c(age0swarm, splits) # combine splits and swarms in age 0 object
+      }
+   }    
+      
+     
+  
+}#ta zaklepaj paše k zanki od leta
 
 
 
@@ -231,3 +276,17 @@ for (year in 1:2) {
 #   cbind(x@queen@pheno[, "honey_yield_Q"] + colMeans(x@workers@pheno[, "honey_yield_W", drop = FALSE]),
 #         x@queen@pheno[, "swarm_Q"]       + colMeans(x@workers@pheno[, "swarm_W",       drop = FALSE]))
 # }
+
+#record the number of age0 and age 1 for each run
+
+
+
+noQueens <- rbind(noQueens, c(Rep, nColonies(age0), nColonies(age1), (nColonies(age0) + nColonies(age1))))
+a = toc()
+loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic )))   
+}
+
+ggplot(noQueens, aes(Rep, sum)) + 
+  geom_line(aes(Rep, sum))
+
+
