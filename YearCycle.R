@@ -35,10 +35,12 @@ if (nDronesFull < (nAvgFathers * 2)) {
 p1swarm <- 0.05
 p1supersede <- 0.05
 p1collapse <- 0.10
+
 # Period2
 p2swarm <- 0.01
 p2supersede <- p1supersede
 p2collapse <- p1collapse
+
 # Period3
 p3collapseAge0 <- 0.25
 p3collapseAge1 <- 0.3
@@ -60,13 +62,14 @@ for (Rep in 1:5) {
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
                                segSites = 1000)
-  SP <- SimParamBee$new(founderGenomes)
+  SP <- SimParamBee$new(founderGenomes, csdChr = NULL)
   base <- newPop(founderGenomes)
 
   # Year-loop ------------------------------------------------------------------
 
   for (year in 1:20) {
     # year <- 1
+    # year <- year + 1
     if (year == 1) {
       age1 <- createColonies2(pop = selectInd(base, nInd = apiarySize * 2, use = "rand"),
                               n = apiarySize, nAvgFathers = nAvgFathers)
@@ -107,7 +110,7 @@ for (Rep in 1:5) {
     #       need createVirginQueens() to work with multiple colonies too, and equally for createWorkers()
     #       and createDrones()
     virginDonor <- sample.int(n = nColonies(age1), size = 1)
-    virginQueens <- createVirginQueens(age1[[virginDonor]], nInd = nColonies(age0p1))
+    virginQueens <- createVirginQueens(age1[[virginDonor]], nInd = nColonies(age0p1) * 10)
 
     # Requeen the splits --> queens are now 0 years old
     age0p1 <- reQueenColonies(age0p1, queens = virginQueens$virgin_queens)
