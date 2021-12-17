@@ -2,11 +2,13 @@ library(AlphaSimR)
 library(ggplot2)
 library(tictoc)
 
-source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Classes.R")
-source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L0_auxilary.R")
-source('C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L1_Pop.R')
-source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L2_Colony.R")
-source("C:/Users/jernejb/Desktop/git/AlphaSimRBee/AlphaSimRBee/R/Functions_L3_Colonies.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Functions_L0_auxilary.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Functions_L1_Pop.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Functions_L2_Colony.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Functions_L3_Colonies.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Class-Colonies.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Class-Colony.R")
+source("~/Desktop/GitHub/Fork/AlphaSimRBee/R/Class-SimParamBee.R")
 
 
 ####
@@ -24,11 +26,11 @@ p1collapse = 0.10
 #Period2
 p2swarm = 0.01
 p2supersede = p1supersede
-p2collapse = 0.10
+p2collapse = p1collapse 
 #Period3
 p3collapseAge0 = 0.25
 p3collapseAge1 = 0.3
-#TODO: Change into a vector of probabilites (age 1,2,3 of the queen)
+#TODO: Change into a vector of probabilities (age 1,2,3 of the queen)
 ################################################################################
 # create df for recording the number of age0 and age1 colonies and for recording cpu time
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
@@ -43,12 +45,14 @@ tic('20y loop')
 ################################################################################  
 # Founder population - colonies
 #Create founders
-founder = quickHaplo(n = 1000,
-                     nChr = 1,
-                     segSites = 10)
+  founder_population = quickHaplo(nInd = 1000,
+                                  nChr = 16,
+                                  ploidy = 2L,
+                                  inbred = FALSE, 
+                                  segSites = 1000)
 
-#Create base population
-SP = SimParam$new(founder)
+#Create base population using SimParamBee 
+SP = SimParamBee$new(founder_population)
 #Add traits: honey yield
 # Queen and average worker effect cov
 covA = matrix(data = c( 1.0, -0.5,
@@ -66,8 +70,7 @@ SP$addTraitA(nQtlPerChr = 10,
              corA = cov2cor(covA))
 covE = covA
 covE[1,2] <- covE[2,1] <- 0
-base = newPop(founder)
-
+base = newPop(founder_population)
 
 ####Year 0
 #Period1
@@ -75,7 +78,7 @@ base = newPop(founder)
 
 for (year in 1:20) {
   if (year == 1) {
-    age1 = createMatedColonies(base, nColonies = nFounderColonies, nAvgFathers = nAvgFathers)
+    age1 = createColonies2(n = nFounderColonies, pop = base, nAvgFathers = nAvgFathers, simParamBee = SimParamBee)
   } else {
     age2 = age1
     age1 = age0
@@ -84,12 +87,12 @@ for (year in 1:20) {
     age0p2 = NULL
   }
 
-  
+  class(age1)
   #########################################################################
   #Period1
   #########################################################################
   #Build-up the colonies
-  age1 = buildUpColonies(age1, nWorkers = nWorkersFull, nDrones = nWorkersFull * 0.1)
+  age1 = buildUpColonies(colonies = age1, nWorkers = nWorkersFull, nDrones = nWorkersFull * 0.1, simParamBee = SP)
   if (year > 1) {
     age2 <- buildUpColonies(age2, nWorkers = nWorkersFull, nDrones = nWorkersFull * 0.1)
   }
@@ -231,7 +234,7 @@ for (year in 1:20) {
   age2 = NULL #We don't need this but just to show the workflow!!!
  
    # Maintain the constant number of colonies
-  # održimo age1 v celoti, age0 swarmed in do apiarySize dopolnimo s spliti. Ostale splite zbrišemo
+  # odr?imo age1 v celoti, age0 swarmed in do apiarySize dopolnimo s spliti. Ostale splite zbri?emo
    
    if ((nColonies(age0) + nColonies(age1)) > apiarySize) {  # check if the sum of all colonies is grater than apiary size, if yes enter the loop
     
@@ -260,7 +263,7 @@ for (year in 1:20) {
       
      
   
-}#ta zaklepaj paše k zanki od leta
+}#ta zaklepaj pa?e k zanki od leta
 
 
 
