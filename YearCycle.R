@@ -52,8 +52,10 @@ noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
 
 # Rep-loop ---------------------------------------------------------------------
 
-for (Rep in 1:5) {
+nRep <- 5
+for (Rep in 1:nRep) {
   # Rep <- 1
+  cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
   # Measure cpu time
   tic('20y loop')
 
@@ -67,9 +69,11 @@ for (Rep in 1:5) {
 
   # Year-loop ------------------------------------------------------------------
 
-  for (year in 1:20) {
+  nYear <- 20
+  for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
+    cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
       age1 <- createColonies2(pop = selectInd(base, nInd = apiarySize * 2, use = "rand"),
                               n = apiarySize, nAvgFathers = nAvgFathers)
