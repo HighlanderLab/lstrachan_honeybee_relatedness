@@ -57,7 +57,7 @@ noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
 csdVariability <- data.frame(Rep = NA, year = NA, avgCSDage0 = NA )
 # Rep-loop ---------------------------------------------------------------------
 
-nRep <- 5
+nRep <- 1
 for (Rep in 1:nRep) {
   # Rep <- 1
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
@@ -69,27 +69,24 @@ for (Rep in 1:nRep) {
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
                                segSites = 1000)
-  SP <- SimParamBee$new(founderGenomes, csdChr = 4, nCsdHaplo = 128)
+  SP <- SimParamBee$new(founderGenomes, csdChr = 4, nCsdAlleles = 128)
   base <- newPop(founderGenomes)
 
   # Year-loop ------------------------------------------------------------------
 
-  nYear <- 2
+  nYear <- 1
   for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
-<<<<<<< HEAD
+
       #age1 <- createColonies(pop = selectInd(base, nCol = apiarySize * 2, use = "rand"),
-       #                       n = apiarySize, nAvgFathers = nAvgFathers)
+                            # n = apiarySize, nAvgFathers = nAvgFathers)
       age1 <- createColonies(pop = base, nCol = apiarySize, mated = TRUE,
                                          nAvgFathers = 15, nDronesPerQueen = 100,
                                          simParamBee = SP)
-=======
-      age1 <- createColonies(pop = selectInd(base, nInd = apiarySize * 2, use = "rand"),
-                             nCol = apiarySize, nAvgFathers = nAvgFathers)
->>>>>>> f9a956d9d5bccfd369345b236891ed6dc36658a6
+
     } else {
       age2 <- age1
       age1 <- age0
@@ -244,13 +241,14 @@ for (Rep in 1:nRep) {
     age2 <- NULL #We don't need this but just to show the workflow!!!
     
     # Get the intracolonial csd variability-------------------------------------
-    
-    
-    for (colony in age0){
-      q <- nCsdAlleles(getWorkers(colony))
-      nCsdAll <- c(nCsdAll, q)
+    ids <- getId(age0)
+    q <- nCsdAlleles(age0)
+    nCsdAll <- c()
+    for (id in ids){
+      w <- q$id$workers
+      nCsdAll <- c(nCsdAll, w)
     }
-    nCSD <- sum(nCsdAll)
+    nCSD <- sum(nCsdAll)/nColonies(age0)
     csdVariability <- rbind(csdVariability, c(Rep, year, nCSD))
 
     # Maintain the number of colonies ------------------------------------------
