@@ -5,13 +5,16 @@ rm(list = ls())
 library(AlphaSimR)
 library(ggplot2)
 library(tictoc)
+library(R6)
 
 # TODO: replace with devtools installation from Github once the package is operational
 # Source the development version of AlphaSimR
 # Laura
-AlphaSimRBeeFolder <- "~/Desktop/GitHub/Fork/AlphaSimRBee"
+#AlphaSimRBeeFolder <- "~/Desktop/GitHub/Fork/AlphaSimRBee"
 # Gregor
-AlphaSimRBeeFolder <- "~/Documents/5_Storages/GitBox/AlphaSimRBee/AlphaSimRBee"
+#AlphaSimRBeeFolder <- "~/Documents/5_Storages/GitBox/AlphaSimRBee/AlphaSimRBee" 
+# Jernej
+AlphaSimRBeeFolder <- "C:/Users/jernejb/Desktop/git/AlphaSimRBee/SIMplyBee"
 
 source(paste0(AlphaSimRBeeFolder, "/R/Class-SimParamBee.R"))
 source(paste0(AlphaSimRBeeFolder, "/R/Class-Colony.R"))
@@ -46,10 +49,10 @@ p3collapseAge0 <- 0.25
 p3collapseAge1 <- 0.3
 # TODO: Change into a vector of probabilities (age 1,2,3 of the queen)
 
-# Create df for recording the number of age0 and age1 colonies and for recording cpu time
+# Create df for recording the number of age0 and age1 colonies, csd variability and for recording cpu time
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
-
+csdVariability <- data.frame(Rep = NA, year = NA, avgCSDage0 = NA )
 # Rep-loop ---------------------------------------------------------------------
 
 nRep <- 5
@@ -64,19 +67,22 @@ for (Rep in 1:nRep) {
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
                                segSites = 1000)
-  SP <- SimParamBee$new(founderGenomes, csdChr = NULL)
+  SP <- SimParamBee$new(founderGenomes, csdChr = 4, nCsdHaplo = 128)
   base <- newPop(founderGenomes)
 
   # Year-loop ------------------------------------------------------------------
 
-  nYear <- 20
+  nYear <- 2
   for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
-      age1 <- createColonies2(pop = selectInd(base, nInd = apiarySize * 2, use = "rand"),
-                              n = apiarySize, nAvgFathers = nAvgFathers)
+      #age1 <- createColonies(pop = selectInd(base, nCol = apiarySize * 2, use = "rand"),
+       #                       n = apiarySize, nAvgFathers = nAvgFathers)
+      age1 <- createColonies(pop = base, nCol = apiarySize, mated = TRUE,
+                                         nAvgFathers = 15, nDronesPerQueen = 100,
+                                         simParamBee = SP)
     } else {
       age2 <- age1
       age1 <- age0
@@ -229,6 +235,16 @@ for (Rep in 1:nRep) {
     age0 <- selectColonies(age0, p = (1 - p3collapseAge0))
     age1 <- selectColonies(age1, p = (1 - p3collapseAge1))
     age2 <- NULL #We don't need this but just to show the workflow!!!
+    
+    # Get the intracolonial csd variability-------------------------------------
+    
+    
+    for (colony in age0){
+      q <- nCsdAlleles(getWorkers(colony))
+      nCsdAll <- c(nCsdAll, q)
+    }
+    nCSD <- sum(nCsdAll)
+    csdVariability <- rbind(csdVariability, c(Rep, year, nCSD))
 
     # Maintain the number of colonies ------------------------------------------
 
@@ -262,3 +278,4 @@ for (Rep in 1:nRep) {
 
 ggplot(noQueens, aes(Rep, sum)) +
   geom_line(aes(Rep, sum))
+
