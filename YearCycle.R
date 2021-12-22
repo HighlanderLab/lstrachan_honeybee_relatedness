@@ -24,6 +24,8 @@ source(paste0(AlphaSimRBeeFolder, "/R/Functions_L1_Pop.R"))
 source(paste0(AlphaSimRBeeFolder, "/R/Functions_L2_Colony.R"))
 source(paste0(AlphaSimRBeeFolder, "/R/Functions_L3_Colonies.R"))
 
+library(SIMplyBee)
+
 # Parameters -------------------------------------------------------------------
 
 apiarySize <- 20
@@ -78,11 +80,16 @@ for (Rep in 1:nRep) {
     # year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
+<<<<<<< HEAD
       #age1 <- createColonies(pop = selectInd(base, nCol = apiarySize * 2, use = "rand"),
        #                       n = apiarySize, nAvgFathers = nAvgFathers)
       age1 <- createColonies(pop = base, nCol = apiarySize, mated = TRUE,
                                          nAvgFathers = 15, nDronesPerQueen = 100,
                                          simParamBee = SP)
+=======
+      age1 <- createColonies(pop = selectInd(base, nInd = apiarySize * 2, use = "rand"),
+                             nCol = apiarySize, nAvgFathers = nAvgFathers)
+>>>>>>> f9a956d9d5bccfd369345b236891ed6dc36658a6
     } else {
       age2 <- age1
       age1 <- age0
@@ -148,7 +155,7 @@ for (Rep in 1:nRep) {
     age0p1 <- c(age0p1, tmp)
 
     if (year > 1) {
-      # Supersede age2 collonies
+      # Supersede age2 colonies
       tmp <- pullColonies(age2, p = p1supersede)
       age2 <- tmp$remainingColonies
       tmp <- supersedeColonies(tmp$pulledColonies)
