@@ -241,11 +241,10 @@ for (Rep in 1:nRep) {
     age2 <- NULL #We don't need this but just to show the workflow!!!
     
     # Get the intracolonial csd variability-------------------------------------
-    ids <- getId(age0)
     q <- nCsdAlleles(age0)
     nCsdAll <- c()
-    for (id in ids){
-      w <- q$id$workers
+    for (n in 1:nColonies(age0)){
+      w <- q[[n]]$workers
       nCsdAll <- c(nCsdAll, w)
     }
     nCSD <- sum(nCsdAll)/nColonies(age0)
