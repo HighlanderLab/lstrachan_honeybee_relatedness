@@ -35,7 +35,7 @@ nDronesFull <- nWorkersFull * 0.2
 if (nDronesFull < (nAvgFathers * 2)) {
   nDronesFull <-nAvgFathers * 2
 }
-nVirginQueensFull <- 30
+nVirginQueensFull <- 100
 
 # Period1
 p1swarm <- 0.05
@@ -72,7 +72,7 @@ for (Rep in 1:nRep) {
                                nChr = 16,
                                segSites = 1000)
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
-  SP <- SimParamBee$new(founderGenomes, csdChr = NULL, nCsdAlleles = 128)
+  # SP <- SimParamBee$new(founderGenomes, csdChr = NULL, nCsdAlleles = 128)
   SP$nWorkers <- nWorkersFull
   SP$nDrones <- nDronesFull
   SP$nVirginQueens <- nVirginQueensFull
@@ -86,7 +86,8 @@ for (Rep in 1:nRep) {
     # year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
-      age1 <- createColonies(pop = base, nCol = apiarySize)
+      age1 <- createColonies(pop = base, nCol = apiarySize,
+                             yearOfBirth = year - 1)
     } else {
       age2 <- age1
       age1 <- age0
@@ -99,9 +100,9 @@ for (Rep in 1:nRep) {
     cat("Period1 -----------------------------------------------------------\n")
 
     cat("# Build-up the colonies\n")
-    age1 <- buildUpColonies(age1)
+    age1 <- buildUpColonies(age1, year = year)
     if (year > 1) {
-      age2 <- buildUpColonies(age2)
+      age2 <- buildUpColonies(age2, year = year)
     }
 
     cat("# Split all age1 colonies\n")
@@ -123,6 +124,7 @@ for (Rep in 1:nRep) {
     virginQueens <- tmp$pulled
     age1 <- assignColonyToColonies(age1, tmp$colony,
                                    pos = which(getId(age1) == getId(tmp$colony)))
+    virginQueens <- setQueensYearOfBirth(virginQueens, year)
 
     cat("# Requeen the splits\n")
     age0p1 <- reQueenColonies(age0p1, queens = virginQueens) # queens are now 0 years old
@@ -132,7 +134,7 @@ for (Rep in 1:nRep) {
     age1 <- tmpPa$remainingColonies
     tmpW1 <- swarmColonies(tmpPa$pulledColonies)
     age0p1 <- c(age0p1, tmpW1$remnants)
-    tmpW1$swarms <- buildUpColonies(tmpW1$swarms) # TODO: is this OK?
+    tmpW1$swarms <- buildUpColonies(tmpW1$swarms, year = year) # TODO: is this OK?
     age1 <- c(age1, tmpW1$swarms)
 
     if (year > 1) {
@@ -141,7 +143,7 @@ for (Rep in 1:nRep) {
       age2 <- tmpPb$remainingColonies
       tmpW2 <- swarmColonies(tmpPb$pulledColonies)
       age0p1 <- c(age0p1, tmpW2$remnants)
-      tmpW2$swarms <- buildUpColonies(tmpW2$swarms) # TODO: is this OK?
+      tmpW2$swarms <- buildUpColonies(tmpW2$swarms, year = year) # TODO: is this OK?
       age2 <- c(age2, tmpW2$swarms)
     }
 
@@ -181,7 +183,7 @@ for (Rep in 1:nRep) {
     age1 <- tmpPa$remainingColonies
     tmpW1 <- swarmColonies(tmpPa$pulledColonies)
     age0p2 <- tmpW1$remnants # The queens of the remnant colonies are of age 0
-    tmpW1$swarms <- buildUpColonies(tmpW1$swarms) # TODO: is this OK?
+    tmpW1$swarms <- buildUpColonies(tmpW1$swarms, year = year) # TODO: is this OK?
     age1 <- c(age1, tmpW1$swarms)
 
     if (year > 1) {
@@ -190,7 +192,7 @@ for (Rep in 1:nRep) {
       age2 <- tmpPb$remainingColonies
       tmpW2 <- swarmColonies(tmpPb$pulledColonies)
       age0p2 <- c(age0p2, tmpW2$remnants) # The queens of the remnant colonies are of age 0
-      tmpW2$swarms <- buildUpColonies(tmpW2$swarms) # TODO: is this OK?
+      tmpW2$swarms <- buildUpColonies(tmpW2$swarms, year = year) # TODO: is this OK?
       age2 <- c(age2, tmpW2$swarms)
     }
 
@@ -280,9 +282,11 @@ for (Rep in 1:nRep) {
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
 
-  nVirginQueens(age2)
+  # nVirginQueens(age2)
   nVirginQueens(age1)
+  nVirginQueens(age0)
   nVirginQueens(age0p1)
+  nVirginQueens(age0p2)
 
 } # Rep-loop
 
