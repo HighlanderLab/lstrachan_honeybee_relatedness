@@ -132,6 +132,7 @@ for (Rep in 1:nRep) {
     age1 <- tmpPa$remainingColonies
     tmpW1 <- swarmColonies(tmpPa$pulledColonies)
     age0p1 <- c(age0p1, tmpW1$remnants)
+    tmpW1$swarms <- buildUpColonies(tmpW1$swarms) # TODO: is this OK?
     age1 <- c(age1, tmpW1$swarms)
 
     if (year > 1) {
@@ -140,6 +141,7 @@ for (Rep in 1:nRep) {
       age2 <- tmpPb$remainingColonies
       tmpW2 <- swarmColonies(tmpPb$pulledColonies)
       age0p1 <- c(age0p1, tmpW2$remnants)
+      tmpW2$swarms <- buildUpColonies(tmpW2$swarms) # TODO: is this OK?
       age2 <- c(age2, tmpW2$swarms)
     }
 
@@ -179,6 +181,7 @@ for (Rep in 1:nRep) {
     age1 <- tmpPa$remainingColonies
     tmpW1 <- swarmColonies(tmpPa$pulledColonies)
     age0p2 <- tmpW1$remnants # The queens of the remnant colonies are of age 0
+    tmpW1$swarms <- buildUpColonies(tmpW1$swarms) # TODO: is this OK?
     age1 <- c(age1, tmpW1$swarms)
 
     if (year > 1) {
@@ -187,6 +190,7 @@ for (Rep in 1:nRep) {
       age2 <- tmpPb$remainingColonies
       tmpW2 <- swarmColonies(tmpPb$pulledColonies)
       age0p2 <- c(age0p2, tmpW2$remnants) # The queens of the remnant colonies are of age 0
+      tmpW2$swarms <- buildUpColonies(tmpW2$swarms) # TODO: is this OK?
       age2 <- c(age2, tmpW2$swarms)
     }
 
