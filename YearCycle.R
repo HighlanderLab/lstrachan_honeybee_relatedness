@@ -118,8 +118,11 @@ for (Rep in 1:nRep) {
 
     cat("# Create virgin queens\n")
     # Sample colony for the virgin queens
-    virginDonor <- selectColonies(age1, n = 1)
-    virginQueens <- getVirginQueens(virginDonor[[1]])
+    virginDonor <- selectColonies(age1, n = 1)[[1]]
+    tmp <- pullVirginQueens( c, nInd = apiarySize)
+    virginQueens <- tmp$pulled
+    age1 <- assignColonyToColonies(age1, tmp$colony,
+                                   pos = which(getId(age1) == getId(tmp$colony)))
 
     cat("# Requeen the splits\n")
     age0p1 <- reQueenColonies(age0p1, queens = virginQueens) # queens are now 0 years old
