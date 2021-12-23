@@ -119,7 +119,7 @@ for (Rep in 1:nRep) {
     cat("# Create virgin queens\n")
     # Sample colony for the virgin queens
     virginDonor <- selectColonies(age1, n = 1)[[1]]
-    tmp <- pullVirginQueens( c, nInd = apiarySize)
+    tmp <- pullVirginQueens(virginDonor, nInd = apiarySize)
     virginQueens <- tmp$pulled
     age1 <- assignColonyToColonies(age1, tmp$colony,
                                    pos = which(getId(age1) == getId(tmp$colony)))
