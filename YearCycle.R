@@ -12,17 +12,17 @@ library(R6)
 # Laura
 #AlphaSimRBeeFolder <- "~/Desktop/GitHub/Fork/AlphaSimRBee"
 # Gregor
-#AlphaSimRBeeFolder <- "~/Documents/5_Storages/GitBox/AlphaSimRBee/AlphaSimRBee" 
+#AlphaSimRBeeFolder <- "~/Documents/5_Storages/GitBox/AlphaSimRBee/AlphaSimRBee"
 # Jernej
-AlphaSimRBeeFolder <- "C:/Users/jernejb/Desktop/git/AlphaSimRBee/SIMplyBee"
+#AlphaSimRBeeFolder <- "C:/Users/jernejb/Desktop/git/AlphaSimRBee/SIMplyBee"
 
-source(paste0(AlphaSimRBeeFolder, "/R/Class-SimParamBee.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Class-Colony.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Class-Colonies.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Functions_L0_auxilary.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Functions_L1_Pop.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Functions_L2_Colony.R"))
-source(paste0(AlphaSimRBeeFolder, "/R/Functions_L3_Colonies.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Class-SimParamBee.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Class-Colony.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Class-Colonies.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L0_auxilary.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L1_Pop.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L2_Colony.R"))
+#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L3_Colonies.R"))
 
 library(SIMplyBee)
 
@@ -55,9 +55,10 @@ p3collapseAge1 <- 0.3
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
 csdVariability <- data.frame(Rep = NA, year = NA, avgCSDage0 = NA )
+pDiploidDrones <- data.frame(Rep = NA, year = NA, pDidrA0 = NA, pDidrA1 = NA)
 # Rep-loop ---------------------------------------------------------------------
 
-nRep <- 1
+nRep <- 5
 for (Rep in 1:nRep) {
   # Rep <- 1
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
@@ -69,12 +70,12 @@ for (Rep in 1:nRep) {
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
                                segSites = 1000)
-  SP <- SimParamBee$new(founderGenomes, csdChr = 4, nCsdAlleles = 128)
+  SP <- SimParamBee$new(founderGenomes, nCsdAlleles = 128)
   base <- newPop(founderGenomes)
 
   # Year-loop ------------------------------------------------------------------
 
-  nYear <- 1
+  nYear <- 10
   for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
@@ -130,6 +131,15 @@ for (Rep in 1:nRep) {
     age0p1 <- reQueenColonies(age0p1, queens = virginQueens$virgin_queens)
 
     # Swarm a percentage of age1 colonies
+
+    TMP <- lapply(age1@colonies, FUN = addVirginQueens, nInd = 50)
+    age1@colonies <- TMP
+
+    if (year > 1) {
+    TMP <- lapply(age2@colonies, FUN = addVirginQueens, nInd = 50)
+    age2@colonies <- TMP
+    }
+
     tmp <- pullColonies(age1, p = p1swarm)
     age1 <- tmp$remainingColonies
     tmp <- swarmColonies(tmp$pulledColonies)
@@ -146,6 +156,16 @@ for (Rep in 1:nRep) {
     }
 
     # Supersede age1 colonies
+
+
+    TMP <- lapply(age1@colonies, FUN = addVirginQueens, nInd = 50)
+    age1@colonies <- TMP
+
+    if (year > 1) {
+    TMP <- lapply(age2@colonies, FUN = addVirginQueens, nInd = 50)
+    age2@colonies <- TMP
+    }
+
     tmp <- pullColonies(age1, p = p1supersede)
     age1 <- tmp$remainingColonies
     tmp <- supersedeColonies(tmp$pulledColonies)
@@ -176,6 +196,16 @@ for (Rep in 1:nRep) {
     # Period2 ------------------------------------------------------------------
 
     # Swarm a percentage of age1 colonies
+
+
+    TMP <- lapply(age1@colonies, FUN = addVirginQueens, nInd = 50)
+    age1@colonies <- TMP
+
+    if (year > 1) {
+    TMP <- lapply(age2@colonies, FUN = addVirginQueens, nInd = 50)
+    age2@colonies <- TMP
+    }
+
     tmp <- pullColonies(age1, p = p2swarm)
     age1 <- tmp$remainingColonies
     tmp <- swarmColonies(tmp$pulledColonies)
@@ -194,6 +224,16 @@ for (Rep in 1:nRep) {
     }
 
     # Supersede a part of age1 colonies
+
+
+    TMP <- lapply(age1@colonies, FUN = addVirginQueens, nInd = 50)
+    age1@colonies <- TMP
+
+    if (year > 1) {
+    TMP <- lapply(age2@colonies, FUN = addVirginQueens, nInd = 50)
+    age2@colonies <- TMP
+    }
+
     tmp <- pullColonies(age1, p = p2supersede)
     age1 <- tmp$remainingColonies
     tmp <- supersedeColonies(tmp$pulledColonies)
@@ -201,7 +241,7 @@ for (Rep in 1:nRep) {
     age0p2 <- c(age0p2, tmp)
 
     if (year > 1) {
-      # Supersede a part of age1 colonies
+      # Supersede a part of age2 colonies
       tmp <- pullColonies(age2, p = p2supersede)
       age2 <- tmp$remainingColonies
       tmp <- supersedeColonies(tmp$pulledColonies)
@@ -235,11 +275,6 @@ for (Rep in 1:nRep) {
 
     # Period3 ------------------------------------------------------------------
 
-    # Collapse age0 queens
-    age0 <- selectColonies(age0, p = (1 - p3collapseAge0))
-    age1 <- selectColonies(age1, p = (1 - p3collapseAge1))
-    age2 <- NULL #We don't need this but just to show the workflow!!!
-    
     # Get the intracolonial csd variability-------------------------------------
     q <- nCsdAlleles(age0)
     nCsdAll <- c()
@@ -249,6 +284,19 @@ for (Rep in 1:nRep) {
     }
     nCSD <- sum(nCsdAll)/nColonies(age0)
     csdVariability <- rbind(csdVariability, c(Rep, year, nCSD))
+    # Get p of homozygus brood for each age group-------------------------------
+    phb0 <- sum(pHomBrood(age0)) / nColonies(age0)
+    phb1 <- sum(pHomBrood(age1)) / nColonies(age1)
+    # phb2 <- sum(pHomBrood(age2)) / nColonies(age2)
+    pDiploidDrones <- rbind( c(Rep = Rep, year = year, pDidrA0 = phb0, pDidrA1 = phb1))
+
+
+    # Collapse age0 queens
+    age0 <- selectColonies(age0, p = (1 - p3collapseAge0))
+    age1 <- selectColonies(age1, p = (1 - p3collapseAge1))
+    age2 <- NULL #We don't need this but just to show the workflow!!!
+
+
 
     # Maintain the number of colonies ------------------------------------------
 
