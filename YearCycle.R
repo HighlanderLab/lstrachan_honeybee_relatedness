@@ -29,7 +29,7 @@ library(SIMplyBee)
 # Parameters -------------------------------------------------------------------
 
 apiarySize <- 20
-nWorkersFull <- 200 # TODO: change to 20K
+nWorkersFull <- 20000 # TODO: change to 20K
 nAvgFathers <- 15
 nDronesFull <- nWorkersFull * 0.2
 if (nDronesFull < (nAvgFathers * 2)) {
@@ -53,12 +53,12 @@ p3collapseAge1 <- 0.3
 
 # Create df for recording the number of age0 and age1 colonies, csd variability and for recording cpu time
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
-noQueens <- data.frame(Rep = NA, Age0 = NA, Age1 = NA, sum = NA)
-csdVariability <- data.frame(Rep = NA, year = NA, avgCSDage0 = NA )
-pDiploidDrones <- data.frame(Rep = NA, year = NA, pDidrA0 = NA, pDidrA1 = NA)
+noQueens <- data.frame(Rep = NA, Year = NA, Age0 = NA, Age1 = NA, sum = NA)
+csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSDage0 = NA, totalCSDage0 = NA)
+pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pDidrA0 = NA, pDidrA1 = NA)
 # Rep-loop ---------------------------------------------------------------------
 
-nRep <- 5
+nRep <- 1
 for (Rep in 1:nRep) {
   # Rep <- 1
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
@@ -75,7 +75,7 @@ for (Rep in 1:nRep) {
 
   # Year-loop ------------------------------------------------------------------
 
-  nYear <- 10
+  nYear <- 1
   for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
@@ -276,19 +276,12 @@ for (Rep in 1:nRep) {
     # Period3 ------------------------------------------------------------------
 
     # Get the intracolonial csd variability-------------------------------------
-    q <- nCsdAlleles(age0)
-    nCsdAll <- c()
+    totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
     for (n in 1:nColonies(age0)){
-      w <- q[[n]]$workers
-      nCsdAll <- c(nCsdAll, w)
+      csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
+                                                nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
+      #pDiploidDrones <- rbind( c(Rep = Rep, year = year, id = age0[[n]]@id, pDidrA0 = phb0, pDidrA1 = phb1))
     }
-    nCSD <- sum(nCsdAll)/nColonies(age0)
-    csdVariability <- rbind(csdVariability, c(Rep, year, nCSD))
-    # Get p of homozygus brood for each age group-------------------------------
-    phb0 <- sum(pHomBrood(age0)) / nColonies(age0)
-    phb1 <- sum(pHomBrood(age1)) / nColonies(age1)
-    # phb2 <- sum(pHomBrood(age2)) / nColonies(age2)
-    pDiploidDrones <- rbind( c(Rep = Rep, year = year, pDidrA0 = phb0, pDidrA1 = phb1))
 
 
     # Collapse age0 queens
@@ -323,11 +316,15 @@ for (Rep in 1:nRep) {
     }
 
   } # Year-loop
-  noQueens <- rbind(noQueens, c(Rep, nColonies(age0), nColonies(age1), (nColonies(age0) + nColonies(age1))))
+  noQueens <- rbind(noQueens, c(Rep, year, nColonies(age0), nColonies(age1), (nColonies(age0) + nColonies(age1))))
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
 } # Rep-loop
 
 ggplot(noQueens, aes(Rep, sum)) +
   geom_line(aes(Rep, sum))
+
+write.csv(noQueens, paste0("NoQueens", rep, ".csv"), quote = FALSE, row.names = FALSE)
+write.csv(csdVariability, paste0("CsdVariability", rep, ".csv"), quote = FALSE, row.names = FALSE)
+write.csv(pDiploidDrones, paste0("pDiploidDrones", rep, ".csv"), quote = FALSE, row.names = FALSE)
 
