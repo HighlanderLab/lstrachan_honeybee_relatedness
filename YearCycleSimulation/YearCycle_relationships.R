@@ -1,28 +1,37 @@
 # Clean workspace
-rm(list = ls())
+  rm(list = ls())
+  
+  # Load packages
+  library(AlphaSimR)
+  library(ggplot2)
+  library(tictoc)
+  library(R6)
+  library(package = "devtools")
 
-# Load packages
-library(AlphaSimR)
-library(ggplot2)
-library(tictoc)
-library(R6)
+  devtools::install_github(repo="HighlanderLab/SIMplyBee@main",
+                           subdir = "SIMplyBee",
+                           auth_token = "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") #use GITHUB_PAT environment in future
+  devtools::install_github(repo="HighlanderLab/SIMplyBee@devel",
+                           subdir = "SIMplyBee",
+                           auth_token = "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")
 
 # TODO: replace with devtools installation from Github once the package is operational
 # Source the development version of AlphaSimR
 # Laura
-#AlphaSimRBeeFolder <- "~/Desktop/GitHub/Fork/AlphaSimRBee"
+AlphaSimRBeeFolder <- "~/Desktop/GitHub/Fork/SIMplyBee"
 # Gregor
 #AlphaSimRBeeFolder <- "~/Documents/5_Storages/GitBox/AlphaSimRBee/AlphaSimRBee"
 # Jernej
 #AlphaSimRBeeFolder <- "C:/Users/jernejb/Desktop/git/AlphaSimRBee/SIMplyBee"
 
-#source(paste0(AlphaSimRBeeFolder, "/R/Class-SimParamBee.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Class-Colony.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Class-Colonies.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L0_auxilary.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L1_Pop.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L2_Colony.R"))
-#source(paste0(AlphaSimRBeeFolder, "/R/Functions_L3_Colonies.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Class-SimParamBee.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Class-Colony.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Class-Colonies.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Functions_L0_auxilary.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Functions_L1_Pop.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Functions_L2_Colony.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/Functions_L3_Colonies.R"))
+source(paste0(AlphaSimRBeeFolder, "/R/SIMplyBee.R"))
 
 library(SIMplyBee)
 
@@ -58,7 +67,7 @@ csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSDage0 = NA, totalC
 pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pDidrA0 = NA, pDidrA1 = NA)
 # Rep-loop ---------------------------------------------------------------------
 
-nRep <- 1 
+nRep <- 3 #remeber that this is essential to change! 
 for (Rep in 1:nRep) {
   # Rep <- 1
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
