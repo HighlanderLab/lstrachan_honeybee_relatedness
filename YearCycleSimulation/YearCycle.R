@@ -29,13 +29,15 @@ library(SIMplyBee)
 # Parameters -------------------------------------------------------------------
 
 apiarySize <- 20
-nWorkersFull <- 20000 # TODO: change to 20K
+nWorkersFull <- 20 # TODO: change to 20K
 nAvgFathers <- 15
 nDronesFull <- nWorkersFull * 0.2
 if (nDronesFull < (nAvgFathers * 2)) {
   nDronesFull <-nAvgFathers * 2
 }
 
+nSNPChr <- 3
+nChromo <- 16
 # Period1
 p1swarm <- 0.05
 p1supersede <- 0.05
@@ -56,6 +58,9 @@ loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 noQueens <- data.frame(Rep = NA, Year = NA, Age0 = NA, Age1 = NA, sum = NA)
 csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSDage0 = NA, totalCSDage0 = NA)
 pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pDidrA0 = NA, pDidrA1 = NA)
+ped <- data.frame(ID = NA, mother=NA, father=NA, isDH=NA)
+
+
 # Rep-loop ---------------------------------------------------------------------
 
 nRep <- 1 
@@ -64,18 +69,23 @@ for (Rep in 1:nRep) {
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
   # Measure cpu time
   tic('20y loop')
-
+  
+  # prepare matrix for genotypes
+  
+  SNPgenoAllMat <- matrix(ncol = (nSNPChr*nChromo))
   # Founder population ---------------------------------------------------------
 
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
-                               segSites = 1000)
-  SP <- SimParamBee$new(founderGenomes, nCsdAlleles = 128)
-  base <- newPop(founderGenomes)
+                               segSites = 3)
+  SP <- SimParamBee$new(founderGenomes, csdChr = NULL)
+  SP$setTrackPed(TRUE)
+  SP$addSnpChip(nSnpPerChr = 3)
+  base <- asVirginQueen(newPop(founderGenomes))
 
   # Year-loop ------------------------------------------------------------------
 
-  nYear <- 1
+  nYear <- 3
   for (year in 1:nYear) {
     # year <- 1
     # year <- year + 1
@@ -99,9 +109,9 @@ for (Rep in 1:nRep) {
     # Period1 ------------------------------------------------------------------
 
     # Build-up the colonies
-    age1 <- buildUpColonies(age1, nWorkers = nWorkersFull, nDrones = nDronesFull)
+    age1 <- buildUpColonies(age1, nWorkers = nWorkersFull, nDrones = nDronesFull, exact = FALSE)
     if (year > 1) {
-      age2 <- buildUpColonies(age2, nWorkers = nWorkersFull, nDrones = nDronesFull)
+      age2 <- buildUpColonies(age2, nWorkers = nWorkersFull, nDrones = nDronesFull, exact = FALSE)
     }
 
     # Split all age1 colonies
@@ -276,12 +286,12 @@ for (Rep in 1:nRep) {
     # Period3 ------------------------------------------------------------------
 
     # Get the intracolonial csd variability-------------------------------------
-    totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
-    for (n in 1:nColonies(age0)){
-      csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
-                                                nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
+   # totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
+    #for (n in 1:nColonies(age0)){
+     # csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
+      #                                          nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
       #pDiploidDrones <- rbind( c(Rep = Rep, year = year, id = age0[[n]]@id, pDidrA0 = phb0, pDidrA1 = phb1))
-    }
+    #}
 
 
     # Collapse age0 queens
@@ -314,17 +324,43 @@ for (Rep in 1:nRep) {
         age0 <- c(age0swarm, splits) # combine splits and swarms in age 0 object
       }
     }
-
+  # extract genotype ----------------------------------------------------------- 
+    SNPgenoWA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "workers", nInd = 2)) #na tak nači, še za ostale
+    SNPgenoDA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "drones", nInd = 2))
+    SNPgenoFA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "fathers", nInd = 1))
+    SNPgenoQA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "queen"))
+    
+    SNPgenoAllMat <- do.call("rbind", list(SNPgenoWA0, SNPgenoDA0, SNPgenoFA0, SNPgenoQA0))
+    
+    
   } # Year-loop
   noQueens <- rbind(noQueens, c(Rep, year, nColonies(age0), nColonies(age1), (nColonies(age0) + nColonies(age1))))
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
+  
+  # write getoype info
+  
+  #write.csv(SNPgenoAllMat, paste("SNPGeno", rep, ".csv"), quote = FALSE, row.names = FALSE)
+  
+  
+  
 } # Rep-loop
 
-ggplot(noQueens, aes(Rep, sum)) +
-  geom_line(aes(Rep, sum))
+#polot the number of queens
+#ggplot(noQueens, aes(Rep, sum)) +
+#  geom_line(aes(Rep, sum))
 
-write.csv(noQueens, paste0("NoQueens", rep, ".csv"), quote = FALSE, row.names = FALSE)
-write.csv(csdVariability, paste0("CsdVariability", rep, ".csv"), quote = FALSE, row.names = FALSE)
-write.csv(pDiploidDrones, paste0("pDiploidDrones", rep, ".csv"), quote = FALSE, row.names = FALSE)
+# write pedigree to df
+ped <- SP$pedigree
+
+#write.csv(noQueens, paste0("NoQueens", rep, ".csv"), quote = FALSE, row.names = FALSE)
+#write.csv(csdVariability, paste0("CsdVariability", rep, ".csv"), quote = FALSE, row.names = FALSE)
+#write.csv(pDiploidDrones, paste0("pDiploidDrones", rep, ".csv"), quote = FALSE, row.names = FALSE)
+#write.csv(ped, paste0("ped", rep, ".csv"), quote = FALSE, row.names = FALSE)
+
+
+#### rabmo neko tabelo z kastami, individual id in colony ID
+ caste <- getCaste(age1)
+ indID <- getId(age1)
+ colID <- age1
 
