@@ -47,7 +47,7 @@ p3collapseAge1 <- 0.3
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 noQueens <- data.frame(Rep = NA, Year = NA, Age0 = NA, Age1 = NA, sum = NA)
 csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSDage0 = NA, totalCSDage0 = NA)
-pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pDidrA0 = NA, pDidrA1 = NA)
+pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pQueenHomBrood_age0 = NA, pQueenHomBrood_age1 = NA)
 ped <- data.frame(ID = NA, mother=NA, father=NA, isDH=NA)
 
 
@@ -59,6 +59,8 @@ for (Rep in 1:nRep) {
   cat(paste0("Rep: ", Rep, "/", nRep, "\n"))
   # Measure cpu time
   tic(paste0(nYear, 'y loop'))
+  # Start profiling
+  Rprof()
 
   # prepare matrix for genotypes
 
@@ -67,8 +69,8 @@ for (Rep in 1:nRep) {
 
   founderGenomes <- quickHaplo(nInd = 1000,
                                nChr = 16,
-                               segSites = 3)
-  SP <- SimParamBee$new(founderGenomes, csdChr = NULL)
+                               segSites = 100)
+  SP <- SimParamBee$new(founderGenomes)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
   SP$nFathers <- nFathers
@@ -81,6 +83,7 @@ for (Rep in 1:nRep) {
   base <- createVirginQueens(founderGenomes)
 
   # Year-loop ------------------------------------------------------------------
+
 
   for (year in 1:nYear) {
     # year <- 1
@@ -250,12 +253,15 @@ for (Rep in 1:nRep) {
     # Maintain the number of colonies ------------------------------------------
 
 
-    # totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
-    #for (n in 1:nColonies(age0)){
-    # csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
-    #                                          nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
-    #pDiploidDrones <- rbind( c(Rep = Rep, year = year, id = age0[[n]]@id, pDidrA0 = phb0, pDidrA1 = phb1))
-    #}
+    totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
+    for (n in 1:nColonies(age0)){
+     csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
+                                              nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
+     pDiploidDrones <- rbind(pDiploidDrones,
+                            c(Rep = Rep, year = year, id = age0[[n]]@id,
+                              pQueenHomBrood_age0 = computeQueensPHomBrood(age0),
+                              pQueenHomBrood_age1 = computeQueensPHomBrood(age1)))
+    }
 
     # keep all of age1, age0 swarmed so we build it up with some splits, while we remove (sell) the other splits
     if ((nColonies(age0) + nColonies(age1)) > apiarySize) { # check if the sum of all colonies is greater than apiary size
@@ -298,6 +304,8 @@ for (Rep in 1:nRep) {
   ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"], Father = SP$pedigree[,"father"], Caste = SP$caste[as.numeric(rownames(SP$pedigree))])
   write.csv(ped, paste0("Pedigree", Rep, ".csv", quote = F, row.names = F))
 
+  # Summarize the profiling
+  summaryRprof()
 } # Rep-loop
 
 #polot the number of queens
