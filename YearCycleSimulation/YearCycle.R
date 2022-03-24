@@ -9,6 +9,8 @@ library(R6)
 library(nadiv)
 library(Matrix)
 library(pedigreemm)
+library(ggcorrplot)
+
 
 
 # TODO: replace with devtools installation from Github once the package is operational
@@ -66,9 +68,7 @@ for (Rep in 1:nRep) {
   # Start profiling
   Rprof()
 
-  # prepare matrix for genotypes
 
-  SNPgenoAllMat <- matrix(ncol = (nSNPChr*nChromo))
   # Founder population ---------------------------------------------------------
 
   founderGenomes <- quickHaplo(nInd = 1000,
@@ -82,6 +82,7 @@ for (Rep in 1:nRep) {
   SP$pSwarm <- 0.5
   SP$pSplit <- 0.3
   SP$setTrackPed(TRUE)
+  SP$setTrackRec(TRUE)
   SP$addSnpChip(nSnpPerChr = 3)
 
   base <- createVirginQueens(founderGenomes)
@@ -255,8 +256,6 @@ for (Rep in 1:nRep) {
 
 
     # Maintain the number of colonies ------------------------------------------
-
-
     totalCsdAge0 <- nCsdAlleles(age0, collapse = TRUE)
     for (n in 1:nColonies(age0)){
      csdVariability <- rbind(csdVariability, c(Rep, year, age0[[n]]@id,
@@ -288,13 +287,26 @@ for (Rep in 1:nRep) {
         age0 <- c(age0swarm, splits) # combine splits and swarms in age 0 object
       }
     }
-  # extract genotype -----------------------------------------------------------
-    SNPgenoWA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "workers", nInd = 2)) #na tak nači, še za ostale
-    SNPgenoDA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "drones", nInd = 2))
-    SNPgenoFA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "fathers", nInd = 1))
+    # Extract genotype -----------------------------------------------------------
+    SNPgenoWA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "workers", nInd = 100))
+    SNPgenoDA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "drones", nInd = 20))
+    SNPgenoFA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "fathers", nInd = 15))
     SNPgenoQA0 <- do.call("rbind", getCasteSnpGeno(age0, caste = "queen"))
 
     SNPgenoAllMat <- do.call("rbind", list(SNPgenoWA0, SNPgenoDA0, SNPgenoFA0, SNPgenoQA0))
+    genoSex <- c(rep("F", nrow(SNPgenoWA0)),
+                 rep("M", nrow(SNPgenoDA0)),
+                 rep("M", nrow(SNPgenoFA0)),
+                 rep("F", nrow(SNPgenoQA0)))
+
+    # Extract IBD haplotype -----------------------------------------------------------
+    SNPhaploWA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "workers", nInd = 100))
+    SNPhaploDA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "drones", nInd = 20))
+    SNPhaploFA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "fathers", nInd = 15))
+    SNPhaploQA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "queen"))
+
+    SNPhaploAllMat <- do.call("rbind", list(SNPhaploWA0, SNPhaploDA0, SNPhaploFA0, SNPhaploQA0))
+
 
 
   } # Year-loop
@@ -302,12 +314,29 @@ for (Rep in 1:nRep) {
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
 
-  # Write genotype info
-  #write.csv(SNPgenoAllMat, paste("SNPGeno", rep, ".csv"), quote = FALSE, row.names = FALSE)
+  # Compute the IBS and IBD GRMs
+  ibsGrm <- calcBeeGRMIbs(SNPgenoAllMat, sex = genoSex)
+  ibdGrm <- calcBeeGRMIbd(SNPhaploAllMat)
+  ibdGrm <- ibdGrm$indiv
+  write.csv(ibsGrm, paste0("IbsGrm", Rep, ".csv"), quote = FALSE)
+  write.csv(ibdGrm, paste0("IbdGrm", Rep, ".csv"), quote = FALSE)
+  ibsWorkers <- ibsGrm[rownames(ibsGrm) %in% (names(SP$caste[SP$caste == "workers"])),
+                       rownames(ibsGrm) %in% (names(SP$caste[SP$caste == "workers"]))]
+  workersColony <- SP$pedigree[rownames(SP$pedigree) %in% rownames(ibsWorkers), "mother"]
+  dim(ibsWorkers)
+  ibsDrones <- ibsGrm[rownames(ibsGrm) %in% as.numeric(names(SP$caste[SP$caste == "drones"])),
+                      rownames(ibsGrm) %in% as.numeric(names(SP$caste[SP$caste == "drones"]))]
+  dronesColony <- SP$pedigree[rownames(SP$pedigree) %in% rownames(ibsDrones), "mother"]
+
+  dim(ibsDrones)
+  ggplot() + aes(x = c(ibsWorkers), colour = workersColony) + geom_histogram(bins = 100)
+  ggplot() + aes(x = c(ibsDrones)) + geom_histogram(bins = 100)
+
 
   ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"], 
                     Father = SP$pedigree[,"father"], Caste = SP$caste[rownames(SP$pedigree)])
   write.csv(ped, paste0("Pedigree", Rep, ".csv", quote = F, row.names = F))
+
 
   # Summarize the profiling
 #  summaryRprof()
