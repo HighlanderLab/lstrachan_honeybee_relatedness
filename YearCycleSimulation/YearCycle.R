@@ -17,20 +17,17 @@ library(ggcorrplot)
 # Source the development version of AlphaSimR
 
 
-library(SIMplyBee)
+#library(SIMplyBee)
 
 # Parameters -------------------------------------------------------------------
 nRep <- 1
-nYear <- 1
+nYear <- 3
 
-apiarySize <- 20
-nWorkers <- 60 # TODO: change to 20K
+apiarySize <- 10
+nWorkers <- 50 # TODO: change to 20K
 nFathers <- 15
-nDrones <- 100 #nWorkers * 0.2
+nDrones <- 50 #nWorkers * 0.2
 nVirginQueens <- 1
-if (nDronesFull < (nFathers * 2)) {
-  nDronesFull <-nFathers * 2
-}
 
 nSNPChr <- 3
 nChromo <- 16
@@ -54,8 +51,6 @@ loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 noQueens <- data.frame(Rep = NA, Year = NA, Age0 = NA, Age1 = NA, sum = NA)
 csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSDage0 = NA, totalCSDage0 = NA)
 pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pQueenHomBrood_age0 = NA, pQueenHomBrood_age1 = NA)
-ped <- data.frame(ID = NA, mother=NA, father=NA, isDH=NA)
-
 
 # Rep-loop ---------------------------------------------------------------------
 
@@ -71,7 +66,7 @@ for (Rep in 1:nRep) {
 
   # Founder population ---------------------------------------------------------
 
-  founderGenomes <- quickHaplo(nInd = 1000,
+  founderGenomes <- quickHaplo(nInd = 20,
                                nChr = 16,
                                segSites = 100)
   SP <- SimParamBee$new(founderGenomes)
@@ -97,7 +92,7 @@ for (Rep in 1:nRep) {
     if (year == 1) {
 
       age1 <- createColonies(pop = base, n = apiarySize, mated = TRUE,
-                             nDronesPerQueen = 100,
+                             nDronesPerQueen = 30,
                              simParamBee = SP)
 
     } else {
@@ -179,7 +174,7 @@ for (Rep in 1:nRep) {
     } else {
       DCA <- createDCA(c(age1, age2))
     }
-    age0p1 <- crossColonies(age0p1, DCA = DCA, nFathers = SP$nFathers) #TODO: Remove this
+    age0p1 <- crossColonies(age0p1, drones = DCA, nFathers = SP$nFathers) #TODO: Remove this
 
     # Collapse
     age1 <- selectColonies(age1, p = 1 - p1collapse)
@@ -236,7 +231,7 @@ for (Rep in 1:nRep) {
       DCA <- createDCA(c(age1, age2))
     }
     # Cross age 0 period 2 swarms and splits
-    age0p2 <- crossColonies(age0p2, DCA = DCA, nFathers = nFathers) #TODO: REMOVE
+    age0p2 <- crossColonies(age0p2, drones = DCA, nFathers = nFathers) #TODO: REMOVE
 
     # Collapse
     age1 <- selectColonies(age1, p = 1 - p2collapse)
@@ -300,8 +295,8 @@ for (Rep in 1:nRep) {
                  rep("F", nrow(SNPgenoQA0)))
 
     # Extract IBD haplotype -----------------------------------------------------------
-    SNPhaploWA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "workers", nInd = 100))
-    SNPhaploDA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "drones", nInd = 20))
+    SNPhaploWA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "workers", nInd = 20))
+    SNPhaploDA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "drones", nInd = 10))
     SNPhaploFA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "fathers", nInd = 15))
     SNPhaploQA0 <- do.call("rbind", getCasteIbdHaplo(age0, caste = "queen"))
 
@@ -333,7 +328,7 @@ for (Rep in 1:nRep) {
   ggplot() + aes(x = c(ibsDrones)) + geom_histogram(bins = 100)
 
 
-  ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"], 
+  ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"],
                     Father = SP$pedigree[,"father"], Caste = SP$caste[rownames(SP$pedigree)])
   write.csv(ped, paste0("Pedigree", Rep, ".csv", quote = F, row.names = F))
 
@@ -355,10 +350,10 @@ for (Rep in 1:nRep) {
 #write.csv(ped, paste0("ped", rep, ".csv"), quote = FALSE, row.names = FALSE)
 
 ####### Create A matrix ######
-### prepare df  
-pedtest <- data.frame(ID = rownames(SP$pedigree), 
-                      Dam = SP$pedigree[,"mother"], 
-                      Sire = SP$pedigree[,"father"], 
+### prepare df
+pedtest <- data.frame(ID = rownames(SP$pedigree),
+                      Dam = SP$pedigree[,"mother"],
+                      Sire = SP$pedigree[,"father"],
                       Sex = SP$pedigree[,"isDH"])
 
 pedtest$Dam[pedtest$Dam == 0] <- NA
