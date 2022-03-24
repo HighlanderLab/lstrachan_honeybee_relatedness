@@ -6,6 +6,10 @@ library(AlphaSimR)
 library(ggplot2)
 library(tictoc)
 library(R6)
+library(nadiv)
+library(Matrix)
+library(pedigreemm)
+
 
 # TODO: replace with devtools installation from Github once the package is operational
 # Source the development version of AlphaSimR
@@ -14,13 +18,13 @@ library(R6)
 library(SIMplyBee)
 
 # Parameters -------------------------------------------------------------------
-nRep <- 2
-nYear <- 10
+nRep <- 1
+nYear <- 1
 
 apiarySize <- 20
-nWorkers <- 20000 # TODO: change to 20K
+nWorkers <- 60 # TODO: change to 20K
 nFathers <- 15
-nDrones <- nWorkers * 0.2
+nDrones <- 100 #nWorkers * 0.2
 nVirginQueens <- 1
 if (nDronesFull < (nFathers * 2)) {
   nDronesFull <-nFathers * 2
@@ -301,11 +305,12 @@ for (Rep in 1:nRep) {
   # Write genotype info
   #write.csv(SNPgenoAllMat, paste("SNPGeno", rep, ".csv"), quote = FALSE, row.names = FALSE)
 
-  ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"], Father = SP$pedigree[,"father"], Caste = SP$caste[as.numeric(rownames(SP$pedigree))])
+  ped <- data.frame(ID = rownames(SP$pedigree), Mother = SP$pedigree[,"mother"], 
+                    Father = SP$pedigree[,"father"], Caste = SP$caste[rownames(SP$pedigree)])
   write.csv(ped, paste0("Pedigree", Rep, ".csv", quote = F, row.names = F))
 
   # Summarize the profiling
-  summaryRprof()
+#  summaryRprof()
 } # Rep-loop
 
 #polot the number of queens
@@ -319,3 +324,25 @@ for (Rep in 1:nRep) {
 #write.csv(csdVariability, paste0("CsdVariability", rep, ".csv"), quote = FALSE, row.names = FALSE)
 #write.csv(pDiploidDrones, paste0("pDiploidDrones", rep, ".csv"), quote = FALSE, row.names = FALSE)
 #write.csv(ped, paste0("ped", rep, ".csv"), quote = FALSE, row.names = FALSE)
+
+####### Create A matrix ######
+### prepare df  
+pedtest <- data.frame(ID = rownames(SP$pedigree), 
+                      Dam = SP$pedigree[,"mother"], 
+                      Sire = SP$pedigree[,"father"], 
+                      Sex = SP$pedigree[,"isDH"])
+
+pedtest$Dam[pedtest$Dam == 0] <- NA
+pedtest$Sire[pedtest$Sire == 0] <- NA
+
+pedtest$Sex <-as.numeric(pedtest$Sex == 0)
+pedtest$Sire[pedtest$Sex == 0] <- NA
+
+#pedtest <- as.matrix(pedtest)
+
+#pedtest <- prepPed(pedtest)
+A <- makeS(pedtest, heterogametic = "1", returnS = TRUE)
+
+
+
+
