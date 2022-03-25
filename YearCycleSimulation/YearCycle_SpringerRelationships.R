@@ -356,7 +356,7 @@ for (Rep in 1:nRep) {
   colnames(pedigree) <- c("Dam", "Sire", "Sex", "ID")
   # The order for nadiv should be ID, Dam, Sire, Sex
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
-  pedigree$Sire[pedigree$Sex == 0] <- NA
+  pedigree$Sire[pedigree$Sex == 1] <- NA
 
   A <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
   S <- A$S
