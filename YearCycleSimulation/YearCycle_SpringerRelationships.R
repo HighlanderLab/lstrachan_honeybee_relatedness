@@ -1,4 +1,4 @@
-setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
+setwd("~/Desktop/Github/lstrachan_honeybee_sim/YearCycleSimulation/")
 # Clean workspace
 rm(list = ls())
 
@@ -18,7 +18,7 @@ library(ggcorrplot)
 # Source the development version of AlphaSimR
 
 
-#library(SIMplyBee)
+library(SIMplyBee)
 
 # Parameters -------------------------------------------------------------------
 nRep <- 1
@@ -100,13 +100,13 @@ for (Rep in 1:nRep) {
       age0p1 <- NULL
       age0p2 <- NULL
     }
-
+    if (year ==1){
     # Choose the first colony of age 1 to inspect relationship in the base population
     springerColony1 <- age1[[1]]
     # Building the colony up to 10,000 workers
     springerColony1 <- buildUpColony(colony = springerColony1,
-                                     nWorkers = 10000,
-                                     nDrones = 2000)
+                                     nWorkers = 1000,
+                                     nDrones = 200)
     # Extract the genotypes of all the colony members
     springerColony1_geno <- rbind(getCasteSegSiteGeno(springerColony1, caste = "queen"),
                                   getCasteSegSiteGeno(springerColony1, caste = "workers"),
@@ -130,7 +130,7 @@ for (Rep in 1:nRep) {
     ibd_springerColony1 <- ibd_springerColony1$indiv
 
     springerColony1_id <- getCasteId(springerColony1, caste = "all")
-
+    }
     # Period1 ------------------------------------------------------------------
 
     # Build-up the colonies
@@ -321,8 +321,8 @@ for (Rep in 1:nRep) {
   # Take the first colony of age1 and extract genotypes for relationship computation
   springerColony10 <- age1[[1]]
   springerColony10 <- buildUpColony(colony = springerColony10,
-                                    nWorkers = 10000,
-                                    nDrones = 2000)
+                                    nWorkers = 1000,
+                                    nDrones = 200)
   springerColony10_geno <- rbind(getCasteSegSiteGeno(springerColony10, caste = "queen"),
                                  getCasteSegSiteGeno(springerColony10, caste = "workers"),
                                  getCasteSegSiteGeno(springerColony10, caste = "drones"),
@@ -353,7 +353,6 @@ for (Rep in 1:nRep) {
   pedigree$ID <- rownames(pedigree)
 
   # Females are 1, males are 0
-  pedigree$isDH <-as.numeric(pedigree$isDH == 0)
   colnames(pedigree) <- c("Dam", "Sire", "Sex", "ID")
   # The order for nadiv should be ID, Dam, Sire, Sex
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
@@ -365,7 +364,7 @@ for (Rep in 1:nRep) {
 } # Rep-loop
 
 
-save.image(file = "~/github/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
+save.image(file = "SpringerSimulation.Rdata")
 
 write.csv(nQueens, paste0("nQueens", Rep, ".csv"), quote = FALSE, row.names = FALSE)
 write.csv(csdVariability, paste0("CsdVariability", Rep, ".csv"), quote = FALSE, row.names = FALSE)
