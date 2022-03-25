@@ -334,7 +334,16 @@ for (Rep in 1:nRep) {
                             rep("M", nFathers(springerColony10)))
   ibs_springerColony10 <- calcBeeGRMIbs(x = springerColony10_geno,
                                         sex = sex_springerColony10)
+  ibs_springerColony10csd <- calcBeeGRMIbs(x = springerColony10_geno[, paste(SP$csdChr,
+                                                                             SP$csdPosStart:SP$csdPosStop,
+                                                                             sep = "_")],
+                                        sex = sex_springerColony10)
+  ibs_springerColony10chr3 <- calcBeeGRMIbs(x = springerColony10_geno[, 
+                                                                      grepl(pattern = "3_", 
+                                                                            x = colnames(springerColony10_haplo))],
+                                           sex = sex_springerColony10)
 
+  
   springerColony10_haplo <- rbind(getCasteIbdHaplo(springerColony10, caste = "queen"),
                                   getCasteIbdHaplo(springerColony10, caste = "workers"),
                                   getCasteIbdHaplo(springerColony10, caste = "drones"),
@@ -342,6 +351,15 @@ for (Rep in 1:nRep) {
 
   ibd_springerColony10 <- calcBeeGRMIbd(x = springerColony10_haplo)
   ibd_springerColony10 <- ibd_springerColony10$indiv
+  ibd_springerColony10chr3 <- calcBeeGRMIbd(x = springerColony10_haplo[, 
+                                                                       grepl(pattern = "3_", 
+                                                                             x = colnames(springerColony10_haplo))])
+  ibd_springerColony10chr3 <- ibd_springerColony10chr3$indiv
+  ibd_springerColony10csd <- calcBeeGRMIbd(x = springerColony10_haplo[, paste(SP$csdChr,
+                                                                              SP$csdPosStart:SP$csdPosStop,
+                                                                              sep = "_")])
+  ibd_springerColony10csd <- ibd_springerColony10csd$indiv
+  
 
   springerColony10_id <- getCasteId(springerColony10, caste = "all")
 
@@ -360,7 +378,7 @@ for (Rep in 1:nRep) {
 
   A <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
   S <- A$S
-
+  dimnames(S) <- list(rownames(pedigree), rownames(pedigree))
 } # Rep-loop
 
 
