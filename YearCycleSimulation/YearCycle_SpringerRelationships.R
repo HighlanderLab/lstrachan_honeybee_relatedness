@@ -376,9 +376,9 @@ for (Rep in 1:nRep) {
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
   pedigree$Sire[pedigree$Sex == 1] <- NA
 
-  A <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
-  S <- A$S
-  dimnames(S) <- list(rownames(pedigree), rownames(pedigree))
+  IBDr <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
+  IBDe <- A$S
+  dimnames(IBDe) <- list(rownames(pedigree), rownames(pedigree))
 } # Rep-loop
 
 
