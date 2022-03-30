@@ -1,6 +1,6 @@
-#setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
+setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Plot the relationships from the springer simulation
-#data <- load("SpringerSimulation.Rdata")
+#data <- load("/Users/s2122596/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
 
 library(ggplot2)
 ped <- SP$pedigree
@@ -33,7 +33,7 @@ tmp <- ibd1[id1$workers, id1$workers]
 IBDe_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel1 <- rbind(rel1, data.frame(Value = IBDe_WW1, Rel = "WW", Type = "IBDe"))
 
-tmp <- as.matrix(S[id1$workers, id1$workers])
+tmp <- as.matrix(IBDe[id1$workers, id1$workers])
 IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel1 <- rbind(rel1, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
 
@@ -41,10 +41,10 @@ rel1 <- rbind(rel1, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
 IBS_WD1 <- c(ibs1[id1$workers, id1$drones])
 rel1 <- rbind(rel1, data.frame(Value = IBS_WD1, Rel = "WD", Type = "IBS"))
 
-IBDe_WW1 <- c(ibd1[id1$workers, id1$drones])
+IBDe_WD1 <- c(ibd1[id1$workers, id1$drones])
 rel1 <- rbind(rel1, data.frame(Value = IBDe_WW1, Rel = "WD", Type = "IBDe"))
 
-IBDr_WW1 <- c(as.matrix(S[id1$workers, id1$drones]))
+IBDr_WD1 <- c(as.matrix(IBDe[id1$workers, id1$drones]))
 rel1 <- rbind(rel1, data.frame(Value = IBDr_WW1, Rel = "WD", Type = "IBDr"))
 
 #write c("IBDr", "IBDe") if you want both on plot 
@@ -64,18 +64,18 @@ tmp <- ibd10[id10$workers, id10$workers]
 IBDe_WW10 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10 <- rbind(rel10, data.frame(Value = IBDe_WW10, Rel = "WW", Type = "IBDe"))
 
-tmp <- as.matrix(S[id10$workers, id10$workers])
+tmp <- as.matrix(IBDe[id10$workers, id10$workers])
 IBDr_WW10 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10 <- rbind(rel10, data.frame(Value = IBDr_WW10, Rel = "WW", Type = "IBDr"))
 
 # workers vs drones
-IBS_WW10 <- c(ibs10[id10$workers, id10$drones])
+IBS_WD10 <- c(ibs10[id10$workers, id10$drones])
 rel10 <- rbind(rel10, data.frame(Value = IBS_WW10, Rel = "WD", Type = "IBS"))
 
-IBDe_WW10 <- c(ibd10[id10$workers, id10$drones])
+IBDe_WD10 <- c(ibd10[id10$workers, id10$drones])
 rel10 <- rbind(rel10, data.frame(Value = IBDe_WW10, Rel = "WD", Type = "IBDe"))
 
-IBDr_WW10 <- c(as.matrix(S[id10$workers, id10$drones]))
+IBDr_WD10 <- c(as.matrix(IBDe[id10$workers, id10$drones]))
 rel10 <- rbind(rel10, data.frame(Value = IBDr_WW10, Rel = "WD", Type = "IBDr"))
 
 #write c("IBDr", "IBDe") if you want both on plot 
@@ -95,18 +95,18 @@ tmp <- ibd10_csd[id10$workers, id10$workers]
 IBDe_WW10_csd <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10_csd <- rbind(rel10_csd, data.frame(Value = IBDe_WW10_csd, Rel = "WW", Type = "IBDe"))
 
-tmp <- as.matrix(S[id10$workers, id10$workers])
+tmp <- as.matrix(IBDe[id10$workers, id10$workers])
 IBDr_WW10_csd <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10_csd <- rbind(rel10_csd, data.frame(Value = IBDr_WW10_csd, Rel = "WW", Type = "IBDr"))
 
 # workers vs drones
-IBS_WW10_csd<- c(ibs10_csd[id10$workers, id10$drones])
+IBS_WD10_csd<- c(ibs10_csd[id10$workers, id10$drones])
 rel10_csd <- rbind(rel10_csd, data.frame(Value = IBS_WW10_csd, Rel = "WD", Type = "IBS"))
 
-IBDe_WW10_csd <- c(ibd10_csd[id10$workers, id10$drones])
+IBDe_WD10_csd <- c(ibd10_csd[id10$workers, id10$drones])
 rel10_csd <- rbind(rel10_csd, data.frame(Value = IBDe_WW10_csd, Rel = "WD", Type = "IBDe"))
 
-IBDr_WW10_csd <- c(as.matrix(S[id10$workers, id10$drones]))
+IBDr_WD10_csd <- c(as.matrix(IBDe[id10$workers, id10$drones]))
 rel10_csd <- rbind(rel10_csd, data.frame(Value = IBDr_WW10_csd, Rel = "WD", Type = "IBDr"))
 
 #write c("A", "IBD") if you want both on plot 
@@ -126,18 +126,18 @@ tmp <- ibd10_chr3[id10$workers, id10$workers]
 IBDe_WW10_chr3 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10_chr3 <- rbind(rel10_chr3, data.frame(Value = IBDe_WW10_chr3, Rel = "WW", Type = "IBDe"))
 
-tmp <- as.matrix(S[id10$workers, id10$workers])
+tmp <- as.matrix(IBDe[id10$workers, id10$workers])
 IBDr_WW10_chr3 <- c(tmp[lower.tri(tmp, diag = TRUE)])
 rel10_chr3 <- rbind(rel10_chr3, data.frame(Value = IBDr_WW10_chr3, Rel = "WW", Type = "IBDr"))
 
 # workers vs drones
-IBS_WW10_chr3<- c(ibs10_chr3[id10$workers, id10$drones])
+IBS_WD10_chr3<- c(ibs10_chr3[id10$workers, id10$drones])
 rel10_chr3 <- rbind(rel10_chr3, data.frame(Value = IBS_WW10_chr3, Rel = "WD", Type = "IBS"))
 
-IBDe_WW10_chr3 <- c(ibd10_chr3[id10$workers, id10$drones])
+IBDe_WD10_chr3 <- c(ibd10_chr3[id10$workers, id10$drones])
 rel10_chr3 <- rbind(rel10_chr3, data.frame(Value = IBDe_WW10_chr3, Rel = "WD", Type = "IBDe"))
 
-IBDr_WW10_chr3 <- c(as.matrix(S[id10$workers, id10$drones]))
+IBDr_WD10_chr3 <- c(as.matrix(IBDe[id10$workers, id10$drones]))
 rel10_chr3 <- rbind(rel10_chr3, data.frame(Value = IBDr_WW10_chr3, Rel = "WD", Type = "IBDr"))
 
 #write c("IBDr", "IBDe") if you want both on plot 
