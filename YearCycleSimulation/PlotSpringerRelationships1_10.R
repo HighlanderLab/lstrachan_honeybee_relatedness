@@ -1,5 +1,7 @@
-setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
+#Laura's wd :
+##setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Plot the relationships from the springer simulation
+#Laura's data file : 
 #data <- load("/Users/s2122596/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
 
 library(ggplot2)
