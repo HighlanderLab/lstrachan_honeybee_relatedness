@@ -1,4 +1,4 @@
-setwd("~/Desktop/Github/lstrachan_honeybee_sim/YearCycleSimulation/")
+setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
 # Clean workspace
 rm(list = ls())
 
@@ -9,9 +9,6 @@ library(tictoc)
 library(R6)
 library(nadiv)
 library(Matrix)
-library(pedigreemm)
-library(ggcorrplot)
-
 
 
 # TODO: replace with devtools installation from Github once the package is operational
@@ -26,7 +23,7 @@ nYear <- 10
 
 apiarySize <- 10
 nWorkers <- 0 # TODO: change to 20K
-nFathers <- 15
+pFathers <- nFathersPoisson
 nDrones <- 100 #nWorkers * 0.2
 nVirginQueens <- 1
 
@@ -70,7 +67,7 @@ for (Rep in 1:nRep) {
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
-  SP$nFathers <- nFathers
+  SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
   SP$pSwarm <- 0.5
   SP$pSplit <- 0.3
@@ -117,7 +114,8 @@ for (Rep in 1:nRep) {
                             rep("F", nWorkers(springerColony1)),
                             rep("M", nDrones(springerColony1)),
                             rep("M", nFathers(springerColony1)))
-    # Compute the IBD relationship matrix
+    # Compute the IBS relationship matrix
+    # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
     ibs_springerColony1 <- calcBeeGRMIbs(x = springerColony1_geno,
                                         sex = sex_springerColony1)
     # Collect the IBD haplotypes for all the colony members
@@ -334,32 +332,32 @@ for (Rep in 1:nRep) {
                             rep("M", nFathers(springerColony10)))
   ibs_springerColony10 <- calcBeeGRMIbs(x = springerColony10_geno,
                                         sex = sex_springerColony10)
+  # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
   ibs_springerColony10csd <- calcBeeGRMIbs(x = springerColony10_geno[, paste(SP$csdChr,
                                                                              SP$csdPosStart:SP$csdPosStop,
                                                                              sep = "_")],
                                         sex = sex_springerColony10)
-  ibs_springerColony10chr3 <- calcBeeGRMIbs(x = springerColony10_geno[, 
-                                                                      grepl(pattern = "3_", 
-                                                                            x = colnames(springerColony10_haplo))],
-                                           sex = sex_springerColony10)
-
-  
   springerColony10_haplo <- rbind(getCasteIbdHaplo(springerColony10, caste = "queen"),
                                   getCasteIbdHaplo(springerColony10, caste = "workers"),
                                   getCasteIbdHaplo(springerColony10, caste = "drones"),
                                   getCasteIbdHaplo(springerColony10, caste = "fathers"))
+  ibs_springerColony10chr3 <- calcBeeGRMIbs(x = springerColony10_geno[,
+                                                                      grepl(pattern = "3_",
+                                                                            x = colnames(springerColony10_haplo))],
+                                           sex = sex_springerColony10)
+
 
   ibd_springerColony10 <- calcBeeGRMIbd(x = springerColony10_haplo)
   ibd_springerColony10 <- ibd_springerColony10$indiv
-  ibd_springerColony10chr3 <- calcBeeGRMIbd(x = springerColony10_haplo[, 
-                                                                       grepl(pattern = "3_", 
+  ibd_springerColony10chr3 <- calcBeeGRMIbd(x = springerColony10_haplo[,
+                                                                       grepl(pattern = "3_",
                                                                              x = colnames(springerColony10_haplo))])
   ibd_springerColony10chr3 <- ibd_springerColony10chr3$indiv
   ibd_springerColony10csd <- calcBeeGRMIbd(x = springerColony10_haplo[, paste(SP$csdChr,
                                                                               SP$csdPosStart:SP$csdPosStop,
                                                                               sep = "_")])
   ibd_springerColony10csd <- ibd_springerColony10csd$indiv
-  
+
 
   springerColony10_id <- getCasteId(springerColony10, caste = "all")
 
@@ -376,8 +374,8 @@ for (Rep in 1:nRep) {
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
   pedigree$Sire[pedigree$Sex == 1] <- NA
 
-  IBDr <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
-  IBDe <- IBDr$S
+  tmp <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
+  IBDe <- tmp$S
   dimnames(IBDe) <- list(rownames(pedigree), rownames(pedigree))
 } # Rep-loop
 
