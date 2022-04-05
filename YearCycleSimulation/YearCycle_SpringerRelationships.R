@@ -62,8 +62,8 @@ for (Rep in 1:nRep) {
   # Founder population ---------------------------------------------------------
 
   founderGenomes <- quickHaplo(nInd = 30,
-                               nChr = 16,
-                               segSites = 100)
+                              nChr = 16,
+                              segSites = 100)
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
@@ -75,7 +75,12 @@ for (Rep in 1:nRep) {
   SP$setTrackRec(TRUE)
   SP$addSnpChip(nSnpPerChr = 3)
 
-  base <- createVirginQueens(founderGenomes)
+  # Create virgin queens from the founderGenomes
+  virginQueens <- createVirginQueens(x = founderGenomes[1:30])
+  # Create drones
+  drones <- createDrones(x = melVirginQueens[11:30], nInd = 20)
+  # Mate queens with drones
+  queens <- crossVirginQueen(pop = virginQueens[1:10], drones = drones)
 
   # Year-loop ------------------------------------------------------------------
 
@@ -86,10 +91,9 @@ for (Rep in 1:nRep) {
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
 
-      age1 <- createColonies(pop = base, n = apiarySize, mated = TRUE,
-                             nDronesPerQueen = 30,
+      age1 <- createColonies(x = queens, n = apiarySize,
                              simParamBee = SP)
-
+      
     } else {
       age2 <- age1
       age1 <- age0

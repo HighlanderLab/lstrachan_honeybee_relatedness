@@ -487,7 +487,7 @@ for (Rep in 1:nRep) {
 } # Rep-loop
 
 
-save.image(file = "SpringerSimulation.Rdata")
+save.image(file = "SpringerSimulation_import.Rdata")
 
 
 
