@@ -134,6 +134,7 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe")) {
     facet_grid(cols = vars(Rel)) + xlim(c(-0.01, 2.01))
   return(plot)
 }
+
 ########################################################
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
@@ -184,6 +185,10 @@ plot10_csd
 #Plot csd chr Year 10
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
 plotQueens10 <- plotQueens(re)
+<<<<<<< HEAD
+=======
+
+>>>>>>> bd4f75b3857ba5791e192f0208db1b25d50e5aad
 plot10_chr3
 
 
