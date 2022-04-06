@@ -4,46 +4,63 @@ rm(list = ls())
 
 
 # Define functions
-computeRelationship_genomic <- function(colony) {
+computeRelationship_genomic <- function(x) {
+  if (isColony(x)) {
   # Build the colony up to 10,000 workers and 200 drones
-  colony <- buildUpColony(colony = colony,
-                                   nWorkers = 1000,
-                                   nDrones = 200)
-  # Extract the genotypes of all the colony members
-  colony_geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
-                       getCasteSegSiteGeno(colony, caste = "workers"),
-                       getCasteSegSiteGeno(colony, caste = "drones"),
-                       getCasteSegSiteGeno(colony, caste = "fathers"))
-  # Collect the sex of all the colony members in the order than genotypes
-  sex_colony <- c(rep("F", nQueens(colony)),
-                  rep("F", nWorkers(colony)),
-                  rep("M", nDrones(colony)),
-                  rep("M", nFathers(colony)))
+    colony <- buildUpColony(colony = x,
+                                     nWorkers = 1000,
+                                     nDrones = 200)
+    # Extract the genotypes of all the colony members
+    geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
+                         getCasteSegSiteGeno(colony, caste = "workers"),
+                         getCasteSegSiteGeno(colony, caste = "drones"),
+                         getCasteSegSiteGeno(colony, caste = "fathers"))
+    # Collect the sex of all the colony members in the order than genotypes
+    sex <- c(rep("F", nQueens(colony)),
+                    rep("F", nWorkers(colony)),
+                    rep("M", nDrones(colony)),
+                    rep("M", nFathers(colony)))
+  } else if (SIMplyBee:::isPop(x)) {
+    geno <- getSegSiteGeno(x)
+    sex <- x@sex
+  }
   # Compute the IBS relationship matrix
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
-  ibs_colony <- calcBeeGRMIbs(x = colony_geno,
-                              sex = sex_colony)
+  ibs <- calcBeeGRMIbs(x = geno,
+                      sex = sex)
   # Collect the IBD haplotypes for all the colony members
-  colony_haplo <- rbind(getCasteIbdHaplo(colony, caste = "queen"),
-                        getCasteIbdHaplo(colony, caste = "workers"),
-                        getCasteIbdHaplo(colony, caste = "drones"),
-                        getCasteIbdHaplo(colony, caste = "fathers"))
+  if (isColony(x)) {
+    haplo <- rbind(getCasteIbdHaplo(colony, caste = "queen"),
+                   getCasteIbdHaplo(colony, caste = "workers"),
+                   getCasteIbdHaplo(colony, caste = "drones"),
+                   getCasteIbdHaplo(colony, caste = "fathers"))
+  } else if (SIMplyBee:::isPop(x)) {
+    haplo <- getIbdHaplo(x)
+  }
   # Compute the IBD relationship matrix
-  ibd_colony <- calcBeeGRMIbd(x = colony_haplo)
-  ibd_colony <- ibd_colony$indiv
+  ibd <- calcBeeGRMIbd(x = haplo)
+  ibd <- ibd$indiv
 
   # Only chromosome 3
-  ibd_colonychr3 <- calcBeeGRMIbd(x = colony_haplo[, grepl(pattern = "3_",
-                                                           x = colnames(colony_haplo))])
+  ibd_chr3 <- calcBeeGRMIbd(x = haplo[, grepl(pattern = "3_",
+                                              x = colnames(haplo))])
+  ibd_chr <- ibd_chr3$indiv
+  
   # Only csd locus
-  ibd_colonycsd <- calcBeeGRMIbd(x = colony_haplo[, paste(SP$csdChr,
-                                                          SP$csdPosStart:SP$csdPosStop,
-                                                          sep = "_")])
+  ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
+                                             SP$csdPosStart:SP$csdPosStop,
+                                             sep = "_")])
+  ibd_csd <- ibd_csd$indiv
+  if (isColony(x)) {
+    id <- getCasteId(colony, caste = "all")
+  } else if (SIMplyBee:::isPop(x)) {
+    id <- x@id
+  }
 
-  colony_id <- getCasteId(colony, caste = "all")
-
-  return(list(IBS = ibs_colony, IBD = ibd_colony, IBDChr = ibd_colonychr3, IBDCsd = ibd_colonycsd, ID = colony_id))
+  return(list(IBS = ibs, IBD = ibd, IBDChr = ibd_chr3, IBDCsd = ibd_csd, ID = id))
 }
+
+
 
 computeRelationship_pedigree <- function(pedigree) {
   pedigree <- as.data.frame(pedigree)
@@ -181,7 +198,7 @@ for (Rep in 1:nRep) {
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
-  SP$nFathers <- pFathers
+  SP$nFathers <- 0
   SP$nVirginQueens <- nVirginQueens
   SP$pSwarm <- 0.5
   SP$pSplit <- 0.3
@@ -228,8 +245,9 @@ for (Rep in 1:nRep) {
     # In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
       # Choose the first colony of age 1 to inspect relationship in the base population
-      springerColony1_Mel <- computeRelationship_genomic(colony = age1$Mel[[1]])
-      springerColony1_Car <- computeRelationship_genomic(colony = age1$Car[[1]])
+      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
+      springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]])
+      springerQueens1 <- computeRelationship_genomic(x = c(melQueens, carQueens))
     }
 
     # Period1 ------------------------------------------------------------------
@@ -478,8 +496,9 @@ for (Rep in 1:nRep) {
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
 
   # Take the first colony of age1 and extract genotypes for relationship computation
-  springerColony10_Mel <- computeRelationship_genomic(colony = age1$Mel[[1]])
-  springerColony10_Car <- computeRelationship_genomic(colony = age1$Car[[1]])
+  springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
+  springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]])
+  springerQueens10 <- computeRelationship_genomic(x = c(Reduce(c, getQueen(age1$Mel)), Reduce(c, getQueen(age1$Car))))
 
   # Compute the pedigree relationship matrix
   IBDe <- computeRelationship_pedigree(SP$pedigree)
@@ -487,7 +506,9 @@ for (Rep in 1:nRep) {
 } # Rep-loop
 
 
-save.image(file = "SpringerSimulation_import.Rdata")
+save(SP$pedigree, SP$caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
+     springerColony1_Car, springerColony10_Car, springerQueens10,
+     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import.Rdata")
 
 
 
