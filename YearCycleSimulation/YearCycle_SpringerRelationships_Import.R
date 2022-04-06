@@ -4,11 +4,11 @@ rm(list = ls())
 
 
 # Define functions
-computeRelationship_genomic <- function(x) {
+computeRelationship_genomic <- function(x, csd = TRUE) {
   if (isColony(x)) {
   # Build the colony up to 10,000 workers and 200 drones
     colony <- buildUpColony(colony = x,
-                                     nWorkers = 1000,
+                                     nWorkers = 10,
                                      nDrones = 200)
     # Extract the genotypes of all the colony members
     geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
@@ -41,25 +41,29 @@ computeRelationship_genomic <- function(x) {
   ibd <- calcBeeGRMIbd(x = haplo)
   ibd <- ibd$indiv
 
-  
-  
+  if (csd) {
   # Only chromosome 3
-  ibd_chr3 <- calcBeeGRMIbd(x = haplo[, grepl(pattern = "3_",
-                            x = colnames(haplo))])
-  ibd_chr3 <- ibd_chr3$indiv
-  ibs_chr3 <- calcBeeGRMIbs(x = haplo[, grepl(pattern = "3_",
-                            x = colnames(haplo))],
-                            sex = sex)
-  
-  # Only csd locus
-  ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
-                           SP$csdPosStart:SP$csdPosStop,
-                           sep = "_")])
-  ibd_csd <- ibd_csd$indiv
-  ibs_csd <- calcBeeGRMIbs(x = haplo[, paste(SP$csdChr,
-                           SP$csdPosStart:SP$csdPosStop,
-                           sep = "_")],
-                           sex = sex)
+    csdChr <- SP$csdChr
+    ibd_csdChr <- calcBeeGRMIbd(x = haplo[, grepl(pattern = paste0(csdChr, "_"),
+                                x = colnames(haplo))])
+    ibd_csdChr <- ibd_csdChr$indiv
+    ibs_csdChr <- calcBeeGRMIbs(x = geno[,
+                                        grepl(pattern = paste0(csdChr, "_"),
+                                        x = colnames(geno))],
+                                sex = sex)
+    
+    # Only csd locus
+    ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
+                             SP$csdPosStart:SP$csdPosStop,
+                             sep = "_")])
+    ibd_csd <- ibd_csd$indiv
+    ibs_csd <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
+                                              SP$csdPosStart:SP$csdPosStop,
+                                              sep = "_")],
+                             sex = sex)
+  } else {
+    ibd_csdChr = ibd_csdChr = ibd_csd = ibs_csd = NULL
+  }
   
   if (isColony(x)) {
     id <- getCasteId(colony, caste = "all")
@@ -68,7 +72,7 @@ computeRelationship_genomic <- function(x) {
   }
 
   return(list(IBS = ibs, IBD = ibd, 
-              IBSChr3 = ibs_chr3, IBDChr3 = ibd_chr3, 
+              IBScsdChr = ibs_csdChr, IBDcsdChr = ibd_csdChr, 
               IBSCsd = ibs_csd, IBDCsd = ibd_csd, ID = id))
 }
 
@@ -99,7 +103,7 @@ getCsdInfo <- function (colonies, subspecies = NULL) {
     csdVariability <- c(Rep = Rep, year = year, id = colonies[[n]]@id,
                         nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE), totalCSD = totalCsd, subspecies = subspecies)
     pDiploidDrones <- c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                        pQueenHomBrood = computeQueensPHomBrood(colonies), subspecies = subspecies)
+                        pQueenHomBrood = calcQueensPHomBrood(colonies), subspecies = subspecies)
     return(list(csdVariability = csdVariability, pDiploidDrones = pDiploidDrones))
   }
 }
@@ -255,9 +259,9 @@ for (Rep in 1:nRep) {
     # In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
       # Choose the first colony of age 1 to inspect relationship in the base population
-      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
-      springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]])
-      springerQueens1 <- computeRelationship_genomic(x = c(melQueens, carQueens))
+      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]], csd = isCsdActive(SP))
+      springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]], csd = isCsdActive(SP))
+      springerQueens1 <- computeRelationship_genomic(x = c(melQueens, carQueens), csd = isCsdActive(SP))
     }
 
     # Period1 ------------------------------------------------------------------
