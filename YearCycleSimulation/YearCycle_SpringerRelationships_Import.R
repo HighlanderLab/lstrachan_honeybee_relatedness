@@ -48,7 +48,8 @@ computeRelationship_genomic <- function(x) {
                             x = colnames(haplo))])
   ibd_chr3 <- ibd_chr3$indiv
   ibs_chr3 <- calcBeeGRMIbs(x = haplo[, grepl(pattern = "3_",
-                            x = colnames(haplo))])
+                            x = colnames(haplo))],
+                            sex = sex)
   
   # Only csd locus
   ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
@@ -57,7 +58,8 @@ computeRelationship_genomic <- function(x) {
   ibd_csd <- ibd_csd$indiv
   ibs_csd <- calcBeeGRMIbs(x = haplo[, paste(SP$csdChr,
                            SP$csdPosStart:SP$csdPosStop,
-                           sep = "_")])
+                           sep = "_")],
+                           sex = sex)
   
   if (isColony(x)) {
     id <- getCasteId(colony, caste = "all")
