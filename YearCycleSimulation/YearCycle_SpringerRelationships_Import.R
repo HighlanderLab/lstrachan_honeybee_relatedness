@@ -1,4 +1,4 @@
-setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
+#setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
 # Clean workspace
 rm(list = ls())
 
@@ -209,7 +209,7 @@ for (Rep in 1:nRep) {
   #                                           nCar = 30,
   #                                           nChr = 1,
   #                                           nSegSites = 100)
-  load("~/Documents/TwoPopFounderPop_Bee.Rdata")
+  load("FounderGenomes_TwoPop.Rdata")
   # Create SP object and write in the global simulation/population parameters
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
