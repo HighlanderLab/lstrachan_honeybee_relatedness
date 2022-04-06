@@ -41,23 +41,33 @@ computeRelationship_genomic <- function(x) {
   ibd <- calcBeeGRMIbd(x = haplo)
   ibd <- ibd$indiv
 
+  
+  
   # Only chromosome 3
   ibd_chr3 <- calcBeeGRMIbd(x = haplo[, grepl(pattern = "3_",
-                                              x = colnames(haplo))])
-  ibd_chr <- ibd_chr3$indiv
+                            x = colnames(haplo))])
+  ibd_chr3 <- ibd_chr3$indiv
+  ibs_chr3 <- calcBeeGRMIbs(x = haplo[, grepl(pattern = "3_",
+                            x = colnames(haplo))])
   
   # Only csd locus
   ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
-                                             SP$csdPosStart:SP$csdPosStop,
-                                             sep = "_")])
+                           SP$csdPosStart:SP$csdPosStop,
+                           sep = "_")])
   ibd_csd <- ibd_csd$indiv
+  ibs_csd <- calcBeeGRMIbs(x = haplo[, paste(SP$csdChr,
+                           SP$csdPosStart:SP$csdPosStop,
+                           sep = "_")])
+  
   if (isColony(x)) {
     id <- getCasteId(colony, caste = "all")
   } else if (SIMplyBee:::isPop(x)) {
     id <- x@id
   }
 
-  return(list(IBS = ibs, IBD = ibd, IBDChr = ibd_chr3, IBDCsd = ibd_csd, ID = id))
+  return(list(IBS = ibs, IBD = ibd, 
+              IBSChr3 = ibs_chr3, IBDChr3 = ibd_chr3, 
+              IBSCsd = ibs_csd, IBDCsd = ibd_csd, ID = id))
 }
 
 
@@ -198,7 +208,7 @@ for (Rep in 1:nRep) {
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
-  SP$nFathers <- 0
+  SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
   SP$pSwarm <- 0.5
   SP$pSplit <- 0.3
@@ -230,10 +240,8 @@ for (Rep in 1:nRep) {
     # If this is the first year, create some colonies to start with
     # If not, promote the age0 to age1, age1 to age2 and remove age2 colonies
     if (year == 1) {
-      age1 <- list(Mel = createColonies(x = melQueens, n = apiarySize,
-                                        simParamBee = SP),
-                   Car = createColonies(x = carQueens, n = apiarySize,
-                                        simParamBee = SP))
+      age1 <- list(Mel = createColonies(x = melQueens, n = apiarySize),
+                   Car = createColonies(x = carQueens, n = apiarySize))
     } else {
       age2 <- list(Mel = age1$Mel, Car = age1$Car)
       age1 <- list(Mel = age0$Mel, Car = age0$Car)
