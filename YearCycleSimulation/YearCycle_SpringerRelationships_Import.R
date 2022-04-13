@@ -6,9 +6,9 @@ rm(list = ls())
 # Define functions
 computeRelationship_genomic <- function(x, csd = TRUE) {
   if (isColony(x)) {
-  # Build the colony up to 10,000 workers and 200 drones
+  # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUpColony(colony = x,
-                                     nWorkers = 10,
+                                     nWorkers = 1000,
                                      nDrones = 200)
     # Extract the genotypes of all the colony members
     geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
@@ -516,13 +516,16 @@ for (Rep in 1:nRep) {
 
   # Compute the pedigree relationship matrix
   IBDe <- computeRelationship_pedigree(SP$pedigree)
+  pedigree <- SP$pedigree
+  caste <- SP$caste
 
 } # Rep-loop
 
 
-save(SP$pedigree, SP$caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
+save(pedigree, caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
      springerColony1_Car, springerColony10_Car, springerQueens10,
-     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import.Rdata")
+     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
+save.image("SpringerSimulation_import.RData")
 
 
 
