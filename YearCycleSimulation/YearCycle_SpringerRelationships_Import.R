@@ -51,7 +51,7 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
                                         grepl(pattern = paste0(csdChr, "_"),
                                         x = colnames(geno))],
                                 sex = sex)
-    
+
     # Only csd locus
     ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
                              SP$csdPosStart:SP$csdPosStop,
@@ -64,15 +64,15 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   } else {
     ibd_csdChr = ibd_csdChr = ibd_csd = ibs_csd = NULL
   }
-  
+
   if (isColony(x)) {
     id <- getCasteId(colony, caste = "all")
   } else if (SIMplyBee:::isPop(x)) {
     id <- x@id
   }
 
-  return(list(IBS = ibs, IBD = ibd, 
-              IBScsdChr = ibs_csdChr, IBDcsdChr = ibd_csdChr, 
+  return(list(IBS = ibs, IBD = ibd,
+              IBScsdChr = ibs_csdChr, IBDcsdChr = ibd_csdChr,
               IBSCsd = ibs_csd, IBDCsd = ibd_csd, ID = id))
 }
 
@@ -209,7 +209,7 @@ for (Rep in 1:nRep) {
   #                                           nCar = 30,
   #                                           nChr = 1,
   #                                           nSegSites = 100)
-  load("FounderGenomes_TwoPop.Rdata")
+  load("~/Documents/TwoPopFounderPop_Bee.Rdata")
   # Create SP object and write in the global simulation/population parameters
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
@@ -519,10 +519,13 @@ for (Rep in 1:nRep) {
   pedigree <- SP$pedigree
   caste <- SP$caste
 
+  pedigree <- SP$pedigree
+  caste <- SP$caste
+
 } # Rep-loop
 
 
-save(pedigree, caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
+save(pedigree, caste, springerColony1_Mel, springerColony10_Mel, springerQueens1,
      springerColony1_Car, springerColony10_Car, springerQueens10,
      IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
 save.image("SpringerSimulation_import.RData")
