@@ -6,9 +6,9 @@ rm(list = ls())
 # Define functions
 computeRelationship_genomic <- function(x, csd = TRUE) {
   if (isColony(x)) {
-  # Build the colony up to 10,000 workers and 200 drones
+  # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUpColony(colony = x,
-                                     nWorkers = 10,
+                                     nWorkers = 1000,
                                      nDrones = 200)
     # Extract the genotypes of all the colony members
     geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
@@ -209,6 +209,7 @@ for (Rep in 1:nRep) {
   #                                           nCar = 30,
   #                                           nChr = 1,
   #                                           nSegSites = 100)
+  print("Loading in the founderData")
   load("FounderGenomes_TwoPop.Rdata")
   # Create SP object and write in the global simulation/population parameters
   SP <- SimParamBee$new(founderGenomes, csdChr = 3, nCsdAlleles = 128)
@@ -240,12 +241,14 @@ for (Rep in 1:nRep) {
 
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
+    print("Starting the cycle")
     # year <- 1
     # year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     # If this is the first year, create some colonies to start with
     # If not, promote the age0 to age1, age1 to age2 and remove age2 colonies
     if (year == 1) {
+      print("Creating initial colonies")
       age1 <- list(Mel = createColonies(x = melQueens, n = apiarySize),
                    Car = createColonies(x = carQueens, n = apiarySize))
     } else {
@@ -258,6 +261,7 @@ for (Rep in 1:nRep) {
 
     # In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
+      print("Computing initial relationships")
       # Choose the first colony of age 1 to inspect relationship in the base population
       springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]], csd = isCsdActive(SP))
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]], csd = isCsdActive(SP))
@@ -516,13 +520,16 @@ for (Rep in 1:nRep) {
 
   # Compute the pedigree relationship matrix
   IBDe <- computeRelationship_pedigree(SP$pedigree)
+  pedigree <- SP$pedigree
+  caste <- SP$caste
 
 } # Rep-loop
 
 
-save(SP$pedigree, SP$caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
+save(pedigree, caste, springerColony1_Mel, springerColony10_Mel, springerQueens1, 
      springerColony1_Car, springerColony10_Car, springerQueens10,
-     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import.Rdata")
+     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
+save.image("SpringerSimulation_import.RData")
 
 
 
