@@ -44,6 +44,7 @@ ibdQueens1 <- queens1$IBD
 ibdQueens1_csdChr <- queens1$IBDcsdChr
 ibdQueens1_csd <- queens1$IBDCsd
 idQueens1 <- queens1$ID
+idPopQueens1 <- springerQueensPop1
 
 
 # Colony in year 10
@@ -74,6 +75,7 @@ ibdQueens10 <- queens10$IBD
 ibdQueens10_csdChr <- queens10$IBDcsdChr
 ibdQueens10_csd <- queens10$IBDCsd
 idQueens10 <- queens10$ID
+idPopQueens10 <- springerQueensPop10
 
 # Pedigree
 IBDe <- IBDe
@@ -169,13 +171,21 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe")) {
   return(plot)
 }
 
-plotQueens_heatmap <- function(df) {
+plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
   df$name <- as.factor(as.numeric(df$name))
   
-  plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() + 
-    facet_grid(rows = vars(Method))
-  return(ret)
+  if (Pop) {
+    df <- merge(df, PopIdDF, by = "ID")
+    df$PopId <- paste0(df$Pop, df$ID)
+    
+    plot <- ggplot(data = df, aes(x = PopId, y = name, fill = value)) + geom_tile() + 
+      facet_grid(rows = vars(Method))
+  } else {
+    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() + 
+        facet_grid(rows = vars(Method))
+  }
+  return(plot)
 }
 
 print("Plotting")
@@ -229,7 +239,7 @@ dev.off()
 ########################################################
 #Plot queens Year 1
 relQueens1 <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
-plotQueens1 <- plotQueens_heatmap(relQueens1)
+plotQueens1 <- plotQueens_heatmap(relQueens1, Pop = TRUE, PopIdDF = idPopQueens1)
 pdf("Plot_Queens1.pdf")
 plotQueens1
 dev.off()
@@ -250,7 +260,7 @@ dev.off()
 
 #Plot queens Year 10
 relQueens10 <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, pedDF = IBDe, idDF = idQueens10)
-plotQueens10 <- plotQueens_heatmap(relQueens10)
+plotQueens10 <- plotQueens_heatmap(relQueens10, Pop = T, PopIdDF = idPopQueens10)
 pdf("Plot_Queens10.pdf")
 plotQueens10
 dev.off()
