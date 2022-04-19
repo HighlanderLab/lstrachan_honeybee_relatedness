@@ -266,6 +266,9 @@ for (Rep in 1:nRep) {
       springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]], csd = isCsdActive(SP))
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]], csd = isCsdActive(SP))
       springerQueens1 <- computeRelationship_genomic(x = c(melQueens, carQueens), csd = isCsdActive(SP))
+      springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
+                                  data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
+      
     }
 
     # Period1 ------------------------------------------------------------------
@@ -517,6 +520,8 @@ for (Rep in 1:nRep) {
   springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
   springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]])
   springerQueens10 <- computeRelationship_genomic(x = c(Reduce(c, getQueen(age1$Mel)), Reduce(c, getQueen(age1$Car))))
+  springerQueensPop10 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
+                               data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
 
   # Compute the pedigree relationship matrix
   IBDe <- computeRelationship_pedigree(SP$pedigree)
@@ -526,8 +531,11 @@ for (Rep in 1:nRep) {
 } # Rep-loop
 
 
-save(pedigree, caste, springerColony1_Mel, springerColony10_Mel, springerQueens1,
-     springerColony1_Car, springerColony10_Car, springerQueens10,
+save(pedigree, caste, 
+     springerColony1_Mel, springerColony10_Mel, 
+     springerColony1_Car, springerColony10_Car, 
+     springerQueens1, springerQueensPop1, 
+     springerQueens10, springerQueensPop10,
      IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
 save.image("SpringerSimulation_import.RData")
 

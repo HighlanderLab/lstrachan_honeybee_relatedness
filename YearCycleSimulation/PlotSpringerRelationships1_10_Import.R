@@ -5,7 +5,7 @@
 #data <- load("~/github//lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
 #data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.Rdata")
 print("Reading in the data")
-data <- load("SpringerSimulation_import_objects.RData")
+data <- load("~/EddieDir/SpringerSimulation_import_objects.RData")
 #save.image("~/Documents/")
 
 # The data contains two populations - mellifera and carnica
@@ -83,25 +83,31 @@ IBDe <- IBDe
 # Plotting functions
 prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL,  idDF) {
   #IBS
+  print("IBS WW")
   tmp <- ibsDF[idDF$workers, idDF$workers]
   IBS_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- data.frame(Value = IBS_WW1, Rel = "WW", Type = "IBS")
 
+  print("IBD WW")
   tmp <- ibdDF[idDF$workers, idDF$workers]
   IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
 
+  print("PED WW")
   tmp <- as.matrix(pedDF[idDF$workers, idDF$workers])
   IBDe_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDe_WW1, Rel = "WW", Type = "IBDe"))
 
   # workers vs drones
+  print("IBS WD")
   IBS_WD1 <- c(ibsDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBS_WD1, Rel = "WD", Type = "IBS"))
 
+  print("IBD WD")
   IBDr_WD1 <- c(ibdDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBDr_WD1, Rel = "WD", Type = "IBDr"))
 
+  print("PED WD")
   IBDe_WD1 <- c(as.matrix(pedDF[idDF$workers, idDF$drones]))
   ret <- rbind(ret, data.frame(Value = IBDe_WD1, Rel = "WD", Type = "IBDe"))
 
@@ -110,15 +116,40 @@ prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NU
 
 prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL,  idDF) {
   #IBS
-  IBS <- c(tmp[lower.tri(ibsDF, diag = TRUE)])
+  IBS <- c(ibsDF[lower.tri(ibsDF, diag = TRUE)])
   ret <- data.frame(Value = IBS, Rel = "QQ", Type = "IBS")
 
-  IBDr <- c(tmp[lower.tri(ibdDF, diag = TRUE)])
+  IBDr <- c(ibdDF[lower.tri(ibdDF, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDr, Rel = "QQ", Type = "IBDr"))
 
-  IBDe <- c(tmp[lower.tri(pedDF, diag = TRUE)])
+  tmp <- c(as.matrix(pedDF[idDF, idDF]))
+  IBDe <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDe, Rel = "QQ", Type = "IBDe"))
 
+  return(ret)
+}
+
+
+prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL, idDF = NULL) {   
+  ibsDF <- as.data.frame(ibsDF)
+  columns <- colnames(ibsDF)
+  ibsDF$ID <- rownames(ibsDF)
+  ibsDFL <- ibsDF %>% pivot_longer(cols = all_of(columns))
+  ibsDFL$Method <- "IBS"
+  
+  ibdDF <- as.data.frame(ibdDF)
+  columns <- colnames(ibdDF)
+  ibdDF$ID <- rownames(ibdDF)
+  ibdDFL <- ibdDF %>% pivot_longer(cols = all_of(columns))
+  ibdDFL$Method <- "IBD"
+  
+  pedDF <-  as.data.frame(as.matrix(pedDF[idDF, idDF]))
+  columns <- colnames(pedDF)
+  pedDF$ID <- rownames(pedDF)
+  pedDFL <- pedDF %>% pivot_longer(cols = all_of(columns))
+  pedDFL$Method <- "PED"
+  
+  ret <- rbind(ibsDFL, ibdDFL, pedDFL)
   return(ret)
 }
 
@@ -136,6 +167,15 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe")) {
     geom_histogram(binwidth = 0.01, position = "identity") +
     facet_grid(cols = vars(Rel)) + xlim(c(-0.01, 2.01))
   return(plot)
+}
+
+plotQueens_heatmap <- function(df) {
+  df$ID <- as.factor(as.numeric(df$ID))
+  df$name <- as.factor(as.numeric(df$name))
+  
+  plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() + 
+    facet_grid(rows = vars(Method))
+  return(ret)
 }
 
 print("Plotting")
@@ -187,17 +227,44 @@ dev.off()
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
-#Plot queens Year 10
-relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
-plotQueens1 <- plotQueens(relQueens1)
+#Plot queens Year 1
+relQueens1 <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
+plotQueens1 <- plotQueens_heatmap(relQueens1)
 pdf("Plot_Queens1.pdf")
 plotQueens1
 dev.off()
 
-#Plot csd chr Year 10
-relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, pedDF = IBDe, idDF = idQueens10)
-plotQueens10 <- plotQueens(relQueens10)
-plot("Plot_Queens10.pdf")
+#Plot csd Year 1
+relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, pedDF = IBDe, idDF = idQueens1)
+plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd)
+pdf("Plot_Queens1_csd.pdf")
+plotQueens1_csd
+dev.off()
+
+#Plot csd chr Year 1
+relQueens1_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, pedDF = IBDe, idDF = idQueens1)
+plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr)
+pdf("Plot_Queens1_csdChr.pdf")
+plotQueens1_csdChr
+dev.off()
+
+#Plot queens Year 10
+relQueens10 <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, pedDF = IBDe, idDF = idQueens10)
+plotQueens10 <- plotQueens_heatmap(relQueens10)
+pdf("Plot_Queens10.pdf")
 plotQueens10
 dev.off()
 
+#Plot csd Year 10
+relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, pedDF = IBDe, idDF = idQueens10)
+plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd)
+pdf("Plot_Queens10_csd.pdf")
+plotQueens10_csd
+dev.off()
+
+#Plot csd chr Year 10
+relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, pedDF = IBDe, idDF = idQueens10)
+plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr)
+pdf("Plot_Queens10_csdChr.pdf")
+plotQueens10_csdChr
+dev.off()
