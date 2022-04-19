@@ -2,17 +2,20 @@
 ##setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Plot the relationships from the springer simulation
 #Laura's data file :
-data <- load("~/github//lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
-data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.Rdata")
+#data <- load("~/github//lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
+#data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.Rdata")
+print("Reading in the data")
+data <- load("SpringerSimulation_import_objects.RData")
 #save.image("~/Documents/")
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
 # Mellifera gets mated with a proportion of carnica drones
 
+print("Assigning objects")
 library(ggplot2)
-ped <- SP$pedigree
-caste <- SP$caste
+ped <- pedigree
+caste <- caste
 # Colony in year 1
 # Mellifera
 colonyMel1 <- springerColony1_Mel
@@ -135,18 +138,23 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe")) {
   return(plot)
 }
 
+print("Plotting")
 ########################################################
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
 # Plot year 1
-relCar1 <- prepareDataForPlotting(ibsDF = ibsCar1, ibdDF = ibdCar1, pedDF = IBDe, idDF = idCar1)
+relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibdDF = ibdCar1, pedDF = IBDe, idDF = idCar1)
 plotCar1 <- plotColony(relCar1, type = "IBDr")
+pdf("Plot_Carnica1.pdf")
 plotCar1
+dev.off()
 
 # Plot year 10
-relCar10 <- prepareDataForPlotting(ibsDF = ibsCar10, ibdDF = ibdCar10, pedDF = IBDe, idDF = idCar10)
+relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibdDF = ibdCar10, pedDF = IBDe, idDF = idCar10)
 plotCar10 <- plotColony(relCar10)
+pdf("Plot_Carnica10.pdf")
 plotCar10
+dev.off()
 
 #
 # #Plot Only workers in year 1 and year 10
@@ -163,32 +171,33 @@ plotCar10
 # plotWW_1_10
 
 #Plot csd Year 10
-relCar10_csd <- prepareDataForPlotting(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, pedDF = IBDe, idDF = idCar10)
+relCar10_csd <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, pedDF = IBDe, idDF = idCar10)
 plotCar10_csd <- plotColony(relCar10_csd)
+pdf("Plot_Carnica10_csd.pdf")
 plotCar10_csd
+dev.off()
 
 #Plot csd chr Year 10
-relCar10_csdChr <- prepareDataForPlotting(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, pedDF = IBDe, idDF = idCar10)
+relCar10_csdChr <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, pedDF = IBDe, idDF = idCar10)
 plotCar10_csdChr <- plotColony(relCar10_csdChr)
+pdf("Plot_Carnica10_csdChr.pdf")
 plotCar10_csdChr
+dev.off()
 
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
-relQueens10 <- prepareDataForPlotting(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
-plot10_csd <- ggplot(relCar10_csd[relCar10_csd$Rel %in% c("WD", "WW") & relCar10_csd$Type %in% c("IBDr", "IBDe"), ],
-                     aes(x = Value, fill = Type)) + geom_histogram(binwidth = 0.01) +
-  facet_grid(cols = vars(Rel)) + xlim(c(-0.01, 2.01))
-
-plot10_csd
+#Plot queens Year 10
+relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
+plotQueens1 <- plotQueens(relQueens1)
+pdf("Plot_Queens1.pdf")
+plotQueens1
+dev.off()
 
 #Plot csd chr Year 10
-relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, pedDF = IBDe, idDF = idQueens1)
-plotQueens10 <- plotQueens(re)
-<<<<<<< HEAD
-=======
-
->>>>>>> bd4f75b3857ba5791e192f0208db1b25d50e5aad
-plot10_chr3
-
+relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, pedDF = IBDe, idDF = idQueens10)
+plotQueens10 <- plotQueens(relQueens10)
+plot("Plot_Queens10.pdf")
+plotQueens10
+dev.off()
 
