@@ -110,13 +110,14 @@ prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NU
 
 prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL,  idDF) {
   #IBS
-  IBS <- c(tmp[lower.tri(ibsDF, diag = TRUE)])
+  IBS <- c(ibsDF[lower.tri(ibsDF, diag = TRUE)])
   ret <- data.frame(Value = IBS, Rel = "QQ", Type = "IBS")
 
-  IBDr <- c(tmp[lower.tri(ibdDF, diag = TRUE)])
+  IBDr <- c(ibdDF[lower.tri(ibdDF, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDr, Rel = "QQ", Type = "IBDr"))
 
-  IBDe <- c(tmp[lower.tri(pedDF, diag = TRUE)])
+  tmp <- c(as.matrix(pedDF[idDF, idDF]))
+  IBDe <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDe, Rel = "QQ", Type = "IBDe"))
 
   return(ret)
