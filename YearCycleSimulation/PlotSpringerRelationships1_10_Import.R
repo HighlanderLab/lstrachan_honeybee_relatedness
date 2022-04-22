@@ -39,7 +39,7 @@ idCar1 <- colonyCar1$ID
 queens1 <- springerQueens1
 ibsQueens1 <- queens1$IBS
 ibsQueens1_csdChr <- queens1$IBScsdChr
-ibsQueens1_csd <- queens1$IBSCsd
+ibsQueensa1_csd <- queens1$IBSCsd
 ibdQueens1 <- queens1$IBD
 ibdQueens1_csdChr <- queens1$IBDcsdChr
 ibdQueens1_csd <- queens1$IBDCsd
