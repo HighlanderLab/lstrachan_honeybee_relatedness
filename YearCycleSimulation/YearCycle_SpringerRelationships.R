@@ -78,7 +78,7 @@ for (Rep in 1:nRep) {
   # Create virgin queens from the founderGenomes
   virginQueens <- createVirginQueens(x = founderGenomes[1:30])
   # Create drones
-  drones <- createDrones(x = melVirginQueens[11:30], nInd = 20)
+  drones <- createDrones(x = virginQueens[11:30], nInd = 20)
   # Mate queens with drones
   queens <- crossVirginQueen(pop = virginQueens[1:10], drones = drones)
 
@@ -91,8 +91,7 @@ for (Rep in 1:nRep) {
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     if (year == 1) {
 
-      age1 <- createColonies(x = queens, n = apiarySize,
-                             simParamBee = SP)
+      age1 <- createColonies(x = queens, n = apiarySize)
       
     } else {
       age2 <- age1
@@ -287,8 +286,8 @@ for (Rep in 1:nRep) {
                                               nCsdAlleles(age0[[n]], collapse = TRUE), totalCsdAge0))
      pDiploidDrones <- rbind(pDiploidDrones,
                             c(Rep = Rep, year = year, id = age0[[n]]@id,
-                              pQueenHomBrood_age0 = computeQueensPHomBrood(age0),
-                              pQueenHomBrood_age1 = computeQueensPHomBrood(age1)))
+                              pQueenHomBrood_age0 = calcQueensPHomBrood(age0),
+                              pQueenHomBrood_age1 = calcQueensPHomBrood(age1)))
     }
 
     # keep all of age1, age0 swarmed so we build it up with some splits, while we remove (sell) the other splits
