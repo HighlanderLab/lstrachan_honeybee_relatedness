@@ -1,4 +1,4 @@
-setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
+#setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
 # Clean workspace
 rm(list = ls())
 
@@ -147,9 +147,10 @@ library(Matrix)
 library(SIMplyBee)
 
 # Founder opulation parameters -------------------------------------------------------------------
-nMelN = 60
-nCar = 30
+nMelN = 800
+nCar = 400
 nChr = 1
+nDronesPerQueen = 100
 nSegSites = 1000
 # Population parameters -------------------------------------------------------------------
 # Number of repeats
@@ -157,7 +158,7 @@ nRep <- 1
 # Number of years
 nYear <- 10
 # Number of colonies in the apiary
-apiarySize <- 10
+apiarySize <- 300
 # Number of workers in a full colony
 nWorkers <- 0 # TODO: change to 20K
 # Number of drones in a full colony
@@ -209,13 +210,15 @@ for (Rep in 1:nRep) {
 
 
   # Founder population ---------------------------------------------------------
-  # Create a founder population of A. m. mellifera [1:30] and carnica [31:60] bees
-  # founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
-  #                                           nCar = nCar,
-  #                                           nChr = nChr,
-  #                                           nSegSites = nSegSites)
-  print("Loading in the founderData")
-  load("FounderGenomes_ThreePop.RData")
+  # Create a founder population of A. m. mellifera and A. m. carnica bees
+  founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
+                                             nCar = nCar,
+                                             nChr = nChr,
+                                             nSegSites = nSegSites)
+  
+  save(founderGenomes, "FounderGenomes_ThreePop.RData") 
+  #print("Loading in the founderData")
+  #load("FounderGenomes_ThreePop.RData")
   # Create SP object and write in the global simulation/population parameters
   SP <- SimParamBee$new(founderGenomes, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
@@ -232,17 +235,17 @@ for (Rep in 1:nRep) {
   SP$addSnpChip(nSnpPerChr = 3)
 
   # Create a base population for A. m. mellifea, A. m. mellifera cross, and A. m. carnica
-  virginQueens <- list(Mel = createVirginQueens(x = founderGenomes[1:30]),
-                       MelCross = createVirginQueens(x = founderGenomes[31:60]),
-                       Car = createVirginQueens(x = founderGenomes[61:90]))
+  virginQueens <- list(Mel = createVirginQueens(x = founderGenomes[1:(nMelN/2)]),
+                       MelCross = createVirginQueens(x = founderGenomes[(nMelN/2 + 1):nMelN]),
+                       Car = createVirginQueens(x = founderGenomes[(nMelN +1):(nMelN + nCar)]))
   # Create drones for A. m. mellifea, A. m. mellifera cross, and A. m. carnica
-  drones <- list(Mel = createDrones(x = virginQueens$Mel[11:30], nInd = 20),
-                 MelCross = createDrones(x = virginQueens$MelCross[11:30], nInd = 20),
-                 Car = createDrones(x = virginQueens$Car[11:30], nInd = 20))
+  drones <- list(Mel = createDrones(x = virginQueens$Mel[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
+                 MelCross = createDrones(x = virginQueens$MelCross[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
+                 Car = createDrones(x = virginQueens$Car[(apiarySize+1):nCar], nInd = nDronesPerQueen))
   # Mate A. m. mellifera queens with A. m. mellifera drones
-  queens <- list(Mel = crossVirginQueen(pop = virginQueens$Mel[1:10], drones = drones$Mel),
-                 MelCross = crossVirginQueen(pop = virginQueens$MelCross[1:10], drones = drones$MelCross),
-                 Car = crossVirginQueen(pop = virginQueens$Car[1:10], drones = drones$Car))
+  queens <- list(Mel = crossVirginQueen(pop = virginQueens$Mel[1:apiarySize], drones = drones$Mel),
+                 MelCross = crossVirginQueen(pop = virginQueens$MelCross[1:apiarySize], drones = drones$MelCross),
+                 Car = crossVirginQueen(pop = virginQueens$Car[1:apiarySize], drones = drones$Car))
 
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
