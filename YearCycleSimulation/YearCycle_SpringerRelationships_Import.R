@@ -6,29 +6,33 @@ rm(list = ls())
 # Define functions
 computeRelationship_genomic <- function(x, csd = TRUE) {
   if (isColony(x)) {
-  # Build the colony up to 1,000 workers and 200 drones
+    # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUpColony(colony = x,
-                                     nWorkers = 1000,
-                                     nDrones = 200)
+                            nWorkers = 1000,
+                            nDrones = 200)
     # Extract the genotypes of all the colony members
     geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
-                         getCasteSegSiteGeno(colony, caste = "workers"),
-                         getCasteSegSiteGeno(colony, caste = "drones"),
-                         getCasteSegSiteGeno(colony, caste = "fathers"))
+                  getCasteSegSiteGeno(colony, caste = "workers"),
+                  getCasteSegSiteGeno(colony, caste = "drones"),
+                  getCasteSegSiteGeno(colony, caste = "fathers"))
     # Collect the sex of all the colony members in the order than genotypes
     sex <- c(rep("F", nQueens(colony)),
-                    rep("F", nWorkers(colony)),
-                    rep("M", nDrones(colony)),
-                    rep("M", nFathers(colony)))
+             rep("F", nWorkers(colony)),
+             rep("M", nDrones(colony)),
+             rep("M", nFathers(colony)))
   } else if (SIMplyBee:::isPop(x)) {
     geno <- getSegSiteGeno(x)
     sex <- x@sex
   }
   # Compute the IBS relationship matrix
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
+  print("IBS")
+  print(Sys.time())
   ibs <- calcBeeGRMIbs(x = geno,
-                      sex = sex)
+                       sex = sex)
   # Collect the IBD haplotypes for all the colony members
+  print("IBD")
+  print(Sys.time())
   if (isColony(x)) {
     haplo <- rbind(getCasteIbdHaplo(colony, caste = "queen"),
                    getCasteIbdHaplo(colony, caste = "workers"),
@@ -41,21 +45,23 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   ibd <- calcBeeGRMIbd(x = haplo)
   ibd <- ibd$indiv
 
+  print("csd IBD")
+  print(Sys.time())
   if (csd) {
-  # Only chromosome 3
+    # Only chromosome 3
     csdChr <- SP$csdChr
     ibd_csdChr <- calcBeeGRMIbd(x = haplo[, grepl(pattern = paste0(csdChr, "_"),
-                                x = colnames(haplo))])
+                                                  x = colnames(haplo))])
     ibd_csdChr <- ibd_csdChr$indiv
     ibs_csdChr <- calcBeeGRMIbs(x = geno[,
-                                        grepl(pattern = paste0(csdChr, "_"),
-                                        x = colnames(geno))],
+                                         grepl(pattern = paste0(csdChr, "_"),
+                                               x = colnames(geno))],
                                 sex = sex)
 
     # Only csd locus
     ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
-                             SP$csdPosStart:SP$csdPosStop,
-                             sep = "_")])
+                                               SP$csdPosStart:SP$csdPosStop,
+                                               sep = "_")])
     ibd_csd <- ibd_csd$indiv
     ibs_csd <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
                                               SP$csdPosStart:SP$csdPosStop,
@@ -211,22 +217,22 @@ for (Rep in 1:nRep) {
 
   # Founder population ---------------------------------------------------------
   # Create a founder population of A. m. mellifera and A. m. carnica bees
-  founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
-                                             nCar = nCar,
-                                             nChr = nChr,
-                                             nSegSites = nSegSites)
-  
-  save(founderGenomes, "FounderGenomes_ThreePop.RData") 
-  #print("Loading in the founderData")
-  #load("FounderGenomes_ThreePop.RData")
+  #founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
+  #                                           nCar = nCar,
+  #                                           nChr = nChr,
+  #                                           nSegSites = nSegSites)
+  #
+  #save(founderGenomes, file="FounderGenomes_ThreePop.RData")
+  print("Loading in the founderData")
+  load("FounderGenomes_ThreePop.RData")
   # Create SP object and write in the global simulation/population parameters
   SP <- SimParamBee$new(founderGenomes, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
-  SP$pSwarm <- 0.5
-  SP$pSplit <- 0.3
+  SP$swarmP <- 0.5
+  SP$splitP <- 0.3
   # Track the pedigree
   SP$setTrackPed(TRUE)
   # Track the recombination
@@ -272,18 +278,29 @@ for (Rep in 1:nRep) {
     if (year == 1) {
       print("Computing initial relationships")
       # Choose the first colony of age 1 to inspect relationship in the base population
+      print("Computing mellifera generation1 colony relationship")
+      print(Sys.time())
       springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]], csd = isCsdActive(SP))
+      print("Computing mellifera cross generation1 colony relationship")
+      print(Sys.time())
       springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]], csd = isCsdActive(SP))
+      print("Computing carnica generation1 colony relationship")
+      print(Sys.time())
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]], csd = isCsdActive(SP))
+      print("Computing queens geration1 colony relationship")
+      print(Sys.time())
       springerQueens1 <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car), csd = isCsdActive(SP))
       springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                   data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                   data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
 
     }
+    print("Done computing initial relationships")
 
     # Period1 ------------------------------------------------------------------
     # Build-up the colonies
+    print(paste0("Building up the colonies to ", nWorkers, " and ", nDrones))
+    print(Sys.time())
     age1 <- list(Mel = buildUpColonies(age1$Mel),
                  MelCross = buildUpColonies(age1$MelCross),
                  Car = buildUpColonies(age1$Car))
@@ -294,6 +311,8 @@ for (Rep in 1:nRep) {
     }
 
     # Split all age1 colonies
+    print("Splitting the colonies")
+    print(Sys.time())
     tmp <- list(Mel = splitColonies(age1$Mel),
                 MelCross = splitColonies(age1$MelCross),
                 Car = splitColonies(age1$Car))
@@ -323,6 +342,8 @@ for (Rep in 1:nRep) {
     #       maybe we should use selectColonies() and then create virginQueens from them, but we
     #       need createVirginQueens() to work with multiple colonies too, and equally for createWorkers()
     #       and createDrones()
+    print("Create virgin queens, period 1")
+    print(Sys.time())
     virginDonor <- list(Mel = sample.int(n = nColonies(age1$Mel), size = 1),
                         MelCross = sample.int(n = nColonies(age1$MelCross), size = 1),
                         Car = sample.int(n = nColonies(age1$Car), size = 1))
@@ -337,6 +358,8 @@ for (Rep in 1:nRep) {
                    Car = reQueenColonies(age0p1$Car, queens = virginQueens$Car))
 
     # Swarm a percentage of age1 colonies
+    print("Swarm colonies, P1")
+    print(Sys.time())
     tmp <- list(Mel = pullColonies(age1$Mel, p = p1swarm),
                 MelCross = pullColonies(age1$MelCross, p = p1swarm),
                 Car = pullColonies(age1$Car, p = p1swarm))
@@ -374,6 +397,8 @@ for (Rep in 1:nRep) {
     }
 
     # Supersede age1 colonies
+    print("Supersede colonies, P1")
+    print(Sys.time())
     tmp <- list(Mel = pullColonies(age1$Mel, p = p1supersede),
                 MelCross = pullColonies(age1$MelCross, p = p1supersede),
                 Car = pullColonies(age1$Car, p = p1supersede))
@@ -392,7 +417,7 @@ for (Rep in 1:nRep) {
       # Supersede age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p1supersede),
                   MelCross = pullColonies(age2$MelCross, p = p1supersede),
-                  Car = pullColonies(age1$Car, p = p1supersede))
+                  Car = pullColonies(age2$Car, p = p1supersede))
       age2 <- list(Mel = tmp$Mel$remainingColonies,
                    MelCross = tmp$MelCross$remainingColonies,
                    Car = tmp$Car$remainingColonies)
@@ -405,11 +430,13 @@ for (Rep in 1:nRep) {
     }
 
     # Mate the split colonies
+    print("Mate split colonies, P1")
+    print(Sys.time())
     if (year == 1) {
       DCAMel <- createDCA(age1$Mel)
       age0p1$Mel <- crossColonies(age0p1$Mel, drones = DCAMel)
       DCAMelCross <- createDCA(c(age1$MelCross,
-                            selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
+                                 selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
       age0p1$MelCross <- crossColonies(age0p1$MelCross, drones = DCAMelCross)
       DCACar <- createDCA(age1$Car)
       age0p1$Car <- crossColonies(age0p1$Car, drones = DCACar)
@@ -417,15 +444,17 @@ for (Rep in 1:nRep) {
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
       age0p1$Mel <- crossColonies(age0p1$Mel, drones = DCAMel)
       DCAMelCross <- createDCA(c(age1$MelCross,
-                            selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
-                            age2$MelCross,
-                            selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
+                                 selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
+                                 age2$MelCross,
+                                 selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
       age0p1$MelCross <- crossColonies(age0p1$MelCross, drones = DCAMelCross)
       DCACar <- createDCA(c(age1$Car, age2$Car))
       age0p1$Car <- crossColonies(age0p1$Car, drones = DCACar)
     }
 
     # Collapse
+    print("Collapse colonies, P1")
+    print(Sys.time())
     age1 <- list(Mel = selectColonies(age1$Mel, p = 1 - p1collapse),
                  MelCross = selectColonies(age1$MelCross, p = 1 - p1collapse),
                  Car = selectColonies(age1$Car, p = 1 - p1collapse))
@@ -436,9 +465,11 @@ for (Rep in 1:nRep) {
     }
 
     # Period2 ------------------------------------------------------------------
-
+    print("PERIOD 2")
     # Swarm a percentage of age1 colonies
     # Mellifera
+    print("Swarm colonies, P2")
+    print(Sys.time())
     tmp <- list(Mel = pullColonies(age1$Mel, p = p2swarm),
                 MelCross = pullColonies(age1$MelCross, p = p2swarm),
                 Car = pullColonies(age1$Car, p = p2swarm))
@@ -469,7 +500,7 @@ for (Rep in 1:nRep) {
                   Car = swarmColonies(tmp$Car$pulledColonies))
       # The queens of the remnant colonies are of age 0
       age0p2 <- list(Mel = tmp$Mel$remnants,
-                     MelCross = tmp$Mel$remnants,
+                     MelCross = tmp$MelCross$remnants,
                      Car = tmp$Car$remnants)
       age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarms),
                    MelCross = c(age2$MelCross, tmp$MelCross$swarms),
@@ -477,6 +508,9 @@ for (Rep in 1:nRep) {
     }
 
     # Supersede a part of age1 colonies
+    print("Supersede colonies, P2")
+    print(Sys.time())
+
     tmp <- list(Mel = pullColonies(age1$Mel, p = p2supersede),
                 MelCross = pullColonies(age1$MelCross, p = p2supersede),
                 Car = pullColonies(age1$Car, p = p2supersede))
@@ -488,7 +522,7 @@ for (Rep in 1:nRep) {
                 Car = supersedeColonies(tmp$Car$pulledColonies))
     # The queens of superseded colonies are of age 0
     age0p2 <- list(Mel = c(age0p2$Mel, tmp$Mel),
-                   MelCross = c(age0p2$Mel, tmp$MelCross),
+                   MelCross = c(age0p2$MelCross, tmp$MelCross),
                    Car = c(age0p2$Car, tmp$Car))
 
     if (year > 1) {
@@ -509,6 +543,9 @@ for (Rep in 1:nRep) {
     }
 
     # Replace all the drones
+    print("Replace Drones, P2")
+    print(Sys.time())
+
     age1$Mel <- replaceDrones(age1$Mel)
     age1$MelCross <- replaceDrones(age1$MelCross)
     age1$Car <- replaceDrones(age1$Car)
@@ -520,24 +557,30 @@ for (Rep in 1:nRep) {
 
     # Mate the colonies
     # Import p percentage of carnica colonies into mellifera DCA
+    print("Mate colonies, P2")
+    print(Sys.time())
+
+
     if (year == 1) {
       DCAMel <- createDCA(age1$Mel)
+      age0p2$Mel <- crossColonies(age0p2$Mel, drones = DCAMel)
       DCAMelCross <- createDCA(c(age1$MelCross,
-                               selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
+                                 selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
+      age0p2$MelCross <- crossColonies(age0p2$MelCross, drones = DCAMelCross)
       DCACar <- createDCA(age1$Car)
+      age0p2$Car <- crossColonies(age0p2$Car, drones = DCACar)
     } else {
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
+      age0p2$Mel <- crossColonies(age0p2$Mel, drones = DCAMel)
       DCAMelCross <- createDCA(c(age1$MelCross,
-                            selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
-                            age2$MelCross,
-                            selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
+                                 selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
+                                 age2$MelCross,
+                                 selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
+      age0p2$MelCross <- crossColonies(age0p2$MelCross, drones = DCAMelCross)
       DCACar <- createDCA(c(age1$Car, age2$Car))
+      age0p2$Car <- crossColonies(age0p2$Car, drones = DCACar)
     }
 
-    # Cross age 0 period 2 swarms and splits
-    age0p2$Mel <- crossColonies(age0p2$Mel, drones = DCAMel)
-    age0p2$MelCross <- crossColonies(age0p2$MelCross, drones = DCAMelCross)
-    age0p2$Car <- crossColonies(age0p2$Car, drones = DCACar)
 
     # Collapse
     age1 <- list(Mel = selectColonies(age1$Mel, p = 1 - p2collapse),
@@ -556,6 +599,10 @@ for (Rep in 1:nRep) {
 
     # Period3 ------------------------------------------------------------------
     # Collapse age0 queens
+    print("PERIOD 3")
+    print("Collapse colonies, P3")
+    print(Sys.time())
+
     age0 <- list(Mel = selectColonies(age0$Mel, p = (1 - p3collapseAge0)),
                  MelCross = selectColonies(age0$MelCross, p = (1 - p3collapseAge0)),
                  Car = selectColonies(age0$Car, p = (1 - p3collapseAge0)))
@@ -565,6 +612,8 @@ for (Rep in 1:nRep) {
     age2 <- list(Mel = NULL, MelCross=NULL, Car = NULL) #We don't need this but just to show the workflow!!!
 
     #Collect CSD info
+    print("Collect csd info")
+    print(Sys.info())
     csdInfoMel <- getCsdInfo(age0$Mel, subspecies = "Mel")
     csdInfoMelCross <- getCsdInfo(age0$MelCross, subspecies = "MelCross")
     csdInfoCar <- getCsdInfo(age0$Car, subspecies = "Car")
@@ -578,6 +627,9 @@ for (Rep in 1:nRep) {
 
     # Maintain the number of colonies ------------------------------------------
     # Keep all of age1, age0 swarmed so we build it up with some splits, while we remove (sell) the other splits
+    print("Maintain the number, P2")
+    print(Sys.time())
+
     age0$Mel <- maintainApiarySize(age0 = age0$Mel, age1 = age1$Mel)
     age0$MelCross <- maintainApiarySize(age0 = age0$MelCross, age1 = age1$MelCross)
     age0$Car <- maintainApiarySize(age0 = age0$Car, age1 = age1$Car)
@@ -594,10 +646,21 @@ for (Rep in 1:nRep) {
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
 
+  print("Computing final relationships")
+  print(Sys.time())
+
   # Take the first colony of age1 and extract genotypes for relationship computation
+  print("Computing mellifera relationships")
+  print(Sys.time())
   springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
+  print("Computing mellifera cross relationships")
+  print(Sys.time())
   springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]])
+  print("Computing carnica relationships")
+  print(Sys.time())
   springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]])
+  print("Computing queens relationships")
+  print(Sys.time())
   springerQueens10 <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
                                                         mergePops(getQueen(age1$MelCross)),
                                                         mergePops(getQueen(age1$Car))))
@@ -606,13 +669,15 @@ for (Rep in 1:nRep) {
                                data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
 
   # Compute the pedigree relationship matrix
+  print("Computing pedigree relationships")
+  print(Sys.time())
   IBDe <- computeRelationship_pedigree(SP$pedigree)
   pedigree <- SP$pedigree
   caste <- SP$caste
 
 } # Rep-loop
 
-
+print("Saving data")
 save(pedigree, caste,
      springerColony1_Mel, springerColony10_Mel,
      springerColony1_MelCross, springerColony10_MelCross,

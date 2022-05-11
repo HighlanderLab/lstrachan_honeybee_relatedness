@@ -26,6 +26,15 @@ ibdMel1 <- colonyMel1$IBD
 ibdMel1_csdChr <- colonyMel1$IBDcsdChr
 ibdMel1_csd <- colonyMel1$IBDCsd
 idMel1 <- colonyMel1$ID
+# Mellifera cross
+colonyMelCross1 <- springerColony1_MelCross
+ibsMelCross1 <- colonyMelCross1$IBS
+ibsMelCross1_csdChr <- colonyMelCross1$IBScsdChr
+ibsMelCross1_csd <- colonyMelCross1$IBSCsd
+ibdMelCross1 <- colonyMelCross1$IBD
+ibdMelCross1_csdChr <- colonyMelCross1$IBDcsdChr
+ibdMelCross1_csd <- colonyMelCross1$IBDCsd
+idMelCross1 <- colonyMelCross1$ID
 # Carnica
 colonyCar1 <- springerColony1_Car
 ibsCar1 <- colonyCar1$IBS
@@ -57,6 +66,15 @@ ibdMel10 <- colonyMel10$IBD
 ibdMel10_csdChr <- colonyMel10$IBDcsdChr
 ibdMel10_csd <- colonyMel10$IBDCsd
 idMel10 <- colonyMel10$ID
+# Mellifera cross
+colonyMelCross10 <- springerColony10_MelCross
+ibsMelCross10 <- colonyMelCross10$IBS
+ibsMelCross10_csdChr <- colonyMelCross10$IBScsdChr
+ibsMelCross10_csd <- colonyMelCross10$IBSCsd
+ibdMelCross10 <- colonyMelCross10$IBD
+ibdMelCross10_csdChr <- colonyMelCross10$IBDcsdChr
+ibdMelCross10_csd <- colonyMelCross10$IBDCsd
+idMelCross10 <- colonyMelCross10$ID
 # Carnica
 colonyCar10 <- springerColony10_Car
 ibsCar10 <- colonyCar10$IBS
@@ -132,25 +150,25 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NU
 }
 
 
-prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL, idDF = NULL) {   
+prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibdDF = NULL, pedDF = NULL, idDF = NULL) {
   ibsDF <- as.data.frame(ibsDF)
   columns <- colnames(ibsDF)
   ibsDF$ID <- rownames(ibsDF)
   ibsDFL <- ibsDF %>% pivot_longer(cols = all_of(columns))
   ibsDFL$Method <- "IBS"
-  
+
   ibdDF <- as.data.frame(ibdDF)
   columns <- colnames(ibdDF)
   ibdDF$ID <- rownames(ibdDF)
   ibdDFL <- ibdDF %>% pivot_longer(cols = all_of(columns))
   ibdDFL$Method <- "IBD"
-  
+
   pedDF <-  as.data.frame(as.matrix(pedDF[idDF, idDF]))
   columns <- colnames(pedDF)
   pedDF$ID <- rownames(pedDF)
   pedDFL <- pedDF %>% pivot_longer(cols = all_of(columns))
   pedDFL$Method <- "PED"
-  
+
   ret <- rbind(ibsDFL, ibdDFL, pedDFL)
   return(ret)
 }
@@ -174,15 +192,15 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe")) {
 plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
   df$name <- as.factor(as.numeric(df$name))
-  
+
   if (Pop) {
     df <- merge(df, PopIdDF, by = "ID")
     df$PopId <- paste0(df$Pop, df$ID)
-    
-    plot <- ggplot(data = df, aes(x = PopId, y = name, fill = value)) + geom_tile() + 
+
+    plot <- ggplot(data = df, aes(x = PopId, y = name, fill = value)) + geom_tile() +
       facet_grid(rows = vars(Method))
   } else {
-    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() + 
+    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() +
         facet_grid(rows = vars(Method))
   }
   return(plot)
