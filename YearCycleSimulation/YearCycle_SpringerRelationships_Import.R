@@ -97,9 +97,9 @@ computeRelationship_pedigree <- function(pedigree) {
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
   pedigree$Sire[pedigree$Sex == 1] <- NA
 
-  tmp <- makeS(pedigree = pedigree, heterogametic = "1", returnS = TRUE)
-  IBDe <- tmp$S
-  dimnames(IBDe) <- list(rownames(pedigree), rownames(pedigree))
+  tmp <- makeS(pedigree = pedigree, heterogametic = "1", returnS = FALSE)
+  IBDe <- tmp #$S
+#  dimnames(IBDe) <- list(rownames(pedigree), rownames(pedigree))
   return(IBDe)
 }
 
@@ -156,7 +156,7 @@ library(SIMplyBee)
 nMelN = 800
 nCar = 400
 nChr = 1
-nDronesPerQueen = 100
+nDronesPerQueen = 50
 nSegSites = 1000
 # Population parameters -------------------------------------------------------------------
 # Number of repeats
@@ -168,7 +168,7 @@ apiarySize <- 300
 # Number of workers in a full colony
 nWorkers <- 0 # TODO: change to 20K
 # Number of drones in a full colony
-nDrones <- 100 #nWorkers * 0.2
+nDrones <- 50 #nWorkers * 0.2
 # Number of drones the queen mates with (could also be a function)
 pFathers <- nFathersPoisson
 # Number of created virgin queens
@@ -671,20 +671,23 @@ for (Rep in 1:nRep) {
   # Compute the pedigree relationship matrix
   print("Computing pedigree relationships")
   print(Sys.time())
-  IBDe <- computeRelationship_pedigree(SP$pedigree)
   pedigree <- SP$pedigree
   caste <- SP$caste
 
+  save(pedigree, caste,
+       springerColony1_Mel, springerColony10_Mel,
+       springerColony1_MelCross, springerColony10_MelCross,
+       springerColony1_Car, springerColony10_Car,
+       springerQueens1, springerQueensPop1,
+       springerQueens10, springerQueensPop10,
+       csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
+
+  IBDe <- computeRelationship_pedigree(SP$pedigree)
+  save(IBDe, file = "IBDe_SpringerSimulation.RData")
+
 } # Rep-loop
 
-print("Saving data")
-save(pedigree, caste,
-     springerColony1_Mel, springerColony10_Mel,
-     springerColony1_MelCross, springerColony10_MelCross,
-     springerColony1_Car, springerColony10_Car,
-     springerQueens1, springerQueensPop1,
-     springerQueens10, springerQueensPop10,
-     IBDe, csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
+print("Saving image data")
 save.image("SpringerSimulation_import.RData")
 
 
