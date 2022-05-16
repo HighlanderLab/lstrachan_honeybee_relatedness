@@ -105,11 +105,15 @@ computeRelationship_pedigree <- function(pedigree) {
 
 getCsdInfo <- function (colonies, subspecies = NULL) {
   totalCsd <- nCsdAlleles(colonies, collapse = TRUE)
+  csdVariability <- data.frame()
+  pDiploidDrones <- data.frame()
   for (n in 1:nColonies(colonies)){
-    csdVariability <- c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                        nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE), totalCSD = totalCsd, subspecies = subspecies)
-    pDiploidDrones <- c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                        pQueenHomBrood = calcQueensPHomBrood(colonies), subspecies = subspecies)
+    csdVariability <- rbind(csdVariability,
+                            c(Rep = Rep, year = year, id = colonies[[n]]@id,
+                              nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE), totalCSD = totalCsd, subspecies = subspecies))
+    pDiploidDrones <- rbind(pDiploidDrones,
+                            c(Rep = Rep, year = year, id = colonies[[n]]@id,
+                              pQueenHomBrood = calcQueensPHomBrood(colonies), subspecies = subspecies))
     return(list(csdVariability = csdVariability, pDiploidDrones = pDiploidDrones))
   }
 }
