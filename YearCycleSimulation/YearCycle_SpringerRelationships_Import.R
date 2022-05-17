@@ -114,8 +114,10 @@ getCsdInfo <- function (colonies, subspecies = NULL) {
     pDiploidDrones <- rbind(pDiploidDrones,
                             c(Rep = Rep, year = year, id = colonies[[n]]@id,
                               pQueenHomBrood = calcQueensPHomBrood(colonies), subspecies = subspecies))
-    return(list(csdVariability = csdVariability, pDiploidDrones = pDiploidDrones))
   }
+  colnames(csdVariability) <- c("Rep", "year", "id", "nCSD", "totalCSD", "subspecies")
+  colnames(pDiploidDrones) <- c("Rep", "year", "id", "pQueenHomBrood", "subspecies")
+  return(list(csdVariability = csdVariability, pDiploidDrones = pDiploidDrones))
 }
 
 
