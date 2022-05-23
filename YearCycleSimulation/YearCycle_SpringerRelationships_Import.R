@@ -29,7 +29,8 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   print("IBS")
   print(Sys.time())
   ibs <- calcBeeGRMIbs(x = geno,
-                       sex = sex)
+                       sex = sex,
+                       alleleFreq = rep(0.5, ncol(geno)))
   # Collect the IBD haplotypes for all the colony members
   print("IBD")
   print(Sys.time())
@@ -50,13 +51,13 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   if (csd) {
     # Only chromosome 3
     csdChr <- SP$csdChr
-    ibd_csdChr <- calcBeeGRMIbd(x = haplo[, grepl(pattern = paste0(csdChr, "_"),
-                                                  x = colnames(haplo))])
+    csdChrHaplo <- haplo[, grepl(pattern = paste0(csdChr, "_"), x = colnames(haplo))]
+    ibd_csdChr <- calcBeeGRMIbd(x = csdChrHaplo)
     ibd_csdChr <- ibd_csdChr$indiv
-    ibs_csdChr <- calcBeeGRMIbs(x = geno[,
-                                         grepl(pattern = paste0(csdChr, "_"),
-                                               x = colnames(geno))],
-                                sex = sex)
+    csdChrGeno <- geno[, grepl(pattern = paste0(csdChr, "_"), x = colnames(geno))]
+    ibs_csdChr <- calcBeeGRMIbs(x =  csdChrGeno,
+                                sex = sex,
+                                alleleFreq = rep(0.5, ncol(csdChrGeno)))
 
     # Only csd locus
     ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
@@ -66,7 +67,8 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
     ibs_csd <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
                                               SP$csdPosStart:SP$csdPosStop,
                                               sep = "_")],
-                             sex = sex)
+                             sex = sex,
+                             alleleFreq = rep(0.5, length(SP$csdPosStart:SP$csdPosStop)))
   } else {
     ibd_csdChr = ibd_csdChr = ibd_csd = ibs_csd = NULL
   }
@@ -76,6 +78,8 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   } else if (SIMplyBee:::isPop(x)) {
     id <- x@id
   }
+  
+  
 
   return(list(IBS = ibs, IBD = ibd,
               IBScsdChr = ibs_csdChr, IBDcsdChr = ibd_csdChr,
@@ -399,7 +403,7 @@ for (Rep in 1:nRep) {
                      Car = c(age0p1$Car, tmp$Car$remnants))
       age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarms),
                    MelCross = c(age2$MelCross, tmp$MelCross$swarms),
-                   Car = c(age2$Car, tmp$Car$swarms))
+                   Car = c(age2$Car, tmp$Car$swarms))SP$csdPosStart:SP$csdPosStop
     }
 
     # Supersede age1 colonies
