@@ -1,10 +1,10 @@
-#setwd("~/github/lstrachan_honeybee_sim/YearCycleSimulation/")
+setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Clean workspace
 rm(list = ls())
 
 
 # Define functions
-computeRelationship_genomic <- function(x, csd = TRUE) {
+computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NULL, csd = TRUE) {
   if (isColony(x)) {
     # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUpColony(colony = x,
@@ -28,9 +28,15 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
   print("IBS")
   print(Sys.time())
+  if (is.null(alleleFreq)) {
+    alleleFreq <- rep(0.5, ncol(geno))
+  }
+  if (is.null(alleleFreqCsd)) {
+    alleleFreqCsd <- rep(0.5, length(SP$csdPosStart:SP$csdPosStop))
+  }
   ibs <- calcBeeGRMIbs(x = geno,
                        sex = sex,
-                       alleleFreq = rep(0.5, ncol(geno)))
+                       alleleFreq = alleleFreq)
   # Collect the IBD haplotypes for all the colony members
   print("IBD")
   print(Sys.time())
@@ -57,7 +63,7 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
     csdChrGeno <- geno[, grepl(pattern = paste0(csdChr, "_"), x = colnames(geno))]
     ibs_csdChr <- calcBeeGRMIbs(x =  csdChrGeno,
                                 sex = sex,
-                                alleleFreq = rep(0.5, ncol(csdChrGeno)))
+                                alleleFreq = alleleFreq)
 
     # Only csd locus
     ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
@@ -68,7 +74,7 @@ computeRelationship_genomic <- function(x, csd = TRUE) {
                                               SP$csdPosStart:SP$csdPosStop,
                                               sep = "_")],
                              sex = sex,
-                             alleleFreq = rep(0.5, length(SP$csdPosStart:SP$csdPosStop)))
+                             alleleFreq = alleleFreqCsd)
   } else {
     ibd_csdChr = ibd_csdChr = ibd_csd = ibs_csd = NULL
   }
@@ -114,7 +120,9 @@ getCsdInfo <- function (colonies, subspecies = NULL) {
   for (n in 1:nColonies(colonies)){
     csdVariability <- rbind(csdVariability,
                             c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                              nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE), totalCSD = totalCsd, subspecies = subspecies))
+                              nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE),
+                              totalCSD = totalCsd, 
+                              subspecies = subspecies))
     pDiploidDrones <- rbind(pDiploidDrones,
                             c(Rep = Rep, year = year, id = colonies[[n]]@id,
                               pQueenHomBrood = calcQueensPHomBrood(colonies[[n]]), subspecies = subspecies))
@@ -162,7 +170,7 @@ library(Matrix)
 
 library(SIMplyBee)
 
-# Founder opulation parameters -------------------------------------------------------------------
+# Founder population parameters -------------------------------------------------------------------
 nMelN = 800
 nCar = 400
 nChr = 1
@@ -263,6 +271,12 @@ for (Rep in 1:nRep) {
                  MelCross = crossVirginQueen(pop = virginQueens$MelCross[1:apiarySize], drones = drones$MelCross),
                  Car = crossVirginQueen(pop = virginQueens$Car[1:apiarySize], drones = drones$Car))
 
+  tmp <- c(queens$Mel, queens$MelCross, queens$Car)
+  alleleFreqBaseQueens <- calcBeeAlleleFreq(x = getSegSiteGeno(tmp),
+                                            sex = tmp@sex)
+  csdLoci <- paste0(SP$csdChr, "_", SP$csdPosStart:SP$csdPosStop)
+  alleleFreqCsdBaseQueens <- alleleFreqBaseQueens[csdLoci]
+  
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
     print("Starting the cycle")
@@ -277,11 +291,11 @@ for (Rep in 1:nRep) {
                    MelCross = createColonies(x = queens$MelCross, n = apiarySize),
                    Car = createColonies(x = queens$Car, n = apiarySize))
     } else {
-      age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
-      age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
       age0 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
       age0p1 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
       age0p2 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
+      age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
+      age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
     }
 
     # In year 1, inspect the relationship in one of the colonies
@@ -290,16 +304,28 @@ for (Rep in 1:nRep) {
       # Choose the first colony of age 1 to inspect relationship in the base population
       print("Computing mellifera generation1 colony relationship")
       print(Sys.time())
-      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]], csd = isCsdActive(SP))
+      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
+                                                         csd = isCsdActive(SP),
+                                                         alleleFreq = alleleFreqBaseQueens,
+                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
       print("Computing mellifera cross generation1 colony relationship")
       print(Sys.time())
-      springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]], csd = isCsdActive(SP))
+      springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
+                                                              csd = isCsdActive(SP),
+                                                              alleleFreq = alleleFreqBaseQueens,
+                                                              alleleFreqCsd = alleleFreqCsdBaseQueens)
       print("Computing carnica generation1 colony relationship")
       print(Sys.time())
-      springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]], csd = isCsdActive(SP))
-      print("Computing queens geration1 colony relationship")
+      springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]],
+                                                         csd = isCsdActive(SP),
+                                                         alleleFreq = alleleFreqBaseQueens,
+                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
+      print("Computing queens generation1 colony relationship")
       print(Sys.time())
-      springerQueens1 <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car), csd = isCsdActive(SP))
+      springerQueens1 <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
+                                                     csd = isCsdActive(SP),
+                                                     alleleFreq = alleleFreqBaseQueens,
+                                                     alleleFreqCsd = alleleFreqCsdBaseQueens)
       springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                   data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                   data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
@@ -403,7 +429,7 @@ for (Rep in 1:nRep) {
                      Car = c(age0p1$Car, tmp$Car$remnants))
       age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarms),
                    MelCross = c(age2$MelCross, tmp$MelCross$swarms),
-                   Car = c(age2$Car, tmp$Car$swarms))SP$csdPosStart:SP$csdPosStop
+                   Car = c(age2$Car, tmp$Car$swarms))
     }
 
     # Supersede age1 colonies
@@ -662,18 +688,30 @@ for (Rep in 1:nRep) {
   # Take the first colony of age1 and extract genotypes for relationship computation
   print("Computing mellifera relationships")
   print(Sys.time())
-  springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]])
+  springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
+                                                      csd = isCsdActive(SP),
+                                                      alleleFreq = alleleFreqBaseQueens,
+                                                      alleleFreqCsd = alleleFreqCsdBaseQueens)
   print("Computing mellifera cross relationships")
   print(Sys.time())
-  springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]])
+  springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
+                                                           csd = isCsdActive(SP),
+                                                           alleleFreq = alleleFreqBaseQueens,
+                                                           alleleFreqCsd = alleleFreqCsdBaseQueens)
   print("Computing carnica relationships")
   print(Sys.time())
-  springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]])
+  springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]],
+                                                      csd = isCsdActive(SP),
+                                                      alleleFreq = alleleFreqBaseQueens,
+                                                      alleleFreqCsd = alleleFreqCsdBaseQueens)
   print("Computing queens relationships")
   print(Sys.time())
   springerQueens10 <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
                                                         mergePops(getQueen(age1$MelCross)),
-                                                        mergePops(getQueen(age1$Car))))
+                                                        mergePops(getQueen(age1$Car))),
+                                                  csd = isCsdActive(SP),
+                                                  alleleFreq = alleleFreqBaseQueens,
+                                                  alleleFreqCsd = alleleFreqCsdBaseQueens)
   springerQueensPop10 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
