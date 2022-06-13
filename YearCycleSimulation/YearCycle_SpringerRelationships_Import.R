@@ -1,4 +1,4 @@
-setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
+#setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Clean workspace
 rm(list = ls())
 
@@ -249,8 +249,8 @@ for (Rep in 1:nRep) {
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
-  SP$swarmP <- 0.5
-  SP$splitP <- 0.3
+  SP$pSwarm <- 0.5
+  SP$pSplit <- 0.3
   # Track the pedigree
   SP$setTrackPed(TRUE)
   # Track the recombination
@@ -271,7 +271,7 @@ for (Rep in 1:nRep) {
                  MelCross = crossVirginQueen(pop = virginQueens$MelCross[1:apiarySize], drones = drones$MelCross),
                  Car = crossVirginQueen(pop = virginQueens$Car[1:apiarySize], drones = drones$Car))
 
-  tmp <- c(queens$Mel, queens$MelCross, queens$Car)
+  tmp <- c(queens$Mel, queens$Car)
   alleleFreqBaseQueens <- calcBeeAlleleFreq(x = getSegSiteGeno(tmp),
                                             sex = tmp@sex)
   csdLoci <- paste0(SP$csdChr, "_", SP$csdPosStart:SP$csdPosStop)
