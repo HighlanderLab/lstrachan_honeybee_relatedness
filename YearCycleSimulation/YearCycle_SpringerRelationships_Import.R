@@ -248,8 +248,8 @@ for (Rep in 1:nRep) {
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
-  SP$pSwarm <- 0.5
-  SP$pSplit <- 0.3
+  SP$swarmP <- 0.5
+  SP$splitP <- 0.3
   # Track the pedigree
   SP$setTrackPed(TRUE)
   # Track the recombination
