@@ -2,7 +2,6 @@
 # Clean workspace
 rm(list = ls())
 
-
 # Define functions
 computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NULL, csd = TRUE) {
   if (isColony(x)) {
