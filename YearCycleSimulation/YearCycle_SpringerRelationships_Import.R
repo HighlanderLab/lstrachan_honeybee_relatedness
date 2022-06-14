@@ -248,8 +248,8 @@ for (Rep in 1:nRep) {
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
   SP$nVirginQueens <- nVirginQueens
-  SP$pSwarm <- 0.5
-  SP$pSplit <- 0.3
+  SP$swarmP <- 0.5
+  SP$splitP <- 0.3
   # Track the pedigree
   SP$setTrackPed(TRUE)
   # Track the recombination
@@ -273,6 +273,7 @@ for (Rep in 1:nRep) {
   tmp <- c(queens$Mel, queens$Car)
   alleleFreqBaseQueens <- calcBeeAlleleFreq(x = getSegSiteGeno(tmp),
                                             sex = tmp@sex)
+  #TODO: get allele freq for csd chromomsome 
   csdLoci <- paste0(SP$csdChr, "_", SP$csdPosStart:SP$csdPosStop)
   alleleFreqCsdBaseQueens <- alleleFreqBaseQueens[csdLoci]
   
@@ -290,11 +291,11 @@ for (Rep in 1:nRep) {
                    MelCross = createColonies(x = queens$MelCross, n = apiarySize),
                    Car = createColonies(x = queens$Car, n = apiarySize))
     } else {
+      age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
+      age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
       age0 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
       age0p1 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
       age0p2 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
-      age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
-      age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
     }
 
     # In year 1, inspect the relationship in one of the colonies
@@ -736,6 +737,7 @@ for (Rep in 1:nRep) {
 
 print("Saving image data")
 save.image("SpringerSimulation_import.RData")
+
 
 
 
