@@ -9,15 +9,25 @@ library(Matrix)
 #data <- load("~/github//lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
 #data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.Rdata")
 print("Reading in the data")
-data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import_objects.RData")
-Sinv <- readMM("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/Sinv.mm")
+data <- load("/Users/s2122596/Desktop/GitHub/Data /SpringerSimulation_import_objects.RData")
+Sinv <- readMM("/Users/s2122596/Desktop/GitHub/Data /Sinv2.mm")
 #save.image("~/Documents/")
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
 # Mellifera gets mated with a proportion of carnica drones
 
+#Plotting help 
+# The colourblind palette with grey:
+cbPalette <- c("#E69F00", "#0072B2", "#56B4E9", "#009E73", "#F0E442", "#D55E00", "#CC79A7")
+# To use for fills, add
+scale_fill_manual(values=cbPalette)
+
+# To use for line and point colors, add
+scale_colour_manual(values=cbPalette)
+
 print("Assigning objects")
+
 ped <- pedigree
 caste <- caste
 # Colony in year 1
@@ -52,7 +62,7 @@ idCar1 <- colonyCar1$ID
 queens1 <- springerQueens1
 ibsQueens1 <- queens1$IBS
 ibsQueens1_csdChr <- queens1$IBScsdChr
-ibsQueensa1_csd <- queens1$IBSCsd
+ibsQueens1_csd <- queens1$IBSCsd
 ibdQueens1 <- queens1$IBD
 ibdQueens1_csdChr <- queens1$IBDcsdChr
 ibdQueens1_csd <- queens1$IBDCsd
@@ -118,7 +128,6 @@ getS <- function(Sinv, ids, with = ids, diagOnly = F, vector = F) {
 
 # Plotting functions
 prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NULL,  idDF) {
-  #IBS
   print("IBS WW")
   tmp <- ibsDF[idDF$workers, idDF$workers]
   IBS_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
@@ -129,7 +138,7 @@ prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
   IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
   ret <- rbind(ret, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
   
-  if (!is.na(Sinv)) {
+  if (!is.null(Sinv)) {
     print("IBDe WW")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$workers, vector = TRUE), 
                                  Rel = "WW", Type = "IBDe"))
@@ -144,7 +153,7 @@ prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
   IBDr_WD1 <- c(ibdDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBDr_WD1, Rel = "WD", Type = "IBDr"))
   
-  if (!is.na(pedDF)) {
+  if (!is.null(Sinv)) {
     print("IBDe WD")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$workers, with = idDF$drones, vector = TRUE), 
                                  Rel = "WD", Type = "IBDe"))
@@ -267,25 +276,27 @@ prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sin
 
 plotColony <- function(df, rel = c("WD", "WW"), type = c("IBDr", "IBDe")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
-  plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
+  df$Rel <- factor(df$Rel, levels= c("WW", "WD"))
+  p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
                  aes(x = Value, fill = Rel)) +
-    geom_histogram(binwidth = 0.01, position = "identity") +
-    facet_grid(rows = vars(Type), scales = "free") + xlim(c(-0.01, 2.01))
+    geom_histogram(binwidth = 0.01, position = "identity") + facet_grid(rows = vars(Type), scales = "free") + xlim(c(-0.01, 2.01))
+  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
 plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   if (plot == "histogram") {
-    plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Pops)) +
+    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
+                   aes(x = Value, fill = Rel)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
       facet_grid(cols = vars(Type)) + xlim(c(-0.01, 2.01))
   } else if (plot == "density") {
-    plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) + 
-      stat_density(aes(x=Value, y=..scaled.., color=Pops), position="dodge", geom="line") +
+    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) + 
+      stat_density(aes(x=Value, y=..scaled..), position="dodge", geom="line") +
       facet_grid(cols = vars(Type))
   }
+  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill"))
   return(plot)
 }
 
@@ -293,12 +304,13 @@ plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogr
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   if (plot == "histogram") {
     plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Pops)) +
+                   
+                   aes(x = Value, fill = cbPalette)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
       facet_grid(cols = vars(Type)) + xlim(c(-0.01, 2.01))
   } else if (plot == "density") {
     plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) + 
-      stat_density(aes(x=Value, color=Pops), position="dodge", geom="line") +
+      stat_density(aes(x=Value, color=cbPalette), position="dodge", geom="line") +
       facet_grid(cols = vars(Type)) + theme_by(base_size = 18)
   }
   return(plot)
@@ -318,7 +330,7 @@ plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
     
     n <- length(unique(df$name[df$Pop.y == "Mel"]))/2
     breaks = list(df %>% group_by(Pop.y) %>% summarise(mean = unique(name)[n]) %>% unite(PopMean, Pop.y, mean, sep=""))[[1]]$PopMean
-    plot <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() +
+    plot <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = cbPalette)) + geom_tile() +
       scale_x_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
       scale_y_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
       xlab("") + ylab("") +
@@ -326,7 +338,7 @@ plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
     
     
   } else {
-    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() +
+    plot <- ggplot(data = df, aes(x = ID, y = name, fill = cbPalette)) + geom_tile() +
       facet_grid(rows = vars(Method))
   }
   return(plot)
@@ -335,47 +347,70 @@ plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
 ########################################################
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
-# Plot year 1
+# Plot CAR year 1
 relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
-plotCar1 <- plotColony(relCar1, type = c("IBDe", "IBDr", "IBS"))
-pdf("Plot_Carnica1.pdf")
-plotCar1
-dev.off()
 
-# Plot year 10
+plotCar1ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
+plotCar1ibd
+
+plotCar1ibd_ibs <- plotColony(relCar1, type = c("IBDr", "IBS"))
+plotCar1ibd_ibs
+
+# Plot CAR year 10
 relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
-plotCar10 <- plotColony(relCar10, type = c("IBS", "IBDe", "IBDr"))
-pdf("Plot_Carnica10.pdf")
-plotCar10
+
+plotCar10ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
+plotCar10ibd
+
+plotCar10ibd_ibs<- plotColony(relCar10, type = c("IBDr", "IBS"))
+plotCar10ibd_ibs
+
+#Plot CAR csd Year 10
+relCar10_csd <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
+plotCar10_csd <- plotColony(relCar10_csd)
+plotCar10_csd
+
+#Plot CAR csd chr Year 10
+relCar10_csdChr <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, Sinv = Sinv, idDF = idCar10)
+plotCar10_csdChr <- plotColony(relCar10_csdChr)
+plotCar10_csdChr
+
+#Save pdfs
+pdf("Plot_Carnica1ibd.pdf")
+plotCar1ibd
 dev.off()
 
-#
+pdf("Plot_Carnica1ibd_ibs.pdf")
+plotCar1ibd_ibs
+dev.off()
+
+pdf("Plot_Carnica10ibd.pdf")
+plotCar10ibd
+dev.off()
+
+pdf("Plot_Carnica10ibd_ibs.pdf")
+plotCar10ibd_ibs
+dev.off()
+
+pdf("Plot_Carnica10_csd.pdf")
+plotCar10_csd
+dev.off()
+
+pdf("Plot_Carnica10_csdChr.pdf")
+plotCar10_csdChr
+dev.off()
+
+
 # #Plot Only workers in year 1 and year 10
 # WW1 <- rel1[rel1$Rel %in% c("WW") & rel1$Type %in% c("IBDr", "IBDe"), ]
 # WW1$Year <- 1
 # WW10 <- rel10[rel10$Rel %in% c("WW") & rel10$Type %in% c("IBDr", "IBDe"), ]
 # WW10$Year <- 10
 # WW1_10 <- rbind(WW1, WW10)
-#
 # plotWW_1_10 <- ggplot(WW1_10,
 #                  aes(x = Value, fill = Type)) + geom_histogram(binwidth = 0.01, position = "identity") +
 #   facet_grid(cols = vars(Year), scales = "free") + xlim(c(-0.01, 2.01))
-#
 # plotWW_1_10
-
-#Plot csd Year 10
-relCar10_csd <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
-plotCar10_csd <- plotColony(relCar10_csd)
-pdf("Plot_Carnica10_csd.pdf")
-plotCar10_csd
-dev.off()
-
-#Plot csd chr Year 10
-relCar10_csdChr <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, Sinv = Sinv, idDF = idCar10)
-plotCar10_csdChr <- plotColony(relCar10_csdChr)
-pdf("Plot_Carnica10_csdChr.pdf")
-plotCar10_csdChr
-dev.off()
 
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
@@ -387,24 +422,23 @@ plotQueens1F <- plotQueensF(relQueens1, type = c("IBDr", "IBS", "IBDe"), plot = 
 pdf("Plot_Queens1.pdf")
 plotQueens1
 dev.off()
-pdf("Plot_Queens1F.pdf")
+pdf("Plot_Queens1F.pdf")  #F = inbreeding 
 plotQueens1F
 dev.off()
 relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
 plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1)
-pdf("Plot_Queens1h.pdf")
+pdf("Plot_Queens1h.pdf") #h = heatmaps 
 plotQueens1h
 dev.off()
 
 #Plot csd Year 1
-relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, pedDF = IBDe, idDF = idQueens1)
+relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
 plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd)
 pdf("Plot_Queens1_csd.pdf")
 plotQueens1_csd
 dev.off()
 
 #Plot csd chr Year 1
-relQueens1_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, pedDF = IBDe, idDF = idQueens1)
 plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr)
 pdf("Plot_Queens1_csdChr.pdf")
 plotQueens1_csdChr
@@ -430,14 +464,14 @@ plotQueens10h
 dev.off()
 
 #Plot csd Year 10
-relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, pedDF = IBDe, idDF = idQueens10)
+relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd)
 pdf("Plot_Queens10_csd.pdf")
 plotQueens10_csd
 dev.off()
 
 #Plot csd chr Year 10
-relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, pedDF = IBDe, idDF = idQueens10)
+relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr)
 pdf("Plot_Queens10_csdChr.pdf")
 plotQueens10_csdChr
