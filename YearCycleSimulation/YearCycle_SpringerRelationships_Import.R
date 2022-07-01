@@ -112,25 +112,6 @@ computeRelationship_pedigree <- function(pedigree) {
   return(IBDe)
 }
 
-getCsdInfo <- function (colonies, subspecies = NULL) {
-  totalCsd <- nCsdAlleles(colonies, collapse = TRUE)
-  csdVariability <- data.frame()
-  pDiploidDrones <- data.frame()
-  for (n in 1:nColonies(colonies)){
-    csdVariability <- rbind(csdVariability,
-                            c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                              nCSD = nCsdAlleles(colonies[[n]], collapse = TRUE),
-                              totalCSD = totalCsd, 
-                              subspecies = subspecies))
-    pDiploidDrones <- rbind(pDiploidDrones,
-                            c(Rep = Rep, year = year, id = colonies[[n]]@id,
-                              pQueenHomBrood = calcQueensPHomBrood(colonies[[n]]), subspecies = subspecies))
-  }
-  colnames(csdVariability) <- c("Rep", "year", "id", "nCSD", "totalCSD", "subspecies")
-  colnames(pDiploidDrones) <- c("Rep", "year", "id", "pQueenHomBrood", "subspecies")
-  return(list(csdVariability = csdVariability, pDiploidDrones = pDiploidDrones))
-}
-
 
 maintainApiarySize <- function(age0 = NULL, age1 = NULL) {
   if ((nColonies(age0) + nColonies(age1)) > apiarySize) { # check if the sum of all colonies is greater than apiary size
@@ -219,8 +200,26 @@ pImport <- 0.5
 
 # Create data frames for recording the number of age0 and age1 colonies, csd variability and for recording cpu time
 loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
-csdVariability <- data.frame(Rep = NA, year = NA, id = NA, nCSD = NA, totalCSD = NA, subspecies = NA)
-pDiploidDrones <- data.frame(Rep = NA, year = NA, id = NA, pQueenHomBrood = NA, subspecies = NA)
+
+# Prepare recording function
+data_rec <- function(datafile, colonies, year, population) {
+  queens = mergePops(getQueen(age0p1$Mel))
+  datafile = rbind(datafile,
+                   data.frame(colonies      = deparse(substitute(colonies)),
+                              population    = population, 
+                              year          = year, 
+                              Id            = queens@id,
+                              MId           = queens@mother,
+                              FId           = queens@father,
+                              nFathers      = nFathers(queens),
+                              nDPQ          = sapply(getFathers(queens), function(x) length(unique(x@mother))),
+                              nCsdAlColony  = sapply(colonies@colonies, function(x) nCsdAlleles(x, collapse = TRUE)),
+                              nCsdApiary    = rep(nCsdAlleles(colonies, collapse = TRUE), queens@nInd),
+                              pHomBrood     = calcQueensPHomBrood(queens)
+                   ) 
+  )
+}
+colonyRecords = NULL
 
 # Start of the rep-loop ---------------------------------------------------------------------
 for (Rep in 1:nRep) {
@@ -290,6 +289,11 @@ for (Rep in 1:nRep) {
       age1 <- list(Mel = createColonies(x = queens$Mel, n = apiarySize),
                    MelCross = createColonies(x = queens$MelCross, n = apiarySize),
                    Car = createColonies(x = queens$Car, n = apiarySize))
+      print("Record initial colonies")
+      colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$Mel, year = year, population = "Mel")
+      colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$MelCross, year = year, population = "MelCross")
+      colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$Car, year = year, population = "Car")
+      
     } else {
       age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
       age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
@@ -632,6 +636,9 @@ for (Rep in 1:nRep) {
     age0 <- list(Mel = c(age0p1$Mel, age0p2$Mel),
                  MelCross = c(age0p1$MelCross, age0p2$MelCross),
                  Car = c(age0p1$Car, age0p2$Car))
+    colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$Mel, year = year, population = "Mel")
+    colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$MelCross, year = year, population = "MelCross")
+    colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$Car, year = year, population = "Car")
 
     # Period3 ------------------------------------------------------------------
     # Collapse age0 queens
@@ -646,19 +653,6 @@ for (Rep in 1:nRep) {
                  MelCross = selectColonies(age1$MelCross, p = (1 - p3collapseAge1)),
                  Car = selectColonies(age1$Car, p = (1 - p3collapseAge1)))
     age2 <- list(Mel = NULL, MelCross=NULL, Car = NULL) #We don't need this but just to show the workflow!!!
-
-    #Collect CSD info
-    print("Collect csd info")
-    print(Sys.info())
-    csdInfoMel <- getCsdInfo(age0$Mel, subspecies = "Mel")
-    csdInfoMelCross <- getCsdInfo(age0$MelCross, subspecies = "MelCross")
-    csdInfoCar <- getCsdInfo(age0$Car, subspecies = "Car")
-    csdVariability <- rbind(csdVariability, csdInfoMel$csdVariability)
-    csdVariability <- rbind(csdVariability, csdInfoMelCross$csdVariability)
-    csdVariability <- rbind(csdVariability, csdInfoCar$csdVariability)
-    pDiploidDrones <-rbind(pDiploidDrones, csdInfoMel$pDiploidDrones)
-    pDiploidDrones <-rbind(pDiploidDrones, csdInfoMelCross$pDiploidDrones)
-    pDiploidDrones <-rbind(pDiploidDrones, csdInfoCar$DiploidDrones)
 
 
     # Maintain the number of colonies ------------------------------------------
@@ -728,7 +722,7 @@ for (Rep in 1:nRep) {
        springerColony1_Car, springerColony10_Car,
        springerQueens1, springerQueensPop1,
        springerQueens10, springerQueensPop10,
-       csdVariability, pDiploidDrones, file = "SpringerSimulation_import_objects.RData")
+       colonyRecords, file = "SpringerSimulation_import_objects.RData")
 
   IBDe <- computeRelationship_pedigree(SP$pedigree)
   save(IBDe, file = "IBDe_SpringerSimulation.RData")
