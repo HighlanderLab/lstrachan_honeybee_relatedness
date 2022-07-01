@@ -2,15 +2,16 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(Matrix)
-#Laura's wd :
-##setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
-# Plot the relationships from the springer simulation
-#Laura's data file :
-#data <- load("~/github//lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation.Rdata")
-#data <- load("~/EddieDir/YearCycleSimulation/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.Rdata")
+library(SIMplyBee)
+
 print("Reading in the data")
+#Laura's laptop data 
 data <- load("/Users/s2122596/Desktop/GitHub/Data /SpringerSimulation_import_objects.RData")
 Sinv <- readMM("/Users/s2122596/Desktop/GitHub/Data /Sinv2.mm")
+
+#Eddie data 
+#data <- load("SpringerSimulation_import_objects.RData")
+#Sinv <- readMM("Sinv2.mm")
 #save.image("~/Documents/")
 
 # The data contains two populations - mellifera and carnica
@@ -192,7 +193,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
   IBDr$Rel <- "QQ"
   
   #IBDe
-  if (!is.na(Sinv)) {
+  if (!is.null(Sinv)) {
     IBDeMelMelCross <- data.frame(Value = getS(Sinv, ids = melID, with = melCrossID, vector = T),
                                   Pops = "Mel_MelCross")
     IBDeMelCar <- data.frame(Value = getS(Sinv, ids = melID, with = carID, vector = T),
@@ -227,7 +228,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
   
   ret <- rbind(IBS, IBDr)
   
-  if (!is.na(Sinv)) { #TODO: CHANGE THIS WHEN YOU GET PEDIGREE ESTIMATES
+  if (!is.null(Sinv)) { #TODO: CHANGE THIS WHEN YOU GET PEDIGREE ESTIMATES
     inbIBDe <- rbind(data.frame(Value = getS(Sinv, melID, diagOnly = TRUE),
                                 Pops = "Mel"),
                      data.frame(Value = getS(Sinv, melCrossID, diagOnly = TRUE),
@@ -259,7 +260,7 @@ prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sin
   ibdrDFL$Method <- "IBDr"
   ret <- rbind(ibsDFL, ibdrDFL)
   
-  if (!is.na(Sinv)) {
+  if (!is.null(Sinv)) {
     ibdeDF <-  as.data.frame(as.matrix(getS(Sinv, ids = idDF)))
     rownames(ibdeDF) <- idDF
     colnames(ibdeDF) <- idDF
@@ -296,23 +297,23 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe"), plot = "hist
       stat_density(aes(x=Value, y=..scaled..), position="dodge", geom="line") +
       facet_grid(cols = vars(Type))
   }
-  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill"))
+  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
 plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   if (plot == "histogram") {
-    plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   
-                   aes(x = Value, fill = cbPalette)) +
+    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
+                   aes(x = Value, fill = Rel)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
       facet_grid(cols = vars(Type)) + xlim(c(-0.01, 2.01))
   } else if (plot == "density") {
-    plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) + 
-      stat_density(aes(x=Value, color=cbPalette), position="dodge", geom="line") +
+    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) + 
+      stat_density(aes(x=Value, color=Rel), position="dodge", geom="line") +
       facet_grid(cols = vars(Type)) + theme_by(base_size = 18)
   }
+  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
@@ -335,8 +336,6 @@ plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
       scale_y_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
       xlab("") + ylab("") +
       facet_grid(rows = vars(Method))
-    
-    
   } else {
     plot <- ggplot(data = df, aes(x = ID, y = name, fill = cbPalette)) + geom_tile() +
       facet_grid(rows = vars(Method))
@@ -347,7 +346,8 @@ plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
 ########################################################
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
-# Plot CAR year 1
+#Plot carnica year 1
+print("Plot carnica year 1") 
 relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
 
 plotCar1ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
@@ -357,6 +357,7 @@ plotCar1ibd_ibs <- plotColony(relCar1, type = c("IBDr", "IBS"))
 plotCar1ibd_ibs
 
 # Plot CAR year 10
+print("Plot carnica year 10") 
 relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
 
 plotCar10ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
@@ -416,30 +417,60 @@ dev.off()
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
 #Plot queens Year 1
+print("Plot queens year 1") 
 relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
-plotQueens1 <- plotQueens(relQueens1, type = c("IBDr", "IBS", "IBDe"), plot = "histogram")
-plotQueens1F <- plotQueensF(relQueens1, type = c("IBDr", "IBS", "IBDe"), plot = "histogram")
-pdf("Plot_Queens1.pdf")
-plotQueens1
-dev.off()
-pdf("Plot_Queens1F.pdf")  #F = inbreeding 
-plotQueens1F
-dev.off()
+
+plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens1ibd
+
+plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"), plot = "histogram")
+plotQueens1ibs
+
+plotQueens1Fibd <- plotQueensF(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens1Fibd
+
+plotQueens1Fibs <- plotQueensF(relQueens1, type = c("IBS"), plot = "histogram")
+plotQueens1Fibs
+
 relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
 plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1)
-pdf("Plot_Queens1h.pdf") #h = heatmaps 
 plotQueens1h
-dev.off()
 
 #Plot csd Year 1
 relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
 plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd)
+plotQueens1_csd
+
+#Plot csd chr Year 1
+plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr)
+plotQueens1_csdChr
+
+#save pdfs
+#Save pdfs
+pdf("Plot_Queens1ibd.pdf")
+plotQueens1ibd
+dev.off()
+
+pdf("Plot_Queens1ibs.pdf")
+plotQueens1ibs
+dev.off()
+
+pdf("Plot_Queens1Fibd.pdf")  #F = inbreeding 
+plotQueens1Fibd
+dev.off()
+
+pdf("Plot_Queens1Fibs.pdf")  
+plotQueens1Fibs
+dev.off()
+
+pdf("Plot_Queens1h.pdf") #h = heatmaps 
+plotQueens1h
+dev.off()
+
 pdf("Plot_Queens1_csd.pdf")
 plotQueens1_csd
 dev.off()
 
-#Plot csd chr Year 1
-plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr)
 pdf("Plot_Queens1_csdChr.pdf")
 plotQueens1_csdChr
 dev.off()
@@ -448,36 +479,62 @@ dev.off()
 
 # --- Year 10 ---#
 #Plot queens Year 10
+print("Plot queens year 1") 
+
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
-plotQueens10 <- plotQueens(relQueens10, type = c("IBDr", "IBS", "IBDe"), plot = "histogram")
-plotQueens10F <- plotQueensF(relQueens10, type = c("IBDr", "IBS", "IBDe"), plot = "histogram")
-pdf("Plot_Queens10.pdf")
-plotQueens10
-dev.off()
-pdf("Plot_Queens10F.pdf")
-plotQueens10F
-dev.off()
+plotQueens10ibd <- plotQueens(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens10ibd
+
+plotQueens10ibs <- plotQueens(relQueens10, type = c("IBS"), plot = "histogram")
+plotQueens10ibs
+
+plotQueens10Fibd <- plotQueensFibd(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens10Fibd
+
+plotQueens10Fibs <- plotQueensFibs(relQueens10, type = c( "IBS"), plot = "histogram")
+plotQueens10Fibs
+
 relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idDF = idQueens10)
 plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10)
-pdf("Plot_Queens10h.pdf")
 plotQueens10h
-dev.off()
 
 #Plot csd Year 10
 relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd)
-pdf("Plot_Queens10_csd.pdf")
-plotQueens10_csd
-dev.off()
+
 
 #Plot csd chr Year 10
 relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr)
+
+#save pdfs
+pdf("Plot_Queens10ibd.pdf")
+plotQueens10ibd
+dev.off()
+
+pdf("Plot_Queens10ibs.pdf")
+plotQueens10ibs
+dev.off()
+
+pdf("Plot_Queens10Fibd.pdf")
+plotQueens10Fibd
+dev.off()
+
+pdf("Plot_Queens10Fibs.pdf")
+plotQueens10Fibs
+dev.off()
+
+pdf("Plot_Queens10h.pdf")
+plotQueens10h
+dev.off()
+
+pdf("Plot_Queens10_csd.pdf")
+plotQueens10_csd
+dev.off()
+
 pdf("Plot_Queens10_csdChr.pdf")
 plotQueens10_csdChr
 dev.off()
-
-
 
 ### Csd
 csdVariability <- csdVariability[!is.na(csdVariability$subspecies),]

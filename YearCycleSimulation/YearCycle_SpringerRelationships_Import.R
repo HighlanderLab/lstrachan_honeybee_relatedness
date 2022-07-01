@@ -183,7 +183,7 @@ nYear <- 10
 # Number of colonies in the apiary
 apiarySize <- 300
 # Number of workers in a full colony
-nWorkers <- 0 # TODO: change to 20K
+nWorkers <- 2 # TODO: change to 20K
 # Number of drones in a full colony
 nDrones <- 50 #nWorkers * 0.2
 # Number of drones the queen mates with (could also be a function)
