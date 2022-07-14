@@ -203,7 +203,7 @@ loopTime <- data.frame(Rep = NA, tic = NA, toc = NA, msg = NA, time = NA)
 
 # Prepare recording function
 data_rec <- function(datafile, colonies, year, population) {
-  queens = mergePops(getQueen(age0p1$Mel))
+  queens = mergePops(getQueen(colonies))
   datafile = rbind(datafile,
                    data.frame(colonies      = deparse(substitute(colonies)),
                               population    = population, 
@@ -671,7 +671,6 @@ for (Rep in 1:nRep) {
     }
 
   } # Year-loop
-
 
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
