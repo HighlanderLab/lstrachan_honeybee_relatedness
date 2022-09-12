@@ -403,12 +403,12 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = pullColonies(age1$Mel, p = p1swarm),
                 MelCross = pullColonies(age1$MelCross, p = p1swarm),
                 Car = pullColonies(age1$Car, p = p1swarm))
-    age1 <- list(Mel = tmp$Mel$remainingColonies,
-                 MelCross = tmp$MelCross$remainingColonies,
-                 Car = tmp$Car$remainingColonies)
-    tmp <- list(Mel = swarm(tmp$Mel$pulledColonies),
-                MelCross = swarm(tmp$MelCross$pulledColonies),
-                Car = swarm(tmp$Car$pulledColonies))
+    age1 <- list(Mel = tmp$Mel$remnant,
+                 MelCross = tmp$MelCross$remnant,
+                 Car = tmp$Car$remnant)
+    tmp <- list(Mel = swarm(tmp$Mel$pulled),
+                MelCross = swarm(tmp$MelCross$pulled),
+                Car = swarm(tmp$Car$pulled))
     age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$remnants),
                    MelCross = c(age0p1$MelCross, tmp$MelCross$remnants),
                    Car = c(age0p1$Car, tmp$Car$remnants))
