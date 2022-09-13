@@ -7,8 +7,8 @@ computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NU
   if (isColony(x)) {
     # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUp(x = x,
-                            nWorkers = 1000,
-                            nDrones = 200)
+                      nWorkers = 1000,
+                      nDrones = 200)
     # Extract the genotypes of all the colony members
     geno <- rbind(getCasteSegSiteGeno(colony, caste = "queen"),
                   getCasteSegSiteGeno(colony, caste = "workers"),
