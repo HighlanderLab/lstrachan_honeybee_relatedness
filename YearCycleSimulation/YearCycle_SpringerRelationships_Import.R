@@ -117,19 +117,19 @@ maintainApiarySize <- function(age0 = NULL, age1 = NULL) {
   if ((nColonies(age0) + nColonies(age1)) > apiarySize) { # check if the sum of all colonies is greater than apiary size
     IDsplits <- getId(age0)[hasSplit(age0)] # get the IDs of age 0 that are splits
     splits0 <- pullColonies(age0, ID = IDsplits) # pull the splits out of age 0
-    age0split <- splits0$pulledColonies # create an object for age 0 splits
-    age0swarm <- splits0$remainingColonies # create an object for swarms and superseded colonies
+    age0split <- splits0$pulled # create an object for age 0 splits
+    age0swarm <- splits0$remnant # create an object for swarms and superseded colonies
     age0needed <- apiarySize - nColonies(age1) # calculate the number of age 0 colonies that are needed to fill up the apiary
     splitsNeeded <- age0needed - nColonies(age0swarm) # calculate the number of splits needed
     if (age0needed <= nColonies(age0swarm)) { # check if the number of age 0 colonies needed is lower or equal to age 0 swarms
       swarmID <- sample(getId(age0swarm), age0needed) # if yes, select the ids of swarms that will stay in apiary
       swarmTMP <- pullColonies(age0swarm, ID = swarmID) # pull out those selected age0 swarms
-      age0 <- swarmTMP$pulledColonies # put selected swarms to age 0 object
+      age0 <- swarmTMP$pulled # put selected swarms to age 0 object
     } else if (age0needed > nColonies(age0swarm)) { # in case when age 0 needed is grater than number of swarm select splits
       nSplitsNeeded <- age0needed - nColonies(age0swarm) # calculate the number of splits needed
       splitId <- sample(getId(age0split), nSplitsNeeded) # select ids of splits
       splitTmp <- pullColonies(age0split, ID = splitId) # pull the splits
-      splits <- splitTmp$pulledColonies # select pulled splits
+      splits <- splitTmp$pulled # select pulled splits
       age0 <- c(age0swarm, splits) # combine splits and swarms in age 0 object
     }
     return(age0)
@@ -356,24 +356,24 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = split(age1$Mel),
                 MelCross = split(age1$MelCross),
                 Car = split(age1$Car))
-    age1 <- list(Mel = tmp$Mel$remnants,
-                 MelCross = tmp$MelCross$remnants,
-                 Car = tmp$Car$remnants)
+    age1 <- list(Mel = tmp$Mel$remnant,
+                 MelCross = tmp$MelCross$remnant,
+                 Car = tmp$Car$remnant)
     # The queens of the splits are 0 years old
-    age0p1 <- list(Mel = tmp$Mel$splits, MelCross = tmp$MelCross$splits, Car = tmp$Car$splits)
+    age0p1 <- list(Mel = tmp$Mel$split, MelCross = tmp$MelCross$split, Car = tmp$Car$split)
 
     if (year > 1) {
       # Split all age2 colonies
       tmp <- list(Mel = split(age2$Mel),
                   MelCross = split(age2$MelCross),
                   Car = split(age2$Car))
-      age2 <- list(Mel = tmp$Mel$remnants,
-                   MelCross = tmp$MelCross$remnants,
-                   Car = tmp$Car$remnants)
+      age2 <- list(Mel = tmp$Mel$remnant,
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
       # The queens of the splits are 0 years old
-      age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$splits),
-                     MelCross = c(age0p1$MelCross, tmp$MelCross$splits),
-                     Car = c(age0p1$Car, tmp$Car$splits))
+      age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$split),
+                     MelCross = c(age0p1$MelCross, tmp$MelCross$split),
+                     Car = c(age0p1$Car, tmp$Car$split))
     }
 
     # Create virgin queens
@@ -409,12 +409,12 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = swarm(tmp$Mel$pulled),
                 MelCross = swarm(tmp$MelCross$pulled),
                 Car = swarm(tmp$Car$pulled))
-    age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$remnants),
-                   MelCross = c(age0p1$MelCross, tmp$MelCross$remnants),
-                   Car = c(age0p1$Car, tmp$Car$remnants))
-    age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarms),
-                 MelCross = c(age1$MelCross, tmp$MelCross$swarms),
-                 Car = c(age1$Car, tmp$Car$swarms))
+    age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$remnant),
+                   MelCross = c(age0p1$MelCross, tmp$MelCross$remnant),
+                   Car = c(age0p1$Car, tmp$Car$remnant))
+    age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarm),
+                 MelCross = c(age1$MelCross, tmp$MelCross$swarm),
+                 Car = c(age1$Car, tmp$Car$swarm))
 
 
     if (year > 1) {
@@ -423,17 +423,17 @@ for (Rep in 1:nRep) {
                   MelCross = pullColonies(age2$MelCross, p = p1swarm),
                   Car = pullColonies(age2$Car, p = p1swarm))
       age2 <- list(Mel = tmp$Mel$remainingColonies,
-                   MelCross = tmp$MelCross$remainingColonies,
-                   Car = tmp$Car$remainingColonies)
-      tmp <- list(Mel = swarm(tmp$Mel$pulledColonies),
-                  MelCross = swarm(tmp$MelCross$pulledColonies),
-                  Car = swarm(tmp$Car$pulledColonies))
-      age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$remnants),
-                     MelCross = c(age0p1$MelCross, tmp$MelCross$remnants),
-                     Car = c(age0p1$Car, tmp$Car$remnants))
-      age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarms),
-                   MelCross = c(age2$MelCross, tmp$MelCross$swarms),
-                   Car = c(age2$Car, tmp$Car$swarms))
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
+      tmp <- list(Mel = swarm(tmp$Mel$pulled),
+                  MelCross = swarm(tmp$MelCross$pulled),
+                  Car = swarm(tmp$Car$pulled))
+      age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel$remnant),
+                     MelCross = c(age0p1$MelCross, tmp$MelCross$remnant),
+                     Car = c(age0p1$Car, tmp$Car$remnant))
+      age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarm),
+                   MelCross = c(age2$MelCross, tmp$MelCross$swarm),
+                   Car = c(age2$Car, tmp$Car$swarm))
     }
 
     # Supersede age1 colonies
@@ -442,12 +442,12 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = pullColonies(age1$Mel, p = p1supersede),
                 MelCross = pullColonies(age1$MelCross, p = p1supersede),
                 Car = pullColonies(age1$Car, p = p1supersede))
-    age1 <- list(Mel = tmp$Mel$remainingColonies,
-                 MelCross = tmp$MelCross$remainingColonies,
-                 Car = tmp$Car$remainingColonies)
-    tmp <- list(Mel = supersede(tmp$Mel$pulledColonies),
-                MelCross = supersede(tmp$MelCross$pulledColonies),
-                Car = supersede(tmp$Car$pulledColonies))
+    age1 <- list(Mel = tmp$Mel$remnant,
+                 MelCross = tmp$MelCross$remnant,
+                 Car = tmp$Car$remnant)
+    tmp <- list(Mel = supersede(tmp$Mel$pulled),
+                MelCross = supersede(tmp$MelCross$pulled),
+                Car = supersede(tmp$Car$pulled))
     age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel),
                    MelCross = c(age0p1$MelCross, tmp$MelCross),
                    Car = c(age0p1$Car, tmp$Car))
@@ -458,12 +458,12 @@ for (Rep in 1:nRep) {
       tmp <- list(Mel = pullColonies(age2$Mel, p = p1supersede),
                   MelCross = pullColonies(age2$MelCross, p = p1supersede),
                   Car = pullColonies(age2$Car, p = p1supersede))
-      age2 <- list(Mel = tmp$Mel$remainingColonies,
-                   MelCross = tmp$MelCross$remainingColonies,
-                   Car = tmp$Car$remainingColonies)
-      tmp <- list(Mel = supersede(tmp$Mel$pulledColonies),
-                  MelCross = supersede(tmp$MelCross$pulledColonies),
-                  Car = supersede(tmp$Car$pulledColonies))
+      age2 <- list(Mel = tmp$Mel$remnant,
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
+      tmp <- list(Mel = supersede(tmp$Mel$pulled),
+                  MelCross = supersede(tmp$MelCross$pulled),
+                  Car = supersede(tmp$Car$pulled))
       age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel),
                      MelCross = c(age0p1$MelCross, tmp$MelCross),
                      Car = c(age0p1$Car, tmp$Car))
@@ -513,38 +513,38 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = pullColonies(age1$Mel, p = p2swarm),
                 MelCross = pullColonies(age1$MelCross, p = p2swarm),
                 Car = pullColonies(age1$Car, p = p2swarm))
-    age1 <- list(Mel = tmp$Mel$remainingColonies,
-                 MelCross = tmp$MelCross$remainingColonies,
-                 Car = tmp$Car$remainingColonies)
-    tmp <- list(Mel = swarm(tmp$Mel$pulledColonies),
-                MelCross = swarm(tmp$MelCross$pulledColonies),
-                Car = swarm(tmp$Car$pulledColonies))
+    age1 <- list(Mel = tmp$Mel$remnant,
+                 MelCross = tmp$MelCross$remnant,
+                 Car = tmp$Car$remnant)
+    tmp <- list(Mel = swarm(tmp$Mel$pulled),
+                MelCross = swarm(tmp$MelCross$pulled),
+                Car = swarm(tmp$Car$pulled))
     # The queens of the remnant colonies are of age 0
-    age0p2 <- list(Mel = tmp$Mel$remnants,
-                   MelCross = tmp$MelCross$remnants,
-                   Car = tmp$Car$remnants)
-    age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarms),
-                 MelCross = c(age1$MelCross, tmp$MelCross$swarms),
-                 Car = c(age1$Car, tmp$Car$swarms))
+    age0p2 <- list(Mel = tmp$Mel$remnant,
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
+    age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarm),
+                 MelCross = c(age1$MelCross, tmp$MelCross$swarm),
+                 Car = c(age1$Car, tmp$Car$swarm))
 
     if (year > 1) {
       # Swarm a percentage of age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p2swarm),
                   MelCross = pullColonies(age2$MelCross, p = p2swarm),
                   Car = pullColonies(age2$Car, p = p2swarm))
-      age2 <- list(Mel = tmp$Mel$remainingColonies,
-                   MelCross = tmp$MelCross$remainingColonies,
-                   Car = tmp$Car$remainingColonies)
-      tmp <- list(Mel = swarm(tmp$Mel$pulledColonies),
-                  MelCross = swarm(tmp$MelCross$pulledColonies),
-                  Car = swarm(tmp$Car$pulledColonies))
+      age2 <- list(Mel = tmp$Mel$remnant,
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
+      tmp <- list(Mel = swarm(tmp$Mel$pulled),
+                  MelCross = swarm(tmp$MelCross$pulled),
+                  Car = swarm(tmp$Car$pulled))
       # The queens of the remnant colonies are of age 0
-      age0p2 <- list(Mel = tmp$Mel$remnants,
-                     MelCross = tmp$MelCross$remnants,
-                     Car = tmp$Car$remnants)
-      age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarms),
-                   MelCross = c(age2$MelCross, tmp$MelCross$swarms),
-                   Car = c(age2$Car, tmp$Car$swarms))
+      age0p2 <- list(Mel = tmp$Mel$remnant,
+                     MelCross = tmp$MelCross$remnant,
+                     Car = tmp$Car$remnant)
+      age2 <- list(Mel = c(age2$Mel, tmp$Mel$swarm),
+                   MelCross = c(age2$MelCross, tmp$MelCross$swarm),
+                   Car = c(age2$Car, tmp$Car$swarm))
     }
 
     # Supersede a part of age1 colonies
@@ -554,12 +554,12 @@ for (Rep in 1:nRep) {
     tmp <- list(Mel = pullColonies(age1$Mel, p = p2supersede),
                 MelCross = pullColonies(age1$MelCross, p = p2supersede),
                 Car = pullColonies(age1$Car, p = p2supersede))
-    age1 <- list(Mel = tmp$Mel$remainingColonies,
-                 MelCross = tmp$MelCross$remainingColonies,
-                 Car = tmp$Car$remainingColonies)
-    tmp <- list(Mel = supersede(tmp$Mel$pulledColonies),
-                MelCross = supersede(tmp$MelCross$pulledColonies),
-                Car = supersede(tmp$Car$pulledColonies))
+    age1 <- list(Mel = tmp$Mel$remnant,
+                 MelCross = tmp$MelCross$remnant,
+                 Car = tmp$Car$remnant)
+    tmp <- list(Mel = supersede(tmp$Mel$pulled),
+                MelCross = supersede(tmp$MelCross$pulled),
+                Car = supersede(tmp$Car$pulled))
     # The queens of superseded colonies are of age 0
     age0p2 <- list(Mel = c(age0p2$Mel, tmp$Mel),
                    MelCross = c(age0p2$MelCross, tmp$MelCross),
@@ -570,12 +570,12 @@ for (Rep in 1:nRep) {
       tmp <- list(Mel = pullColonies(age2$Mel, p = p2supersede),
                   MelCross = pullColonies(age2$MelCross, p = p2supersede),
                   Car = pullColonies(age2$Car, p = p2supersede))
-      age2 <- list(Mel = tmp$Mel$remainingColonies,
-                   MelCross = tmp$MelCross$remainingColonies,
-                   Car = tmp$Car$remainingColonies)
-      tmp <- list(Mel = supersede(tmp$Mel$pulledColonies),
-                  MelCross = supersede(tmp$MelCross$pulledColonies),
-                  Car = supersede(tmp$Car$pulledColonies))
+      age2 <- list(Mel = tmp$Mel$remnant,
+                   MelCross = tmp$MelCross$remnant,
+                   Car = tmp$Car$remnant)
+      tmp <- list(Mel = supersede(tmp$Mel$pulled),
+                  MelCross = supersede(tmp$MelCross$pulled),
+                  Car = supersede(tmp$Car$pulled))
       # The queens of superseded colonies are of age 0
       age0p2 <- list(Mel = c(age0p2$Mel, tmp$Mel),
                      MelCross = c(age0p2$MelCross, tmp$MelCross),
