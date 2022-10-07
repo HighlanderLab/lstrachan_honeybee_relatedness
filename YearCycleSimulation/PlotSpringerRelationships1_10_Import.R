@@ -115,7 +115,7 @@ getS <- function(Sinv, ids, with = ids, diagOnly = F, vector = F) {
   ids <- as.numeric(ids)
   with <- as.numeric(with)
   x <- sparseMatrix(i = ids, j = 1:length(ids), dims = c(nrow(Sinv), length(ids)))
-  M1 <- as(x, "dgCMatrix")
+  M1 <- as(x, "dMatrix")
   Sids <- solve(Sinv, M1)[with,]
 
   if (diagOnly) {
@@ -287,30 +287,35 @@ plotColony <- function(df, rel = c("WD", "WW"), type = c("IBDr", "IBDe")) {
 
 plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
+  df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
   if (plot == "histogram") {
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Rel)) +
+                   aes(x = Value, fill = Pops)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
-      facet_grid(cols = vars(Type)) + xlim(c(-0.01, 2.01))
+      facet_grid(cols = vars(Type)) + xlim(c(-1.01, 2.01)) #IBS not to scale so increased scale
   } else if (plot == "density") {
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
       stat_density(aes(x=Value, y=..scaled..), position="dodge", geom="line") +
       facet_grid(cols = vars(Type))
+  } else if (plot == "scatter") {
+    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
+      geom_point(aes(x = Value, y = 1:62424,  colour = Pops, shape = Type))
   }
   plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
+
 plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   if (plot == "histogram") {
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Rel)) +
+                   aes(x = Value - 1, fill = Pops)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
       facet_grid(cols = vars(Type)) + xlim(c(-0.01, 2.01))
   } else if (plot == "density") {
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
-      stat_density(aes(x=Value, color=Rel), position="dodge", geom="line") +
+      stat_density(aes(x=Value, color= Pops), position="dodge", geom="line") +
       facet_grid(cols = vars(Type)) + theme_by(base_size = 18)
   }
   plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
@@ -356,6 +361,9 @@ plotCar1ibd
 plotCar1ibd_ibs <- plotColony(relCar1, type = c("IBDr", "IBS"))
 plotCar1ibd_ibs
 
+plotCar1 <- plotColony(relCar1, type = c("IBDe", "IBDr","IBS" ))
+plotCar1
+
 # Plot CAR year 10
 print("Plot carnica year 10")
 relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
@@ -365,6 +373,9 @@ plotCar10ibd
 
 plotCar10ibd_ibs<- plotColony(relCar10, type = c("IBDr", "IBS"))
 plotCar10ibd_ibs
+
+plotCar10 <- plotColony(relCar10, type = c("IBDe", "IBDr","IBS" ))
+plotCar10
 
 #Plot CAR csd Year 10
 relCar10_csd <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
@@ -385,12 +396,20 @@ pdf("Plot_Carnica1ibd_ibs.pdf")
 plotCar1ibd_ibs
 dev.off()
 
+pdf("Plot_Carnica1.pdf")
+plotCar1
+dev.off()
+
 pdf("Plot_Carnica10ibd.pdf")
 plotCar10ibd
 dev.off()
 
 pdf("Plot_Carnica10ibd_ibs.pdf")
 plotCar10ibd_ibs
+dev.off()
+
+pdf("Plot_Carnica10.pdf")
+plotCar10
 dev.off()
 
 pdf("Plot_Carnica10_csd.pdf")
@@ -420,11 +439,14 @@ dev.off()
 print("Plot queens year 1")
 relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
 
-plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "scatter")
 plotQueens1ibd
 
 plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"), plot = "histogram")
 plotQueens1ibs
+
+plotQueensScatter1 <- plotQueens(relQueens1, type = c("IBDr", "IBS"), plot = "scatter")
+plotQueensScatter1
 
 plotQueens1Fibd <- plotQueensF(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
 plotQueens1Fibd
@@ -437,16 +459,24 @@ plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueen
 plotQueens1h
 
 #Plot csd Year 1
+relQueens1_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
+plotQueens1_csd_hist_ibd <- plotQueens(relQueens1_csd_hist, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens1_csd_hist_ibd
+
+plotQueens1_csd_hist_ibs <- plotQueens(relQueens1_csd_hist, type = c("IBS"), plot = "histogram")
+plotQueens1_csd_hist_ibs
+
 relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
-plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd)
+plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd, Pop = TRUE, PopIdDF = idPopQueens1)
 plotQueens1_csd
 
 #Plot csd chr Year 1
 relQueens1_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idDF = idQueens1)
-plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr)
+plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr, Pop = TRUE, PopIdDF = idPopQueens1)
 plotQueens1_csdChr
 
-#save pdfs
+
+
 #Save pdfs
 pdf("Plot_Queens1ibd.pdf")
 plotQueens1ibd
@@ -454,6 +484,10 @@ dev.off()
 
 pdf("Plot_Queens1ibs.pdf")
 plotQueens1ibs
+dev.off()
+
+pdf("PlotQueensScatter1.pdf")
+plotQueensScatter1
 dev.off()
 
 pdf("Plot_Queens1Fibd.pdf")  #F = inbreeding
@@ -472,6 +506,14 @@ pdf("Plot_Queens1_csd.pdf")
 plotQueens1_csd
 dev.off()
 
+pdf("PlotQueens1_csd_hist_ibd.pdf")
+plotQueens1_csd_hist_ibd
+dev.off()
+
+pdf("PlotQueens1_csd_hist_ibs.pdf")
+plotQueens1_csd_hist_ibs
+dev.off()
+
 pdf("Plot_Queens1_csdChr.pdf")
 plotQueens1_csdChr
 dev.off()
@@ -480,7 +522,7 @@ dev.off()
 
 # --- Year 10 ---#
 #Plot queens Year 10
-print("Plot queens year 1")
+print("Plot queens year 10")
 
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
 plotQueens10ibd <- plotQueens(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
@@ -488,6 +530,9 @@ plotQueens10ibd
 
 plotQueens10ibs <- plotQueens(relQueens10, type = c("IBS"), plot = "histogram")
 plotQueens10ibs
+
+plotQueensScatter10 <- plotQueens(relQueens10, type = c("IBDr", "IBS"), plot = "scatter")
+plotQueensScatter10
 
 plotQueens10Fibd <- plotQueensF(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
 plotQueens10Fibd
@@ -501,12 +546,20 @@ plotQueens10h
 
 #Plot csd Year 10
 relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
-plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd)
+plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd, Pop = TRUE, PopIdDF = idPopQueens10)
+plotQueens10_csd
 
+relQueens10_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
+plotQueens10_csd_hist_ibd <- plotQueens(relQueens10_csd_hist, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens10_csd_hist_ibd
+
+plotQueens10_csd_hist_ibs <- plotQueens(relQueens10_csd_hist, type = c("IBS"), plot = "histogram")
+plotQueens10_csd_hist_ibs
 
 #Plot csd chr Year 10
 relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
-plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr)
+plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr, Pop = TRUE, PopIdDF = idPopQueens10)
+plotQueens10_csdChr
 
 #save pdfs
 pdf("Plot_Queens10ibd.pdf")
@@ -515,6 +568,10 @@ dev.off()
 
 pdf("Plot_Queens10ibs.pdf")
 plotQueens10ibs
+dev.off()
+
+pdf("PlotQueensScatter10.pdf")
+plotQueensScatter10
 dev.off()
 
 pdf("Plot_Queens10Fibd.pdf")
@@ -531,6 +588,14 @@ dev.off()
 
 pdf("Plot_Queens10_csd.pdf")
 plotQueens10_csd
+dev.off()
+
+pdf("PlotQueens10_csd_hist_ibd.pdf")
+plotQueens10_csd_hist_ibd
+dev.off()
+
+pdf("PlotQueens10_csd_hist_ibs.pdf")
+plotQueens10_csd_hist_ibs
 dev.off()
 
 pdf("Plot_Queens10_csdChr.pdf")
