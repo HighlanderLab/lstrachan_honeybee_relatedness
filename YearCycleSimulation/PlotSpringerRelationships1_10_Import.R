@@ -297,14 +297,20 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe"), plot = "hist
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
       stat_density(aes(x=Value, y=..scaled..), position="dodge", geom="line") +
       facet_grid(cols = vars(Type))
-  } else if (plot == "scatter") {
-    p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
-      geom_point(aes(x = Value, y = 1:62424,  colour = Pops, shape = Type))
-  }
+  } 
   plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
+scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS")) {
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
+  df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
+  a <- pivot_wider(df, names_from = Type, values_from = Value, values_fn = list)
+  b <- unnest(a, cols = c(IBS, IBDr, IBDe))
+  c <- ggplot(data = b, aes(x = IBS, y = IBDr)) + geom_point(aes(colour = Pops))
+  plot <- c + scale_fill_manual(values= cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+  return(plot)
+}
 
 plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
@@ -396,20 +402,12 @@ pdf("Plot_Carnica1ibd_ibs.pdf")
 plotCar1ibd_ibs
 dev.off()
 
-pdf("Plot_Carnica1.pdf")
-plotCar1
-dev.off()
-
 pdf("Plot_Carnica10ibd.pdf")
 plotCar10ibd
 dev.off()
 
 pdf("Plot_Carnica10ibd_ibs.pdf")
 plotCar10ibd_ibs
-dev.off()
-
-pdf("Plot_Carnica10.pdf")
-plotCar10
 dev.off()
 
 pdf("Plot_Carnica10_csd.pdf")
@@ -445,8 +443,9 @@ plotQueens1ibd
 plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"), plot = "histogram")
 plotQueens1ibs
 
-plotQueensScatter1 <- plotQueens(relQueens1, type = c("IBDr", "IBS"), plot = "scatter")
+plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"))
 plotQueensScatter1
+
 
 plotQueens1Fibd <- plotQueensF(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
 plotQueens1Fibd
@@ -531,7 +530,7 @@ plotQueens10ibd
 plotQueens10ibs <- plotQueens(relQueens10, type = c("IBS"), plot = "histogram")
 plotQueens10ibs
 
-plotQueensScatter10 <- plotQueens(relQueens10, type = c("IBDr", "IBS"), plot = "scatter")
+plotQueensScatter10 <- scatterQueens(relQueens10, type = c("IBDr", "IBS"))
 plotQueensScatter10
 
 plotQueens10Fibd <- plotQueensF(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
