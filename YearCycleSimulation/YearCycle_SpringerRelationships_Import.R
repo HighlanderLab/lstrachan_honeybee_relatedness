@@ -265,9 +265,9 @@ for (Rep in 1:nRep) {
                  MelCross = createDrones(x = virginQueens$MelCross[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
                  Car = createDrones(x = virginQueens$Car[(apiarySize+1):nCar], nInd = nDronesPerQueen))
   # Mate A. m. mellifera queens with A. m. mellifera drones
-  queens <- list(Mel = cross(x = virginQueens$Mel[1:apiarySize], fathers = pullDroneGroupsFromDCA(drones$Mel, n = nInd(virginQueens$Mel[1:apiarySize]), nFathers = nFathersPoisson)),
-                 MelCross = cross(x = virginQueens$MelCross[1:apiarySize], fathers = pullDroneGroupsFromDCA(drones$MelCross, n = nInd(virginQueens$MelCross[1:apiarySize]), nFathers = nFathersPoisson)),
-                 Car = cross(x = virginQueens$Car[1:apiarySize], fathers = pullDroneGroupsFromDCA(drones$Car, n = nInd(virginQueens$Car[1:apiarySize]), nFathers = nFathersPoisson)))
+  queens <- list(Mel = cross(x = virginQueens$Mel[1:apiarySize], drones = pullDroneGroupsFromDCA(drones$Mel, n = nInd(virginQueens$Mel[1:apiarySize]), nDrones = nFathersPoisson)),
+                 MelCross = cross(x = virginQueens$MelCross[1:apiarySize], drones = pullDroneGroupsFromDCA(drones$MelCross, n = nInd(virginQueens$MelCross[1:apiarySize]), nDrones = nFathersPoisson)),
+                 Car = cross(x = virginQueens$Car[1:apiarySize], drones = pullDroneGroupsFromDCA(drones$Car, n = nInd(virginQueens$Car[1:apiarySize]), nDrones = nFathersPoisson)))
 
   tmp <- c(queens$Mel, queens$Car)
   alleleFreqBaseQueens <- calcBeeAlleleFreq(x = getSegSiteGeno(tmp),
@@ -474,22 +474,22 @@ for (Rep in 1:nRep) {
     print(Sys.time())
     if (year == 1) {
       DCAMel <- createDCA(age1$Mel)
-      age0p1$Mel <- cross(age0p1$Mel, fathers = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nFathers = nFathersPoisson))
+      age0p1$Mel <- cross(age0p1$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nDrones = nFathersPoisson))
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
-      age0p1$MelCross <- cross(age0p1$MelCross, fathers = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nFathers = nFathersPoisson))
+      age0p1$MelCross <- cross(age0p1$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nDrones = nFathersPoisson))
       DCACar <- createDCA(age1$Car)
-      age0p1$Car <- cross(age0p1$Car, fathers = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nFathers = nFathersPoisson))
+      age0p1$Car <- cross(age0p1$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson))
     } else {
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
-      age0p1$Mel <- cross(age0p1$Mel, fathers = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nFathers = nFathersPoisson))
+      age0p1$Mel <- cross(age0p1$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nDrones = nFathersPoisson))
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
                                  age2$MelCross,
                                  selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
-      age0p1$MelCross <- cross(age0p1$MelCross, fathers = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nFathers = nFathersPoisson))
+      age0p1$MelCross <- cross(age0p1$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nDrones = nFathersPoisson))
       DCACar <- createDCA(c(age1$Car, age2$Car))
-      age0p1$Car <- cross(age0p1$Car, fathers = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nFathers = nFathersPoisson))
+      age0p1$Car <- cross(age0p1$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson))
     }
 
     # Collapse
@@ -603,22 +603,22 @@ for (Rep in 1:nRep) {
 
     if (year == 1) {
       DCAMel <- createDCA(age1$Mel)
-      age0p2$Mel <- cross(age0p2$Mel, fathers = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nFathers = nFathersPoisson))
+      age0p2$Mel <- cross(age0p2$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nDrones = nFathersPoisson))
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0))))
-      age0p2$MelCross <- cross(age0p2$MelCross, fathers = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nFathers = nFathersPoisson))
+      age0p2$MelCross <- cross(age0p2$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nDrones = nFathersPoisson))
       DCACar <- createDCA(age1$Car)
-      age0p2$Car <- cross(age0p2$Car, fathers = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nFathers = nFathersPoisson))
+      age0p2$Car <- cross(age0p2$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nDrones = nFathersPoisson))
     } else {
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
-      age0p2$Mel <- cross(age0p2$Mel, fathers = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nFathers = nFathersPoisson))
+      age0p2$Mel <- cross(age0p2$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nDrones = nFathersPoisson))
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
                                  age2$MelCross,
                                  selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
-      age0p2$MelCross <- cross(age0p2$MelCross, fathers = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nFathers = nFathersPoisson))
+      age0p2$MelCross <- cross(age0p2$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nDrones = nFathersPoisson))
       DCACar <- createDCA(c(age1$Car, age2$Car))
-      age0p2$Car <- cross(age0p2$Car, fathers = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nFathers = nFathersPoisson))
+      age0p2$Car <- cross(age0p2$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nDrones = nFathersPoisson))
     }
 
 

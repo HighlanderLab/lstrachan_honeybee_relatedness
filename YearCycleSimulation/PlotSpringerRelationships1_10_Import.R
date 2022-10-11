@@ -297,7 +297,7 @@ plotQueens <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe"), plot = "hist
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ]) +
       stat_density(aes(x=Value, y=..scaled..), position="dodge", geom="line") +
       facet_grid(cols = vars(Type))
-  } 
+  }
   plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
@@ -307,7 +307,7 @@ scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS")) {
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
   a <- pivot_wider(df, names_from = Type, values_from = Value, values_fn = list)
   b <- unnest(a, cols = c(IBS, IBDr, IBDe))
-  c <- ggplot(data = b, aes(x = IBS, y = IBDr)) + geom_point(aes(colour = Pops))
+  c <- ggplot(data = b, aes(x = IBDr, y = IBS)) + geom_point(aes(colour = Pops))
   plot <- c + scale_fill_manual(values= cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
