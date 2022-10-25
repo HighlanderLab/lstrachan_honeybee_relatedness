@@ -131,18 +131,19 @@ getS <- function(Sinv, ids, with = ids, diagOnly = F, vector = F) {
 prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NULL,  idDF) {
   print("IBS WW")
   tmp <- ibsDF[idDF$workers, idDF$workers]
-  IBS_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
+  IBS_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- data.frame(Value = IBS_WW1, Rel = "WW", Type = "IBS")
 
   print("IBDr WW")
   tmp <- ibdDF[idDF$workers, idDF$workers]
-  IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = TRUE)])
+  IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
 
   if (!is.null(Sinv)) {
     print("IBDe WW")
-    ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$workers, vector = TRUE),
-                                 Rel = "WW", Type = "IBDe"))
+    tmp <- getS(Sinv, ids = idDF$workers, vector = TRUE)
+    IBDe_WW <- c(tmp[lower.tri(tmp, diag = FALSE)])
+    ret <- rbind(ret, data.frame(Value = IBDe_WW, Rel = "WW", Type = "IBDe"))
   }
 
   # workers vs drones
@@ -362,36 +363,36 @@ print("Plot carnica year 1")
 relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
 
 plotCar1ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
-plotCar1ibd
+#plotCar1ibd
 
 plotCar1ibd_ibs <- plotColony(relCar1, type = c("IBDr", "IBS"))
-plotCar1ibd_ibs
+#plotCar1ibd_ibs
 
 plotCar1 <- plotColony(relCar1, type = c("IBDe", "IBDr","IBS" ))
-plotCar1
+#plotCar1
 
 # Plot CAR year 10
 print("Plot carnica year 10")
 relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
 
-plotCar10ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
-plotCar10ibd
+plotCar10ibd <- plotColony(relCar10, type = c("IBDe", "IBDr"))
+#plotCar10ibd
 
 plotCar10ibd_ibs<- plotColony(relCar10, type = c("IBDr", "IBS"))
-plotCar10ibd_ibs
+#plotCar10ibd_ibs
 
 plotCar10 <- plotColony(relCar10, type = c("IBDe", "IBDr","IBS" ))
-plotCar10
+#plotCar10
 
 #Plot CAR csd Year 10
 relCar10_csd <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
 plotCar10_csd <- plotColony(relCar10_csd)
-plotCar10_csd
+#plotCar10_csd
 
 #Plot CAR csd chr Year 10
 relCar10_csdChr <- prepareDataForPlotting_Colony(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, Sinv = Sinv, idDF = idCar10)
 plotCar10_csdChr <- plotColony(relCar10_csdChr)
-plotCar10_csdChr
+#plotCar10_csdChr
 
 #Save pdfs
 pdf("Plot_Carnica1ibd.pdf")
@@ -437,42 +438,42 @@ dev.off()
 print("Plot queens year 1")
 relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
 
-plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "scatter")
-plotQueens1ibd
+plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
+#plotQueens1ibd
 
 plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"), plot = "histogram")
-plotQueens1ibs
+#plotQueens1ibs
 
 plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"))
-plotQueensScatter1
+#plotQueensScatter1
 
 
 plotQueens1Fibd <- plotQueensF(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
-plotQueens1Fibd
+#plotQueens1Fibd
 
 plotQueens1Fibs <- plotQueensF(relQueens1, type = c("IBS"), plot = "histogram")
-plotQueens1Fibs
+#plotQueens1Fibs
 
 relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
 plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1)
-plotQueens1h
+#plotQueens1h
 
 #Plot csd Year 1
 relQueens1_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
 plotQueens1_csd_hist_ibd <- plotQueens(relQueens1_csd_hist, type = c("IBDr", "IBDe"), plot = "histogram")
-plotQueens1_csd_hist_ibd
+#plotQueens1_csd_hist_ibd
 
 plotQueens1_csd_hist_ibs <- plotQueens(relQueens1_csd_hist, type = c("IBS"), plot = "histogram")
-plotQueens1_csd_hist_ibs
+#plotQueens1_csd_hist_ibs
 
 relQueens1_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
 plotQueens1_csd <- plotQueens_heatmap(relQueens1_csd, Pop = TRUE, PopIdDF = idPopQueens1)
-plotQueens1_csd
+#plotQueens1_csd
 
 #Plot csd chr Year 1
 relQueens1_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idDF = idQueens1)
 plotQueens1_csdChr <- plotQueens_heatmap(relQueens1_csdChr, Pop = TRUE, PopIdDF = idPopQueens1)
-plotQueens1_csdChr
+#plotQueens1_csdChr
 
 
 
@@ -525,40 +526,40 @@ print("Plot queens year 10")
 
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
 plotQueens10ibd <- plotQueens(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
-plotQueens10ibd
+#plotQueens10ibd
 
 plotQueens10ibs <- plotQueens(relQueens10, type = c("IBS"), plot = "histogram")
-plotQueens10ibs
+#plotQueens10ibs
 
 plotQueensScatter10 <- scatterQueens(relQueens10, type = c("IBDr", "IBS"))
-plotQueensScatter10
+#plotQueensScatter10
 
 plotQueens10Fibd <- plotQueensF(relQueens10, type = c("IBDr", "IBDe"), plot = "histogram")
-plotQueens10Fibd
+#plotQueens10Fibd
 
 plotQueens10Fibs <- plotQueensF(relQueens10, type = c( "IBS"), plot = "histogram")
-plotQueens10Fibs
+#plotQueens10Fibs
 
 relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idDF = idQueens10)
 plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10)
-plotQueens10h
+#plotQueens10h
 
 #Plot csd Year 10
 relQueens10_csd <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csd <- plotQueens_heatmap(relQueens10_csd, Pop = TRUE, PopIdDF = idPopQueens10)
-plotQueens10_csd
+#plotQueens10_csd
 
 relQueens10_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
 plotQueens10_csd_hist_ibd <- plotQueens(relQueens10_csd_hist, type = c("IBDr", "IBDe"), plot = "histogram")
-plotQueens10_csd_hist_ibd
+#plotQueens10_csd_hist_ibd
 
 plotQueens10_csd_hist_ibs <- plotQueens(relQueens10_csd_hist, type = c("IBS"), plot = "histogram")
-plotQueens10_csd_hist_ibs
+#plotQueens10_csd_hist_ibs
 
 #Plot csd chr Year 10
 relQueens10_csdChr <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
 plotQueens10_csdChr <-plotQueens_heatmap(relQueens10_csdChr, Pop = TRUE, PopIdDF = idPopQueens10)
-plotQueens10_csdChr
+#plotQueens10_csdChr
 
 #save pdfs
 pdf("Plot_Queens10ibd.pdf")
