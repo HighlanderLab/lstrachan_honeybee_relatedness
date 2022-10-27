@@ -3,7 +3,7 @@
 rm(list = ls())
 
 # Define functions
-computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NULL, csd = TRUE) {
+computeRelationship_genomic <- function(x, alleleFreq = NULL, useOwnAlleleFreq = FALSE, alleleFreqCsd = NULL, csd = TRUE) {
   if (isColony(x)) {
     # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUp(x = x,
@@ -27,15 +27,33 @@ computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NU
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
   print("IBS")
   print(Sys.time())
-  if (is.null(alleleFreq)) {
-    alleleFreq <- rep(0.5, ncol(geno))
+  if (is.null(alleleFreq) & !useOwnAlleleFreq) {
+    ibs <- calcBeeGRMIbs(x = geno,
+                         sex = sex,
+                         alleleFreq = rep(0.5, ncol(geno)))
+    ibsOwnFreq <- NULL
+  } else if (useOwnAlleleFreq) {
+    ownAlleleFreq = calcBeeAlleleFreq(x = geno, sex = sex)
+    if (is.null(alleleFreq)) {
+      ibsOwnFreq <- calcBeeGRMIbs(x = geno,
+                                  sex = sex,
+                                  alleleFreq = ownAlleleFreq)
+      ibs = NULL
+    } else {
+      ibs <- calcBeeGRMIbs(x = geno,
+                           sex = sex,
+                           alleleFreq = alleleFreq)
+      ibsOwnFreq <- calcBeeGRMIbs(x = geno,
+                                  sex = sex,
+                                  alleleFreq = ownAlleleFreq)
+    }
   }
-  if (is.null(alleleFreqCsd)) {
+  
+  
+  #Csd
+  if (is.null(alleleFreqCsd)) { #DO THIS
     alleleFreqCsd <- rep(0.5, length(SP$csdPosStart:SP$csdPosStop))
-  }
-  ibs <- calcBeeGRMIbs(x = geno,
-                       sex = sex,
-                       alleleFreq = alleleFreq)
+  } 
   # Collect the IBD haplotypes for all the colony members
   print("IBD")
   print(Sys.time())
@@ -86,7 +104,7 @@ computeRelationship_genomic <- function(x, alleleFreq = NULL, alleleFreqCsd = NU
   
   
   
-  return(list(IBS = ibs, IBD = ibd,
+  return(list(IBS = ibs, IBSOwnFreq = ibsOwnFreq, IBD = ibd,
               IBScsdChr = ibs_csdChr, IBDcsdChr = ibd_csdChr,
               IBSCsd = ibs_csd, IBDCsd = ibd_csd, ID = id))
 }
@@ -327,22 +345,24 @@ for (Rep in 1:nRep) {
     
     #In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
-      print("Computing initial relationships")
-      # Choose the first colony of age 1 to inspect relationship in the base population
-      print("Computing mellifera generation1 colony relationship")
-      print(Sys.time())
-      springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
-                                                         csd = isCsdActive(SP),
-                                                         alleleFreq = alleleFreqBaseQueens,
-                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
-      print("Computing mellifera cross generation1 colony relationship")
-      print(Sys.time())
-      springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
-                                                              csd = isCsdActive(SP),
-                                                              alleleFreq = alleleFreqBaseQueens,
-                                                              alleleFreqCsd = alleleFreqCsdBaseQueens)
+      # print("Computing initial relationships")
+      # # Choose the first colony of age 1 to inspect relationship in the base population
+      # print("Computing mellifera generation1 colony relationship")
+      # print(Sys.time())
+      # springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
+      #                                                    csd = isCsdActive(SP),
+      #                                                    alleleFreq = alleleFreqBaseQueens,
+      #                                                    alleleFreqCsd = alleleFreqCsdBaseQueens)
+      # print("Computing mellifera cross generation1 colony relationship")
+      # print(Sys.time())
+      # springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
+      #                                                         csd = isCsdActive(SP),
+      #                                                         alleleFreq = alleleFreqBaseQueens,
+      #                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
       print("Computing carnica generation1 colony relationship")
       print(Sys.time())
+      alleleFreqColony <- calcBeeAlleleFreq(x = getSegSiteGeno(age1$Car[[1]], collapse = T),
+                                            sex = unlist(getCasteSex(age1$Car[[1]], caste = "all")))
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]],
                                                          csd = isCsdActive(SP),
                                                          alleleFreq = alleleFreqBaseQueens,
