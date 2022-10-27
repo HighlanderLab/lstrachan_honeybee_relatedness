@@ -6,9 +6,8 @@ library(SIMplyBee)
 
 print("Reading in the data")
 #Laura's laptop data
-data <- load("~/Desktop/GitHub/Data /SpringerSimulation_import.RData")
-Sinv <- readMM("/Users/s2122596/Desktop/GitHub/Data /Sinv.mm")
-
+data <- load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/SpringerSimulation_import.RData")
+Sinv <- readMM("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/Sinv.mm")
 #Eddie data
 #data <- load("SpringerSimulation_import_objects.RData")
 #Sinv <- readMM("Sinv.mm")
@@ -206,6 +205,55 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
     IBDe$Rel <- "QQ"
   }
 
+  # Compute relationships between queens of the same populations/ inbreeding without diagonal
+  #IBS
+  tmp <- ibsDF[melID, melID]
+  IBSMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSMel_Mel <- data.frame(Value = as.vector(list(IBSMel_Mel)[[1]]), Rel = "Q", Type = "IBS", Pops = "Mel")
+
+  tmp <- ibsDF[carID, carID]
+  IBSCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSCar_Car <-data.frame(Value = as.vector(list(IBSCar_Car)[[1]]), Rel = "Q", Type = "IBS", Pops = "Car")
+
+  tmp <- ibsDF[melCrossID, melCrossID]
+  IBSmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSmelCross_melCross <- data.frame(Value = as.vector(list(IBSmelCross_melCross)[[1]]), Rel = "Q", Type = "IBS", Pops = "MelCross")
+
+  IBS <- rbind(IBSMel_Mel, IBSCar_Car, IBSmelCross_melCross)
+
+  #IBDr
+  tmp <- ibdDF[melID, melID]
+  IBDrMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrMel_Mel <- data.frame(Value = as.vector(list(IBDrMel_Mel)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Mel")
+
+  tmp <- ibdDF[carID, carID]
+  IBDrCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrCar_Car <- data.frame(Value = as.vector(list(IBDrCar_Car)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Car")
+
+  tmp <- ibdDF[melCrossID, melCrossID]
+  IBDrmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrmelCross_melCross <- data.frame(Value = as.vector(list(IBDrmelCross_melCross)[[1]]), Rel = "Q", Type = "IBDr", Pops = "MelCross")
+
+  IBDr <- rbind(IBDrMel_Mel,IBDrCar_Car, IBDrmelCross_melCross)
+
+  ret <- rbind(IBS, IBDr)
+
+  #IBDe
+  if (!is.null(Sinv)) {
+    IBDe <- rbind(data.frame(Value = getS(Sinv, melID, diagOnly = FALSE, vector = T),
+                                Pops = "Mel"),
+                     data.frame(Value = getS(Sinv, melCrossID, diagOnly = FALSE, vector = T),
+                                Pops = "MelCross"),
+                     data.frame(Value = getS(Sinv, carID, diagOnly = FALSE, vector = T),
+                                Pops = "Car"))
+
+    IBDe$Type = "IBDe"
+    IBDe$Rel = "Q"
+
+    ret <- rbind(ret, IBDe)
+  }
+
+
   # Inbreeding (diagonal!!!) if queens (Q)
   inbIBS <- rbind(data.frame(Value = diag(ibsDF[melID, melID]),
                              Pops = "Mel"),
@@ -214,7 +262,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
                   data.frame(Value = diag(ibsDF[carID, carID]),
                              Pops = "Car"))
   inbIBS$Type = "IBS"
-  inbIBS$Rel = "Q"
+  inbIBS$Rel = "F"
   IBS <- rbind(IBS, inbIBS)
 
   inbIBDr <- rbind(data.frame(Value = diag(ibdDF[melID, melID]),
@@ -224,7 +272,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
                    data.frame(Value = diag(ibdDF[carID, carID]),
                               Pops = "Car"))
   inbIBDr$Type = "IBDr"
-  inbIBDr$Rel = "Q"
+  inbIBDr$Rel = "F"
   IBDr <- rbind(IBDr, inbIBDr)
 
   ret <- rbind(IBS, IBDr)
@@ -237,7 +285,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NUL
                      data.frame(Value = getS(Sinv, carID, diagOnly = TRUE),
                                 Pops = "Car"))
     inbIBDe$Type = "IBDe"
-    inbIBDe$Rel = "Q"
+    inbIBDe$Rel = "F"
     IBDe <- rbind(IBDe, inbIBDe)
 
     ret <- rbind(ret, IBDe)
@@ -313,8 +361,9 @@ scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS")) {
   return(plot)
 }
 
-plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogram") {
+plotQueensF <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe"), plot = "histogram") {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
+  df$Rel <- factor(df$Rel, levels= c("F", "Q"))
   if (plot == "histogram") {
     p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
                    aes(x = Value - 1, fill = Pops)) +
@@ -328,6 +377,8 @@ plotQueensF <- function(df, rel = "Q", type = c("IBDr", "IBDe"), plot = "histogr
   plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
+
+
 
 plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
@@ -364,6 +415,7 @@ relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibdDF = ibdCar1, Sinv 
 
 plotCar1ibd <- plotColony(relCar1, type = c("IBDe", "IBDr"))
 #plotCar1ibd
+
 
 plotCar1ibd_ibs <- plotColony(relCar1, type = c("IBDr", "IBS"))
 #plotCar1ibd_ibs
@@ -438,20 +490,22 @@ dev.off()
 print("Plot queens year 1")
 relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
 
-plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
+plotQueens1ibd <- plotQueens(relQueens1, type = c("IBDr", "IBDe"))
 #plotQueens1ibd
 
-plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"), plot = "histogram")
+plotQueens1ibs <- plotQueens(relQueens1, type = c("IBS"))
 #plotQueens1ibs
 
 plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"))
 #plotQueensScatter1
 
+plotQueensQibd <- plotQueensF(relQueens1, rel = c("Q"), type = c("IBS"))
+plotQueensQibd
 
-plotQueens1Fibd <- plotQueensF(relQueens1, type = c("IBDr", "IBDe"), plot = "histogram")
-#plotQueens1Fibd
+plotQueens1Fibd <- plotQueensF(relQueens1, rel = c("F"), type = c("IBDr", "IBDe"))
+plotQueens1Fibd
 
-plotQueens1Fibs <- plotQueensF(relQueens1, type = c("IBS"), plot = "histogram")
+plotQueens1Fibs <- plotQueensF(relQueens1, type = c("IBS"))
 #plotQueens1Fibs
 
 relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
