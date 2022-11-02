@@ -323,7 +323,7 @@ for (Rep in 1:nRep) {
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
     print("Starting the cycle")
-    #year <- 1
+    year <- 1
     #year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     # If this is the first year, create some colonies to start with
@@ -369,13 +369,15 @@ for (Rep in 1:nRep) {
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]],
                                                          csd = isCsdActive(SP),
                                                          alleleFreq = alleleFreqBaseQueens,
-                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                         alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                         useOwnAlleleFreq = TRUE)
       print("Computing queens generation1 colony relationship")
       print(Sys.time())
       springerQueens1 <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
                                                      csd = isCsdActive(SP),
                                                      alleleFreq = alleleFreqBaseQueens,
-                                                     alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                     alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                     useOwnAlleleFreq = TRUE)
       springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                   data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                   data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
@@ -730,19 +732,22 @@ for (Rep in 1:nRep) {
   springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
                                                       csd = isCsdActive(SP),
                                                       alleleFreq = alleleFreqBaseQueens,
-                                                      alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                      alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                      useOwnAlleleFreq = TRUE)
   print("Computing mellifera cross relationships")
   print(Sys.time())
   springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
                                                            csd = isCsdActive(SP),
                                                            alleleFreq = alleleFreqBaseQueens,
-                                                           alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                           alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                           useOwnAlleleFreq = TRUE)
   print("Computing carnica relationships")
   print(Sys.time())
   springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]],
                                                       csd = isCsdActive(SP),
                                                       alleleFreq = alleleFreqBaseQueens,
-                                                      alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                      alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                      useOwnAlleleFreq = TRUE)
   print("Computing queens relationships")
   print(Sys.time())
   springerQueens10 <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
@@ -750,7 +755,8 @@ for (Rep in 1:nRep) {
                                                         mergePops(getQueen(age1$Car))),
                                                   csd = isCsdActive(SP),
                                                   alleleFreq = alleleFreqBaseQueens,
-                                                  alleleFreqCsd = alleleFreqCsdBaseQueens)
+                                                  alleleFreqCsd = alleleFreqCsdBaseQueens,
+                                                  useOwnAlleleFreq = TRUE)
   springerQueensPop10 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
