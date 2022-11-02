@@ -324,50 +324,50 @@ plotColony <- function(df, rel = c("WD", "WW"), type = c("IBDr", "IBDe")) {
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
                  aes(x = Value, fill = Rel)) +
     geom_histogram(binwidth = 0.01, position = "identity") + facet_grid(rows = vars(Type), scales = "free") + xlim(c(-0.01, 2.01))
-  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
-plotQueensQQ <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe", "IBS"), plot = "histogram") {
+plotQueensQQ <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
                    aes(x = Value, fill = Pops)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
-      facet_grid(cols = vars(Type)) + xlim(c(-1.01, 2.01)) #IBS not to scale so increased scale
-  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+    facet_wrap(.~Type, scales = "free_y") + xlim(c(-1.01, 2.01)) #IBS not to scale so increased scale
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
-scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS")) {
+scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
-  df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
-  a <- pivot_wider(df, names_from = Type, values_from = Value, values_fn = list)
-  b <- unnest(a, cols = c(IBS, IBDr, IBDe))
+  df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "Car", "Mel", "MelCross"))
+  a <- pivot_wider(df[df$Rel %in% rel & df$Type %in% type & df$Pops %in% pops, ], names_from = Type, values_from = Value, values_fn = list)
+  b <- unnest(a, cols = all_of(type))
   c <- ggplot(data = b, aes(x = IBDr, y = IBS)) + geom_point(aes(colour = Pops))
-  plot <- c + scale_fill_manual(values= cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+  plot <- c + scale_fill_manual("", values= cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
-plotQueensQ <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS"), plot = "histogram") {
+plotQueensQ <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   df$Rel <- factor(df$Rel, levels= c("F", "Q"))
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
                    aes(x = Value, fill = Pops)) +
       geom_histogram(binwidth = 0.01, position = "identity") +
-      facet_grid(cols = vars(Type)) #xlim removed
-  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+      facet_wrap(.~Type, scales = "free_y") #xlim removed
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
-plotQueensF <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS"), plot = "histogram") {
+plotQueensF <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS"))
   df$Rel <- factor(df$Rel, levels= c("F", "Q"))
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
               aes(x = Value - 1, fill = Pops)) +
     geom_histogram(binwidth = 0.01, position = "identity") +
-    facet_grid(cols = vars(Type)) #xlim removed
-  plot <- p + scale_fill_manual(values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+    facet_wrap(.~Type, scales = "free_y") #xlim removed
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
   return(plot)
 }
 
@@ -496,11 +496,11 @@ relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibdDF = ibdQueen
 plotQueens1QQ <- plotQueensQQ(relQueens1, type = c("IBDr", "IBDe", "IBS"))
 #plotQueens1QQ
 
-plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"))
+plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
 #plotQueensScatter1
 
 plotQueens1Q <- plotQueensQ(relQueens1, rel = c("Q"), type = c("IBDr", "IBDe", "IBS"))
-plotQueens1Q
+#plotQueens1Q
 
 plotQueens1F <- plotQueensF(relQueens1, rel = c("F"), type = c("IBDr", "IBDe", "IBS"))
 #plotQueens1F
@@ -512,7 +512,7 @@ plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueen
 
 #Plot csd Year 1
 relQueens1_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
-plotQueens1_csdLoc<- plotQueens(relQueens1_csd_hist, type = c("IBDr", "IBDe", "IBS"), plot = "histogram")
+plotQueens1_csdLoc<- plotQueensQQ(relQueens1_csd_hist, type = c("IBDr", "IBDe", "IBS"))
 #plotQueens1_csdLoc
 
 
@@ -532,10 +532,9 @@ pdf("Plot_Queens1QQ.pdf")
 plotQueens1QQ
 dev.off()
 
-pdf("PlotQueensScatter1.pdf")
+jpeg("PlotQueensScatter1.jpeg")
 plotQueensScatter1
 dev.off()
-
 
 pdf("Plot_Queens1Q.pdf")  #Q = non-diagonal
 plotQueens1Q
@@ -545,7 +544,7 @@ pdf("Plot_Queens1F.pdf")  #F = inbreeding
 plotQueens1F
 dev.off()
 
-pdf("Plot_Queens1h.pdf") #h = heatmaps
+jpeg("Plot_Queens1h.jpeg") #h = heatmaps
 plotQueens1h
 dev.off()
 
@@ -553,11 +552,11 @@ pdf("PlotQueens1_csdLoc.pdf")
 plotQueens1_csdLoc
 dev.off()
 
-pdf("PlotQueens1_csdLoc_heat.pdf")
+jpeg("PlotQueens1_csdLoc_heat.jpeg")
 plotQueens1_csdLoc_heat
 dev.off()
 
-pdf("Plot_Queens1_csdChr_heat.pdf")
+jpeg("Plot_Queens1_csdChr_heat.jpeg")
 plotQueens1_csdChr_heat
 dev.off()
 
@@ -565,13 +564,12 @@ dev.off()
 # --- Year 10 ---#
 #Plot queens Year 10
 print("Plot queens year 10")
-
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
 
-plotQueens10QQ <- plotQueensQQ(relQueens10, type = c("IBDe", "IBDr", "IBS"), plot = "histogram")
+plotQueens10QQ <- plotQueensQQ(relQueens10, type = c("IBDe", "IBDr", "IBS"))
 #plotQueens10QQ
 
-plotQueensScatter10 <- scatterQueens(relQueens10, type = c("IBDr", "IBS"))
+plotQueensScatter10 <- scatterQueens(relQueens10, type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
 #plotQueensScatter10
 
 plotQueens10Q <- plotQueensQ(relQueens10, rel = c("Q"), type = c("IBDr", "IBDe", "IBS"))
@@ -590,7 +588,7 @@ plotQueens10_csdLoc_heat <- plotQueens_heatmap(relQueens10_csd, Pop = TRUE, PopI
 #plotQueens10_csdLoc_heat
 
 relQueens10_csd_hist <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
-plotQueens10_csdLoc <- plotQueens(relQueens10_csd_hist, type = c("IBDr", "IBDe", "IBS"), plot = "histogram")
+plotQueens10_csdLoc <- plotQueensQQ(relQueens10_csd_hist, type = c("IBDr", "IBDe", "IBS"))
 #plotQueens10_csdLoc
 
 #Plot csd chr Year 10
@@ -603,7 +601,7 @@ pdf("Plot_Queens10iQQ.pdf")
 plotQueens10QQ
 dev.off()
 
-pdf("PlotQueensScatter10.pdf")
+jpeg("PlotQueensScatter10.jpeg")
 plotQueensScatter10
 dev.off()
 
@@ -615,11 +613,11 @@ pdf("Plot_Queens10F.pdf")  #F = inbreeding
 plotQueens10F
 dev.off()
 
-pdf("Plot_Queens10h.pdf")
+jpeg("Plot_Queens10h.jpeg")
 plotQueens10h
 dev.off()
 
-pdf("Plot_Queens10_csdLoc_heat.pdf")
+jpeg("Plot_Queens10_csdLoc_heat.jpeg")
 plotQueens10_csdLoc_heat
 dev.off()
 
@@ -627,7 +625,7 @@ pdf("PlotQueens10_csdLoc.pdf")
 plotQueens10_csdLoc
 dev.off()
 
-pdf("Plot_Queens10_csdChr_heat.pdf")
+jpeg("Plot_Queens10_csdChr_heat.jpeg")
 plotQueens10_csdChr_heat
 dev.off()
 
