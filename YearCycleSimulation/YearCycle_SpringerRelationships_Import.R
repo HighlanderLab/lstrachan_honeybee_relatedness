@@ -171,7 +171,7 @@ library(SIMplyBee)
 # Founder population parameters -------------------------------------------------------------------
 nMelN = 800
 nCar = 400
-nChr = 1
+nChr = 16
 nDronesPerQueen = 50
 nSegSites = 1000
 # Population parameters -------------------------------------------------------------------
@@ -253,16 +253,16 @@ for (Rep in 1:nRep) {
 
   # Founder population ---------------------------------------------------------
   # Create a founder population of A. m. mellifera and A. m. carnica bees
-  #founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
+  #founderPop <- simulateHoneyBeeGenomes(nMelN = nMelN,
   #                                           nCar = nCar,
   #                                           nChr = nChr,
   #                                           nSegSites = nSegSites)
   #
-  #save(founderGenomes, file="FounderGenomes_ThreePop.RData")
+  #save(founderPop, file="founderPop_ThreePop.RData")
   print("Loading in the founderData")
-  load("FounderGenomes_ThreePop.RData")
+  load("FounderPop_threePop_16chr.RData")
   # Create SP object and write in the global simulation/population parameters
-  SP <- SimParamBee$new(founderGenomes, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
+  SP <- SimParamBee$new(founderPop, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
@@ -291,9 +291,9 @@ for (Rep in 1:nRep) {
 
 
   # Create a base population for A. m. mellifera, A. m. mellifera cross, and A. m. carnica
-  virginQueens <- list(Mel = createVirginQueens(x = founderGenomes[1:(nMelN/2)]),
-                       MelCross = createVirginQueens(x = founderGenomes[(nMelN/2 + 1):nMelN]),
-                       Car = createVirginQueens(x = founderGenomes[(nMelN +1):(nMelN + nCar)]))
+  virginQueens <- list(Mel = createVirginQueens(x = founderPop[1:(nMelN/2)]),
+                       MelCross = createVirginQueens(x = founderPop[(nMelN/2 + 1):nMelN]),
+                       Car = createVirginQueens(x = founderPop[(nMelN +1):(nMelN + nCar)]))
   # Create drones for A. m. mellifera, A. m. mellifera cross, and A. m. carnica
   drones <- list(Mel = createDrones(x = virginQueens$Mel[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
                  MelCross = createDrones(x = virginQueens$MelCross[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
@@ -323,7 +323,7 @@ for (Rep in 1:nRep) {
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
     print("Starting the cycle")
-    year <- 1
+    #year <- 1
     #year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     # If this is the first year, create some colonies to start with
@@ -348,24 +348,24 @@ for (Rep in 1:nRep) {
 
     #In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
-      # print("Computing initial relationships")
-      # # Choose the first colony of age 1 to inspect relationship in the base population
-      # print("Computing mellifera generation1 colony relationship")
-      # print(Sys.time())
-      # springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
-      #                                                    csd = isCsdActive(SP),
-      #                                                    alleleFreq = alleleFreqBaseQueens,
-      #                                                    alleleFreqCsd = alleleFreqCsdBaseQueens)
+       print("Computing initial relationships")
+       # Choose the first colony of age 1 to inspect relationship in the base population
+       # print("Computing mellifera generation1 colony relationship")
+       # print(Sys.time())
+      #  springerColony1_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
+      #                                                     csd = isCsdActive(SP),
+      #                                                     alleleFreq = alleleFreqBaseQueens,
+      #                                                     alleleFreqCsd = alleleFreqCsdBaseQueens,
+      #                                                     useOwnAlleleFreq = TRUE)
       # print("Computing mellifera cross generation1 colony relationship")
-      # print(Sys.time())
-      # springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
-      #                                                         csd = isCsdActive(SP),
-      #                                                         alleleFreq = alleleFreqBaseQueens,
-      #                                                         alleleFreqCsd = alleleFreqCsdBaseQueens)
+      #  print(Sys.time())
+      #  springerColony1_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
+      #                                                     csd = isCsdActive(SP),
+      #                                                     alleleFreq = alleleFreqBaseQueens,
+      #                                                     alleleFreqCsd = alleleFreqCsdBaseQueens,
+      #                                                     useOwnAlleleFreq = TRUE)
       print("Computing carnica generation1 colony relationship")
       print(Sys.time())
-      alleleFreqColony <- calcBeeAlleleFreq(x = getSegSiteGeno(age1$Car[[1]], collapse = T),
-                                            sex = unlist(getCasteSex(age1$Car[[1]], caste = "all")))
       springerColony1_Car <- computeRelationship_genomic(x = age1$Car[[1]],
                                                          csd = isCsdActive(SP),
                                                          alleleFreq = alleleFreqBaseQueens,
@@ -727,20 +727,20 @@ for (Rep in 1:nRep) {
   print(Sys.time())
 
   # Take the first colony of age1 and extract genotypes for relationship computation
-  print("Computing mellifera relationships")
-  print(Sys.time())
-  springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
-                                                      csd = isCsdActive(SP),
-                                                      alleleFreq = alleleFreqBaseQueens,
-                                                      alleleFreqCsd = alleleFreqCsdBaseQueens,
-                                                      useOwnAlleleFreq = TRUE)
-  print("Computing mellifera cross relationships")
-  print(Sys.time())
-  springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
-                                                           csd = isCsdActive(SP),
-                                                           alleleFreq = alleleFreqBaseQueens,
-                                                           alleleFreqCsd = alleleFreqCsdBaseQueens,
-                                                           useOwnAlleleFreq = TRUE)
+  # print("Computing mellifera relationships")
+  # print(Sys.time())
+  # springerColony10_Mel <- computeRelationship_genomic(x = age1$Mel[[1]],
+  #                                                     csd = isCsdActive(SP),
+  #                                                     alleleFreq = alleleFreqBaseQueens,
+  #                                                     alleleFreqCsd = alleleFreqCsdBaseQueens,
+  #                                                     useOwnAlleleFreq = TRUE)
+  # print("Computing mellifera cross relationships")
+  # print(Sys.time())
+  # springerColony10_MelCross <- computeRelationship_genomic(x = age1$MelCross[[1]],
+  #                                                          csd = isCsdActive(SP),
+  #                                                          alleleFreq = alleleFreqBaseQueens,
+  #                                                          alleleFreqCsd = alleleFreqCsdBaseQueens,
+  #                                                          useOwnAlleleFreq = TRUE)
   print("Computing carnica relationships")
   print(Sys.time())
   springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]],
@@ -768,8 +768,6 @@ for (Rep in 1:nRep) {
   caste <- SP$caste
 
   save(pedigree, caste,
-       springerColony1_Mel, springerColony10_Mel,
-       springerColony1_MelCross, springerColony10_MelCross,
        springerColony1_Car, springerColony10_Car,
        springerQueens1, springerQueensPop1,
        springerQueens10, springerQueensPop10,
