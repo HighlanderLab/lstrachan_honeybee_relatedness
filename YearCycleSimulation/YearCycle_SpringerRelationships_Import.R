@@ -27,13 +27,13 @@ computeRelationship_genomic <- function(x, alleleFreq = NULL, useOwnAlleleFreq =
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
   print("IBS")
   print(Sys.time())
-  if (is.null(alleleFreq) & !useOwnAlleleFreq) {
+  if (is.null(alleleFreq) & isFALSE(useOwnAlleleFreq)) { #no allele freq info given
     ibs <- calcBeeGRMIbs(x = geno,
                          sex = sex,
-                         alleleFreq = rep(0.5, ncol(geno)))
+                         alleleFreq = rep(0.5, ncol(geno))) #modified allele freq 
     ibsOwnFreq <- NULL
-  } else if (useOwnAlleleFreq) {
-    ownAlleleFreq = calcBeeAlleleFreq(x = geno, sex = sex)
+  } else if (isTRUE(useOwnAlleleFreq)) {
+    ownAlleleFreq = calcBeeAlleleFreq(x = geno, sex = sex) #use function defaults (geno must be assigned to x) 
     if (is.null(alleleFreq)) {
       ibsOwnFreq <- calcBeeGRMIbs(x = geno,
                                   sex = sex,
@@ -80,7 +80,7 @@ computeRelationship_genomic <- function(x, alleleFreq = NULL, useOwnAlleleFreq =
     csdChrGeno <- geno[, grepl(pattern = paste0(csdChr, "_"), x = colnames(geno))]
     ibs_csdChr <- calcBeeGRMIbs(x =  csdChrGeno,
                                 sex = sex,
-                                alleleFreq = alleleFreq)
+                                alleleFreq = NULL) #THIS SHOULD BE NULL! 
 
     # Only csd locus
     ibd_csd <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
@@ -253,16 +253,16 @@ for (Rep in 1:nRep) {
 
   # Founder population ---------------------------------------------------------
   # Create a founder population of A. m. mellifera and A. m. carnica bees
-  #founderPop <- simulateHoneyBeeGenomes(nMelN = nMelN,
+  #founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
   #                                           nCar = nCar,
   #                                           nChr = nChr,
   #                                           nSegSites = nSegSites)
   #
-  #save(founderPop, file="founderPop_ThreePop.RData")
+  #save(founderGenomes, file="founderGenomes_ThreePop.RData")
   print("Loading in the founderData")
-  load("FounderPop_threePop_16chr.RData")
+  load("FounderGenomes_ThreePop_16chr.RData")
   # Create SP object and write in the global simulation/population parameters
-  SP <- SimParamBee$new(founderPop, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
+  SP <- SimParamBee$new(founderGenomes, csdChr = ifelse(nChr >= 3, 3, 1), nCsdAlleles = 128)
   SP$nWorkers <- nWorkers
   SP$nDrones <- nDrones
   SP$nFathers <- pFathers
@@ -291,9 +291,9 @@ for (Rep in 1:nRep) {
 
 
   # Create a base population for A. m. mellifera, A. m. mellifera cross, and A. m. carnica
-  virginQueens <- list(Mel = createVirginQueens(x = founderPop[1:(nMelN/2)]),
-                       MelCross = createVirginQueens(x = founderPop[(nMelN/2 + 1):nMelN]),
-                       Car = createVirginQueens(x = founderPop[(nMelN +1):(nMelN + nCar)]))
+  virginQueens <- list(Mel = createVirginQueens(x = founderGenomes[1:(nMelN/2)]),
+                       MelCross = createVirginQueens(x = founderGenomes[(nMelN/2 + 1):nMelN]),
+                       Car = createVirginQueens(x = founderGenomes[(nMelN +1):(nMelN + nCar)]))
   # Create drones for A. m. mellifera, A. m. mellifera cross, and A. m. carnica
   drones <- list(Mel = createDrones(x = virginQueens$Mel[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
                  MelCross = createDrones(x = virginQueens$MelCross[(apiarySize+1):(nMelN/2)], nInd = nDronesPerQueen),
@@ -323,7 +323,7 @@ for (Rep in 1:nRep) {
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
     print("Starting the cycle")
-    #year <- 1
+    year <- 1
     #year <- year + 1
     cat(paste0("Year: ", year, "/", nYear, "\n"))
     # If this is the first year, create some colonies to start with
