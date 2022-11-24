@@ -1,9 +1,14 @@
+rm(list = ls())
+setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
+
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(Matrix)
 library(SIMplyBee)
 library(gridExtra)
+library(ggh4x)
+
 
 print("Reading in the data")
 #Laura's laptop data
@@ -79,7 +84,7 @@ getS <- function(Sinv, ids, with = ids, diagOnly = FALSE, vector = FALSE) {
   x <- sparseMatrix(i = ids, j = 1:length(ids), dims = c(nrow(Sinv), length(ids)))
   M1 <- as(x, "dMatrix")
   Sids <- solve(Sinv, M1)[with,]
-
+  
   if (diagOnly) {
     Sids <- diag(Sids)
   }
@@ -96,104 +101,104 @@ prepareDataForPlotting_Colony <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF = N
   tmp <- ibsDF[idDF$workers, idDF$workers]
   IBSb_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- data.frame(Value = IBSb_WW1, Rel = "WW", Type = "IBS")
-
+  
   print("IBSc WW")
   tmp <- ibsCdf[idDF$workers, idDF$workers]
   IBSc_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBSc_WW1, Rel = "WW", Type = "IBSOwnFreq"))
-
+  
   print("IBDr WW")
   tmp <- ibdDF[idDF$workers, idDF$workers]
   IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe WW")
     tmp <- getS(Sinv, ids = idDF$workers, vector = TRUE)
     IBDe_WW <- c(tmp[lower.tri(tmp, diag = FALSE)])
     ret <- rbind(ret, data.frame(Value = IBDe_WW, Rel = "WW", Type = "IBDe"))
   }
-
+  
   # workers vs drones
   print("IBSb WD")
   IBSb_WD1 <- c(ibsDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBSb_WD1, Rel = "WD", Type = "IBS"))
-
+  
   print("IBSc WD")
   IBSc_WD1 <- c(ibsCdf[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBSc_WD1, Rel = "WD", Type = "IBSOwnFreq"))
-
+  
   print("IBDr WD")
   IBDr_WD1 <- c(ibdDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBDr_WD1, Rel = "WD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe WD")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$workers, with = idDF$drones, vector = TRUE),
                                  Rel = "WD", Type = "IBDe"))
   }
-
+  
   # drones vs drones
   print("IBSb DD")
   tmp <- ibsDF[idDF$drones, idDF$drones]
   IBSb_DD1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBSb_DD1, Rel = "DD", Type = "IBS"))
-
+  
   print("IBSc DD")
   tmp <- ibsCdf[idDF$drones, idDF$drones]
   IBSc_DD1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBSc_DD1, Rel = "DD", Type = "IBSOwnFreq"))
-
+  
   print("IBDr DD")
   tmp <- ibdDF[idDF$drones, idDF$drones]
   IBDr_DD1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBDr_DD1, Rel = "DD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe DD")
     tmp <- getS(Sinv, ids = idDF$drones, vector = TRUE)
     IBDe_DD <- c(tmp[lower.tri(tmp, diag = FALSE)])
     ret <- rbind(ret, data.frame(Value = IBDe_DD, Rel = "DD", Type = "IBDe"))
   }
-
+  
   # queen vs workers
   print("IBSb QW")
   ret <- rbind(ret, data.frame(Value = c(ibsDF[idDF$workers, idDF$queen]),
                                Rel = "QW", Type = "IBS"))
-
+  
   print("IBSc QW")
   ret <- rbind(ret, data.frame(Value = c(ibsCdf[idDF$workers, idDF$queen]),
                                Rel = "QW", Type = "IBSOwnFreq"))
-
+  
   print("IBDr QW")
   ret <- rbind(ret, data.frame(Value = c(ibdDF[idDF$workers, idDF$queen]),
                                Rel = "QW", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe QW")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$queen, with = idDF$workers, vector = TRUE),
                                  Rel = "QW", Type = "IBDe"))
   }
-
+  
   # queen vs drones
   print("IBSb QD")
   ret <- rbind(ret, data.frame(Value = c(ibsDF[idDF$queen, idDF$drones]),
                                Rel = "QD", Type = "IBS"))
-
+  
   print("IBSc QD")
   ret <- rbind(ret, data.frame(Value = c(ibsCdf[idDF$queen, idDF$drones]),
                                Rel = "QD", Type = "IBSOwnFreq"))
-
+  
   print("IBDr QD")
   ret <- rbind(ret, data.frame(Value = c(ibdDF[idDF$queen, idDF$drones]),
                                Rel = "QD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe QD")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$queen, with = idDF$drones, vector = TRUE),
                                  Rel = "QD", Type = "IBDe"))
   }
-
+  
   return(ret)
 }
 
@@ -202,15 +207,15 @@ prepareDataForPlotting_ColonyDiag <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF
   print("IBSb WW")
   tmp <- diag(ibsDF[idDF$workers, idDF$workers])
   ret <- data.frame(Value = tmp, Rel = "WW", Type = "IBS")
-
+  
   print("IBSc WW")
   tmp <- diag(ibsCdf[idDF$workers, idDF$workers])
   ret <- rbind(ret, data.frame(Value = tmp, Rel = "WW", Type = "IBSOwnFreq"))
-
+  
   print("IBDr WW")
   tmp <- diag(ibdDF[idDF$workers, idDF$workers])
   ret <- rbind(ret, data.frame(Value = tmp, Rel = "WW", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe WW")
     tmp <- getS(Sinv, ids = idDF$workers, vector = TRUE, diagOnly = TRUE)
@@ -220,15 +225,15 @@ prepareDataForPlotting_ColonyDiag <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF
   print("IBSb DD")
   tmp <- diag(ibsDF[idDF$drones, idDF$drones])
   ret <- rbind(ret, data.frame(Value = tmp, Rel = "DD", Type = "IBS"))
-
+  
   print("IBSc DD")
   tmp <- diag(ibsCdf[idDF$workers, idDF$workers])
   ret <- rbind(ret, data.frame(Value = tmp, Rel = "DD", Type = "IBSOwnFreq"))
-
+  
   print("IBDr DD")
   tmp <- diag(ibdDF[idDF$drones, idDF$drones])
   ret <- rbind(ret, data.frame(Value = tmp, Rel = "DD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe DD")
     tmp <- getS(Sinv, ids = idDF$drones, vector = TRUE, diagOnly = TRUE)
@@ -242,82 +247,82 @@ prepareDataForPlotting_ColonyCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = 
   tmp <- ibsDF[idDF$workers, idDF$workers]
   IBSb_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- data.frame(Value = IBSb_WW1, Rel = "WW", Type = "IBS")
-
+  
   print("IBDr WW")
   tmp <- ibdDF[idDF$workers, idDF$workers]
   IBDr_WW1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBDr_WW1, Rel = "WW", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe WW")
     tmp <- getS(Sinv, ids = idDF$workers, vector = TRUE)
     IBDe_WW <- c(tmp[lower.tri(tmp, diag = FALSE)])
     ret <- rbind(ret, data.frame(Value = IBDe_WW, Rel = "WW", Type = "IBDe"))
   }
-
+  
   # workers vs drones
   print("IBSb WD")
   IBSb_WD1 <- c(ibsDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBSb_WD1, Rel = "WD", Type = "IBS"))
-
+  
   print("IBDr WD")
   IBDr_WD1 <- c(ibdDF[idDF$workers, idDF$drones])
   ret <- rbind(ret, data.frame(Value = IBDr_WD1, Rel = "WD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe WD")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$workers, with = idDF$drones, vector = TRUE),
                                  Rel = "WD", Type = "IBDe"))
   }
-
+  
   # drones vs drones
   print("IBSb DD")
   tmp <- ibsDF[idDF$drones, idDF$drones]
   IBSb_DD1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBSb_DD1, Rel = "DD", Type = "IBS"))
-
+  
   print("IBDr DD")
   tmp <- ibdDF[idDF$drones, idDF$drones]
   IBDr_DD1 <- c(tmp[lower.tri(tmp, diag = FALSE)])
   ret <- rbind(ret, data.frame(Value = IBDr_DD1, Rel = "DD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe DD")
     tmp <- getS(Sinv, ids = idDF$drones, vector = TRUE)
     IBDe_DD <- c(tmp[lower.tri(tmp, diag = FALSE)])
     ret <- rbind(ret, data.frame(Value = IBDe_DD, Rel = "DD", Type = "IBDe"))
   }
-
+  
   # queen vs workers
   print("IBSb QW")
   ret <- rbind(ret, data.frame(Value = c(ibsDF[idDF$workers, idDF$queen]),
                                Rel = "QW", Type = "IBS"))
-
+  
   print("IBDr QW")
   ret <- rbind(ret, data.frame(Value = c(ibdDF[idDF$workers, idDF$queen]),
                                Rel = "QW", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe QW")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$queen, with = idDF$workers, vector = TRUE),
                                  Rel = "QW", Type = "IBDe"))
   }
-
+  
   # queen vs drones
   print("IBSb QD")
   ret <- rbind(ret, data.frame(Value = c(ibsDF[idDF$queen, idDF$drones]),
                                Rel = "QD", Type = "IBS"))
-
+  
   print("IBDr QD")
   ret <- rbind(ret, data.frame(Value = c(ibdDF[idDF$queen, idDF$drones]),
                                Rel = "QD", Type = "IBDr"))
-
+  
   if (!is.null(Sinv)) {
     print("IBDe QD")
     ret <- rbind(ret, data.frame(Value = getS(Sinv, ids = idDF$queen, with = idDF$drones, vector = TRUE),
                                  Rel = "QD", Type = "IBDe"))
   }
-
+  
   return(ret)
 }
 
@@ -326,28 +331,28 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF = N
   melID <- idPopDF$ID[idPopDF$Pop == "Mel"]
   melCrossID <- idPopDF$ID[idPopDF$Pop == "MelCross"]
   carID <- idPopDF$ID[idPopDF$Pop == "Car"]
-
+  
   #Compute relationships between queens of different populations (QQ)
   #IBSb
   IBSbMelMelCross <- data.frame(Value = as.vector(list(ibsDF[melID, melCrossID])[[1]]),
-                               Pops = "Mel_MelCross", Rel = "QQ")
+                                Pops = "Mel_MelCross", Rel = "QQ")
   IBSbMelCar <- data.frame(Value = as.vector(list(ibsDF[melID, carID])[[1]]),
-                          Pops = "Mel_Car", Rel = "QQ")
+                           Pops = "Mel_Car", Rel = "QQ")
   IBSbMelCrossCar <- data.frame(Value = as.vector(list(ibsDF[melCrossID, carID])[[1]]),
-                               Pops = "MelCross_Car", Rel = "QQ")
+                                Pops = "MelCross_Car", Rel = "QQ")
   IBSb <-rbind(IBSbMelMelCross, IBSbMelCar, IBSbMelCrossCar)
   IBSb$Type <- "IBS"
-
+  
   #IBSc
   IBScMelMelCross <- data.frame(Value = as.vector(list(ibsCdf[melID, melCrossID])[[1]]),
-                               Pops = "Mel_MelCross", Rel = "QQ")
+                                Pops = "Mel_MelCross", Rel = "QQ")
   IBScMelCar <- data.frame(Value = as.vector(list(ibsCdf[melID, carID])[[1]]),
-                          Pops = "Mel_Car", Rel = "QQ")
+                           Pops = "Mel_Car", Rel = "QQ")
   IBScMelCrossCar <- data.frame(Value = as.vector(list(ibsCdf[melCrossID, carID])[[1]]),
-                               Pops = "MelCross_Car", Rel = "QQ")
+                                Pops = "MelCross_Car", Rel = "QQ")
   IBSc <-rbind(IBScMelMelCross, IBScMelCar, IBScMelCrossCar)
   IBSc$Type <- "IBSOwnFreq"
-
+  
   #IBDr
   IBDrMelMelCross <- data.frame(Value = as.vector(list(ibdDF[melID, melCrossID])[[1]]),
                                 Pops = "Mel_MelCross", Rel = "QQ")
@@ -357,7 +362,7 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF = N
                                 Pops = "MelCross_Car", Rel = "QQ")
   IBDr <- rbind(IBDrMelMelCross, IBDrMelCar, IBDrMelCrossCar)
   IBDr$Type <- "IBDr"
-
+  
   #IBDe
   if (!is.null(Sinv)) {
     IBDeMelMelCross <- data.frame(Value = getS(Sinv, ids = melID, with = melCrossID, vector = TRUE),
@@ -368,190 +373,53 @@ prepareDataForPlotting_Queens <- function(ibsDF = NULL, ibsCdf = NULL, ibdDF = N
                                   Pops = "MelCross_Car", Rel = "QQ", Type = "IBDe")
     IBDe <- rbind(IBDeMelMelCross, IBDeMelCar, IBDeMelCrossCar)
   }
-
+  
   # Compute relationships between queens of the same populations/ inbreeding without diagonal (Q)
   #IBSb
   tmp <- ibsDF[melID, melID]
   IBSbMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBSbMel_Mel <- data.frame(Value = as.vector(list(IBSbMel_Mel)[[1]]), Rel = "Q", Type = "IBS", Pops = "Mel")
-
+  
   tmp <- ibsDF[carID, carID]
   IBSbCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBSbCar_Car <-data.frame(Value = as.vector(list(IBSbCar_Car)[[1]]), Rel = "Q", Type = "IBS", Pops = "Car")
-
+  
   tmp <- ibsDF[melCrossID, melCrossID]
   IBSbmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
   IBSbmelCross_melCross <- data.frame(Value = as.vector(list(IBSbmelCross_melCross)[[1]]), Rel = "Q", Type = "IBS", Pops = "MelCross")
-
+  
   IBSb <- rbind(IBSb, IBSbMel_Mel, IBSbCar_Car, IBSbmelCross_melCross)
-
+  
   #IBSc
   tmp <- ibsCdf[melID, melID]
   IBScMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBScMel_Mel <- data.frame(Value = as.vector(list(IBScMel_Mel)[[1]]), Rel = "Q", Type = "IBSOwnFreq", Pops = "Mel")
-
+  
   tmp <- ibsCdf[carID, carID]
   IBScCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBScCar_Car <-data.frame(Value = as.vector(list(IBScCar_Car)[[1]]), Rel = "Q", Type = "IBSOwnFreq", Pops = "Car")
-
+  
   tmp <- ibsCdf[melCrossID, melCrossID]
   IBScmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
   IBScmelCross_melCross <- data.frame(Value = as.vector(list(IBScmelCross_melCross)[[1]]), Rel = "Q", Type = "IBSOwnFreq", Pops = "MelCross")
-
+  
   IBSc <- rbind(IBSc, IBScMel_Mel, IBScCar_Car, IBScmelCross_melCross)
-
+  
   #IBDr
   tmp <- ibdDF[melID, melID]
   IBDrMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBDrMel_Mel <- data.frame(Value = as.vector(list(IBDrMel_Mel)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Mel")
-
+  
   tmp <- ibdDF[carID, carID]
   IBDrCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
   IBDrCar_Car <- data.frame(Value = as.vector(list(IBDrCar_Car)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Car")
-
+  
   tmp <- ibdDF[melCrossID, melCrossID]
   IBDrmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
   IBDrmelCross_melCross <- data.frame(Value = as.vector(list(IBDrmelCross_melCross)[[1]]), Rel = "Q", Type = "IBDr", Pops = "MelCross")
-
+  
   IBDr <- rbind(IBDr, IBDrMel_Mel, IBDrCar_Car, IBDrmelCross_melCross)
-
-  #IBDe
-  if (!is.null(Sinv)) {
-    tmp1 <- getS(Sinv, melID, diagOnly = FALSE, vector = FALSE)
-    tmp2 <- getS(Sinv, melCrossID, diagOnly = FALSE, vector = FALSE)
-    tmp3 <- getS(Sinv, carID, diagOnly = FALSE, vector = FALSE)
-    IBDe <- rbind(IBDe,
-                    data.frame(Value = c(tmp1[lower.tri(tmp1, diag = FALSE)]),
-                                Pops = "Mel", Rel = "Q", Type = "IBDe"),
-                     data.frame(Value = c(tmp2[lower.tri(tmp2, diag = FALSE)]),
-                                Pops = "MelCross", Rel = "Q", Type = "IBDe"),
-                     data.frame(Value = c(tmp3[lower.tri(tmp3, diag = FALSE)]),
-                                Pops = "Car", Rel = "Q", Type = "IBDe"))
-
-  }
-
-
-  # Inbreeding (diagonal!!!) if queens (F)
-  inbIBSb <- rbind(data.frame(Value = diag(ibsDF[melID, melID]),
-                             Pops = "Mel"),
-                  data.frame(Value = diag(ibsDF[melCrossID, melCrossID]),
-                             Pops = "MelCross"),
-                  data.frame(Value = diag(ibsDF[carID, carID]),
-                             Pops = "Car"))
-  inbIBSb$Type = "IBS"
-  inbIBSb$Rel = "F"
-  IBSb <- rbind(IBSb, inbIBSb)
-
-  inbIBSc <- rbind(data.frame(Value = diag(ibsCdf[melID, melID]),
-                             Pops = "Mel"),
-                  data.frame(Value = diag(ibsCdf[melCrossID, melCrossID]),
-                             Pops = "MelCross"),
-                  data.frame(Value = diag(ibsCdf[carID, carID]),
-                             Pops = "Car"))
-  inbIBSc$Type = "IBSOwnFreq"
-  inbIBSc$Rel = "F"
-  IBSc <- rbind(IBSc, inbIBSc)
-
-  inbIBDr <- rbind(data.frame(Value = diag(ibdDF[melID, melID]),
-                              Pops = "Mel"),
-                   data.frame(Value = diag(ibdDF[melCrossID, melCrossID]),
-                              Pops = "MelCross"),
-                   data.frame(Value = diag(ibdDF[carID, carID]),
-                              Pops = "Car"))
-  inbIBDr$Type = "IBDr"
-  inbIBDr$Rel = "F"
-  IBDr <- rbind(IBDr, inbIBDr)
-
-  ret <- rbind(IBSb, IBSc, IBDr)
-
-  if (!is.null(Sinv)) { #TODO: CHANGE THIS WHEN YOU GET PEDIGREE ESTIMATES
-    inbIBDe <- rbind(data.frame(Value = getS(Sinv, melID, diagOnly = TRUE),
-                                Pops = "Mel"),
-                     data.frame(Value = getS(Sinv, melCrossID, diagOnly = TRUE),
-                                Pops = "MelCross"),
-                     data.frame(Value = getS(Sinv, carID, diagOnly = TRUE),
-                                Pops = "Car"))
-    inbIBDe$Type = "IBDe"
-    inbIBDe$Rel = "F"
-    IBDe <- rbind(IBDe, inbIBDe)
-
-    ret <- rbind(ret, IBDe)
-  }
-
-  return(ret)
-}
-
-prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NULL,  idPopDF) {
-  #Get populations IDs
-  melID <- idPopDF$ID[idPopDF$Pop == "Mel"]
-  melCrossID <- idPopDF$ID[idPopDF$Pop == "MelCross"]
-  carID <- idPopDF$ID[idPopDF$Pop == "Car"]
-
-  #Compute relationships between queens of different populations (QQ)
-  #IBSb
-  IBSbMelMelCross <- data.frame(Value = as.vector(list(ibsDF[melID, melCrossID])[[1]]),
-                                Pops = "Mel_MelCross", Rel = "QQ")
-  IBSbMelCar <- data.frame(Value = as.vector(list(ibsDF[melID, carID])[[1]]),
-                           Pops = "Mel_Car", Rel = "QQ")
-  IBSbMelCrossCar <- data.frame(Value = as.vector(list(ibsDF[melCrossID, carID])[[1]]),
-                                Pops = "MelCross_Car", Rel = "QQ")
-  IBSb <-rbind(IBSbMelMelCross, IBSbMelCar, IBSbMelCrossCar)
-  IBSb$Type <- "IBS"
-
-  #IBSc
-
-  #IBDr
-  IBDrMelMelCross <- data.frame(Value = as.vector(list(ibdDF[melID, melCrossID])[[1]]),
-                                Pops = "Mel_MelCross", Rel = "QQ")
-  IBDrMelCar <- data.frame(Value = as.vector(list(ibdDF[melID, carID])[[1]]),
-                           Pops = "Mel_Car", Rel = "QQ")
-  IBDrMelCrossCar <- data.frame(Value = as.vector(list(ibdDF[melCrossID, carID])[[1]]),
-                                Pops = "MelCross_Car", Rel = "QQ")
-  IBDr <- rbind(IBDrMelMelCross, IBDrMelCar, IBDrMelCrossCar)
-  IBDr$Type <- "IBDr"
-
-  #IBDe
-  if (!is.null(Sinv)) {
-    IBDeMelMelCross <- data.frame(Value = getS(Sinv, ids = melID, with = melCrossID, vector = TRUE),
-                                  Pops = "Mel_MelCross", Rel = "QQ", Type = "IBDe")
-    IBDeMelCar <- data.frame(Value = getS(Sinv, ids = melID, with = carID, vector = TRUE),
-                             Pops = "Mel_Car", Rel = "QQ", Type = "IBDe")
-    IBDeMelCrossCar <- data.frame(Value = getS(Sinv, ids = melCrossID, with = carID, vector = TRUE),
-                                  Pops = "MelCross_Car", Rel = "QQ", Type = "IBDe")
-    IBDe <- rbind(IBDeMelMelCross, IBDeMelCar, IBDeMelCrossCar)
-  }
-
-  # Compute relationships between queens of the same populations/ inbreeding without diagonal (Q)
-  #IBSb
-  tmp <- ibsDF[melID, melID]
-  IBSbMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBSbMel_Mel <- data.frame(Value = as.vector(list(IBSbMel_Mel)[[1]]), Rel = "Q", Type = "IBS", Pops = "Mel")
-
-  tmp <- ibsDF[carID, carID]
-  IBSbCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBSbCar_Car <-data.frame(Value = as.vector(list(IBSbCar_Car)[[1]]), Rel = "Q", Type = "IBS", Pops = "Car")
-
-  tmp <- ibsDF[melCrossID, melCrossID]
-  IBSbmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBSbmelCross_melCross <- data.frame(Value = as.vector(list(IBSbmelCross_melCross)[[1]]), Rel = "Q", Type = "IBS", Pops = "MelCross")
-
-  IBSb <- rbind(IBSb, IBSbMel_Mel, IBSbCar_Car, IBSbmelCross_melCross)
-
-  #IBDr
-  tmp <- ibdDF[melID, melID]
-  IBDrMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBDrMel_Mel <- data.frame(Value = as.vector(list(IBDrMel_Mel)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Mel")
-
-  tmp <- ibdDF[carID, carID]
-  IBDrCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBDrCar_Car <- data.frame(Value = as.vector(list(IBDrCar_Car)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Car")
-
-  tmp <- ibdDF[melCrossID, melCrossID]
-  IBDrmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
-  IBDrmelCross_melCross <- data.frame(Value = as.vector(list(IBDrmelCross_melCross)[[1]]), Rel = "Q", Type = "IBDr", Pops = "MelCross")
-
-  IBDr <- rbind(IBDr, IBDrMel_Mel, IBDrCar_Car, IBDrmelCross_melCross)
-
+  
   #IBDe
   if (!is.null(Sinv)) {
     tmp1 <- getS(Sinv, melID, diagOnly = FALSE, vector = FALSE)
@@ -564,10 +432,10 @@ prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = 
                              Pops = "MelCross", Rel = "Q", Type = "IBDe"),
                   data.frame(Value = c(tmp3[lower.tri(tmp3, diag = FALSE)]),
                              Pops = "Car", Rel = "Q", Type = "IBDe"))
-
+    
   }
-
-
+  
+  
   # Inbreeding (diagonal!!!) if queens (F)
   inbIBSb <- rbind(data.frame(Value = diag(ibsDF[melID, melID]),
                               Pops = "Mel"),
@@ -578,7 +446,17 @@ prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = 
   inbIBSb$Type = "IBS"
   inbIBSb$Rel = "F"
   IBSb <- rbind(IBSb, inbIBSb)
-
+  
+  inbIBSc <- rbind(data.frame(Value = diag(ibsCdf[melID, melID]),
+                              Pops = "Mel"),
+                   data.frame(Value = diag(ibsCdf[melCrossID, melCrossID]),
+                              Pops = "MelCross"),
+                   data.frame(Value = diag(ibsCdf[carID, carID]),
+                              Pops = "Car"))
+  inbIBSc$Type = "IBSOwnFreq"
+  inbIBSc$Rel = "F"
+  IBSc <- rbind(IBSc, inbIBSc)
+  
   inbIBDr <- rbind(data.frame(Value = diag(ibdDF[melID, melID]),
                               Pops = "Mel"),
                    data.frame(Value = diag(ibdDF[melCrossID, melCrossID]),
@@ -588,9 +466,9 @@ prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = 
   inbIBDr$Type = "IBDr"
   inbIBDr$Rel = "F"
   IBDr <- rbind(IBDr, inbIBDr)
-
-  ret <- rbind(IBSb, IBDr)
-
+  
+  ret <- rbind(IBSb, IBSc, IBDr)
+  
   if (!is.null(Sinv)) { #TODO: CHANGE THIS WHEN YOU GET PEDIGREE ESTIMATES
     inbIBDe <- rbind(data.frame(Value = getS(Sinv, melID, diagOnly = TRUE),
                                 Pops = "Mel"),
@@ -601,10 +479,137 @@ prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = 
     inbIBDe$Type = "IBDe"
     inbIBDe$Rel = "F"
     IBDe <- rbind(IBDe, inbIBDe)
-
+    
     ret <- rbind(ret, IBDe)
   }
+  
+  return(ret)
+}
 
+prepareDataForPlotting_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, Sinv = NULL,  idPopDF) {
+  #Get populations IDs
+  melID <- idPopDF$ID[idPopDF$Pop == "Mel"]
+  melCrossID <- idPopDF$ID[idPopDF$Pop == "MelCross"]
+  carID <- idPopDF$ID[idPopDF$Pop == "Car"]
+  
+  #Compute relationships between queens of different populations (QQ)
+  #IBSb
+  IBSbMelMelCross <- data.frame(Value = as.vector(list(ibsDF[melID, melCrossID])[[1]]),
+                                Pops = "Mel_MelCross", Rel = "QQ")
+  IBSbMelCar <- data.frame(Value = as.vector(list(ibsDF[melID, carID])[[1]]),
+                           Pops = "Mel_Car", Rel = "QQ")
+  IBSbMelCrossCar <- data.frame(Value = as.vector(list(ibsDF[melCrossID, carID])[[1]]),
+                                Pops = "MelCross_Car", Rel = "QQ")
+  IBSb <-rbind(IBSbMelMelCross, IBSbMelCar, IBSbMelCrossCar)
+  IBSb$Type <- "IBS"
+  
+  #IBSc
+  
+  #IBDr
+  IBDrMelMelCross <- data.frame(Value = as.vector(list(ibdDF[melID, melCrossID])[[1]]),
+                                Pops = "Mel_MelCross", Rel = "QQ")
+  IBDrMelCar <- data.frame(Value = as.vector(list(ibdDF[melID, carID])[[1]]),
+                           Pops = "Mel_Car", Rel = "QQ")
+  IBDrMelCrossCar <- data.frame(Value = as.vector(list(ibdDF[melCrossID, carID])[[1]]),
+                                Pops = "MelCross_Car", Rel = "QQ")
+  IBDr <- rbind(IBDrMelMelCross, IBDrMelCar, IBDrMelCrossCar)
+  IBDr$Type <- "IBDr"
+  
+  #IBDe
+  if (!is.null(Sinv)) {
+    IBDeMelMelCross <- data.frame(Value = getS(Sinv, ids = melID, with = melCrossID, vector = TRUE),
+                                  Pops = "Mel_MelCross", Rel = "QQ", Type = "IBDe")
+    IBDeMelCar <- data.frame(Value = getS(Sinv, ids = melID, with = carID, vector = TRUE),
+                             Pops = "Mel_Car", Rel = "QQ", Type = "IBDe")
+    IBDeMelCrossCar <- data.frame(Value = getS(Sinv, ids = melCrossID, with = carID, vector = TRUE),
+                                  Pops = "MelCross_Car", Rel = "QQ", Type = "IBDe")
+    IBDe <- rbind(IBDeMelMelCross, IBDeMelCar, IBDeMelCrossCar)
+  }
+  
+  # Compute relationships between queens of the same populations/ inbreeding without diagonal (Q)
+  #IBSb
+  tmp <- ibsDF[melID, melID]
+  IBSbMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSbMel_Mel <- data.frame(Value = as.vector(list(IBSbMel_Mel)[[1]]), Rel = "Q", Type = "IBS", Pops = "Mel")
+  
+  tmp <- ibsDF[carID, carID]
+  IBSbCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSbCar_Car <-data.frame(Value = as.vector(list(IBSbCar_Car)[[1]]), Rel = "Q", Type = "IBS", Pops = "Car")
+  
+  tmp <- ibsDF[melCrossID, melCrossID]
+  IBSbmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBSbmelCross_melCross <- data.frame(Value = as.vector(list(IBSbmelCross_melCross)[[1]]), Rel = "Q", Type = "IBS", Pops = "MelCross")
+  
+  IBSb <- rbind(IBSb, IBSbMel_Mel, IBSbCar_Car, IBSbmelCross_melCross)
+  
+  #IBDr
+  tmp <- ibdDF[melID, melID]
+  IBDrMel_Mel <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrMel_Mel <- data.frame(Value = as.vector(list(IBDrMel_Mel)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Mel")
+  
+  tmp <- ibdDF[carID, carID]
+  IBDrCar_Car <- c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrCar_Car <- data.frame(Value = as.vector(list(IBDrCar_Car)[[1]]), Rel = "Q", Type = "IBDr", Pops = "Car")
+  
+  tmp <- ibdDF[melCrossID, melCrossID]
+  IBDrmelCross_melCross <-  c(tmp[lower.tri(tmp, diag = FALSE)])
+  IBDrmelCross_melCross <- data.frame(Value = as.vector(list(IBDrmelCross_melCross)[[1]]), Rel = "Q", Type = "IBDr", Pops = "MelCross")
+  
+  IBDr <- rbind(IBDr, IBDrMel_Mel, IBDrCar_Car, IBDrmelCross_melCross)
+  
+  #IBDe
+  if (!is.null(Sinv)) {
+    tmp1 <- getS(Sinv, melID, diagOnly = FALSE, vector = FALSE)
+    tmp2 <- getS(Sinv, melCrossID, diagOnly = FALSE, vector = FALSE)
+    tmp3 <- getS(Sinv, carID, diagOnly = FALSE, vector = FALSE)
+    IBDe <- rbind(IBDe,
+                  data.frame(Value = c(tmp1[lower.tri(tmp1, diag = FALSE)]),
+                             Pops = "Mel", Rel = "Q", Type = "IBDe"),
+                  data.frame(Value = c(tmp2[lower.tri(tmp2, diag = FALSE)]),
+                             Pops = "MelCross", Rel = "Q", Type = "IBDe"),
+                  data.frame(Value = c(tmp3[lower.tri(tmp3, diag = FALSE)]),
+                             Pops = "Car", Rel = "Q", Type = "IBDe"))
+    
+  }
+  
+  
+  # Inbreeding (diagonal!!!) if queens (F)
+  inbIBSb <- rbind(data.frame(Value = diag(ibsDF[melID, melID]),
+                              Pops = "Mel"),
+                   data.frame(Value = diag(ibsDF[melCrossID, melCrossID]),
+                              Pops = "MelCross"),
+                   data.frame(Value = diag(ibsDF[carID, carID]),
+                              Pops = "Car"))
+  inbIBSb$Type = "IBS"
+  inbIBSb$Rel = "F"
+  IBSb <- rbind(IBSb, inbIBSb)
+  
+  inbIBDr <- rbind(data.frame(Value = diag(ibdDF[melID, melID]),
+                              Pops = "Mel"),
+                   data.frame(Value = diag(ibdDF[melCrossID, melCrossID]),
+                              Pops = "MelCross"),
+                   data.frame(Value = diag(ibdDF[carID, carID]),
+                              Pops = "Car"))
+  inbIBDr$Type = "IBDr"
+  inbIBDr$Rel = "F"
+  IBDr <- rbind(IBDr, inbIBDr)
+  
+  ret <- rbind(IBSb, IBDr)
+  
+  if (!is.null(Sinv)) { #TODO: CHANGE THIS WHEN YOU GET PEDIGREE ESTIMATES
+    inbIBDe <- rbind(data.frame(Value = getS(Sinv, melID, diagOnly = TRUE),
+                                Pops = "Mel"),
+                     data.frame(Value = getS(Sinv, melCrossID, diagOnly = TRUE),
+                                Pops = "MelCross"),
+                     data.frame(Value = getS(Sinv, carID, diagOnly = TRUE),
+                                Pops = "Car"))
+    inbIBDe$Type = "IBDe"
+    inbIBDe$Rel = "F"
+    IBDe <- rbind(IBDe, inbIBDe)
+    
+    ret <- rbind(ret, IBDe)
+  }
+  
   return(ret)
 }
 
@@ -614,20 +619,20 @@ prepareDataForPlottingHeatMap_Queens <- function(ibsDF = NULL, ibsCdf = NULL, ib
   ibsDF$ID <- rownames(ibsDF)
   ibsDFL <- ibsDF %>% pivot_longer(cols = all_of(columns))
   ibsDFL$Method <- "IBS"
-
+  
   ibsCdf <- as.data.frame(ibsCdf)
   columns <- colnames(ibsCdf)
   ibsCdf$ID <- rownames(ibsCdf)
   ibsCdfL <- ibsCdf %>% pivot_longer(cols = all_of(columns))
   ibsCdfL$Method <- "IBSOwnFreq"
-
+  
   ibdrDF <- as.data.frame(ibdDF)
   columns <- colnames(ibdrDF)
   ibdrDF$ID <- rownames(ibdrDF)
   ibdrDFL <- ibdrDF %>% pivot_longer(cols = all_of(columns))
   ibdrDFL$Method <- "IBDr"
   ret <- rbind(ibsDFL, ibsCdfL, ibdrDFL)
-
+  
   if (!is.null(Sinv)) {
     ibdeDF <-  as.data.frame(as.matrix(getS(Sinv, ids = idDF)))
     rownames(ibdeDF) <- idDF
@@ -647,14 +652,14 @@ prepareDataForPlottingHeatMap_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, 
   ibsDF$ID <- rownames(ibsDF)
   ibsDFL <- ibsDF %>% pivot_longer(cols = all_of(columns))
   ibsDFL$Method <- "IBS"
-
+  
   ibdrDF <- as.data.frame(ibdDF)
   columns <- colnames(ibdrDF)
   ibdrDF$ID <- rownames(ibdrDF)
   ibdrDFL <- ibdrDF %>% pivot_longer(cols = all_of(columns))
   ibdrDFL$Method <- "IBDr"
   ret <- rbind(ibsDFL, ibdrDFL)
-
+  
   if (!is.null(Sinv)) {
     ibdeDF <-  as.data.frame(as.matrix(getS(Sinv, ids = idDF)))
     rownames(ibdeDF) <- idDF
@@ -668,92 +673,120 @@ prepareDataForPlottingHeatMap_QueensCSD <- function(ibsDF = NULL, ibdDF = NULL, 
   return(ret)
 }
 
-plotColony <- function(df, rel = c("WD", "WW", "DD"), type = c("IBDr", "IBDe"), x_axis = NULL, show.legend = NULL, strip.text = NULL) {
+plotColony <- function(df, rel = c("WD", "WW", "DD"), type = c("IBDr", "IBDe")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
   df$Rel <- factor(df$Rel, levels= c("WW", "WD", "DD", "QW", "QD"))
-  p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                 aes(x = Value, fill = Rel)) +
-    geom_histogram(binwidth = 0.01, position = "identity", show.legend = show.legend) + facet_grid(rows = vars(Type), scales = "free") + xlim(x_axis)
-  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), strip.text = strip.text)
-  return(plot)
-}
-
-plotColonyF <- function(df, rel = c("WW", "DD"), type = c("IBDr", "IBDe"), x_axis = NULL, show.legend = NULL){
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
-  df$Rel <- factor(df$Rel, levels= c("WW", "WD", "DD", "QW", "QD"))
+  type_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  year_labels <- c("Year 1", "Year 10")
+  names(type_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  names(year_labels) <- c("1", "10")
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
               aes(x = Value, fill = Rel)) +
-    geom_histogram(binwidth = 0.01, position = "identity", show.legend = show.legend) + facet_wrap(.~Type, scales = "free_y") + xlim(x_axis)
-  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+    geom_histogram(binwidth = 0.01, position = "identity") + facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels))
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") + scale_x_continuous(breaks=seq(-2, 2, 0.25))
   return(plot)
 }
 
-plotQueensQQ <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe", "IBS"), x_axis = NULL, show.legend = NULL, strip.text = NULL) {
+plotQueensQQ <- function(df, rel = c("QQ"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car"))
+  df$Rel  <- factor(df$Rel, levels = "QQ")
+  type_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  year_labels <- c("Year 1", "Year 10")
+  names(type_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  names(year_labels) <- c("1", "10")
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Pops)) +
-      geom_histogram(binwidth = 0.01, position = "identity", show.legend = show.legend) +
-    facet_wrap(.~Type, scales = "free_y") + xlim(x_axis) #IBS not to scale so increased scale
-  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), strip.text = strip.text)
+              aes(x = Value, fill = Pops)) +
+    geom_histogram(binwidth = 0.01, position = "identity") +
+    facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels))
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") + scale_x_continuous(breaks=seq(-2, 2, 0.25))
   return(plot)
 }
 
-scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), x_axis = NULL, show.legend = NULL ) {
+scatterQueens <-  function(df, rel = c("QQ"), type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "Car", "Mel", "MelCross"))
+  df$Rel  <- factor(df$Rel, levels = "QQ")
+  type_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  year_labels <- c("Year 1", "Year 10")
+  names(type_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  names(year_labels) <- c("1", "10")
   a <- pivot_wider(df[df$Rel %in% rel & df$Type %in% type & df$Pops %in% pops, ], names_from = Type, values_from = Value, values_fn = list)
   b <- unnest(a, cols = all_of(type))
-  c <- ggplot(data = b, aes(x = IBDr, y = IBS)) + geom_point(aes(colour = Pops), show.legend = show.legend) + xlim(x_axis)
-  plot <- c + scale_fill_manual("", values= cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+  c <- ggplot(data = b, aes(x = IBDr, y = IBS)) + geom_point(aes(colour = Pops)) + facet_grid2(cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels))
+  plot <- c + scale_fill_manual("", values= cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") + scale_x_continuous(breaks=seq(-2, 2, 0.25))
   return(plot)
 }
 
-plotQueensQ <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS"), x_axis = NULL, show.legend = NULL, strip.text = NULL) {
+plotQueensQ <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
   df$Rel <- factor(df$Rel, levels= c("F", "Q"))
+  type_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  year_labels <- c("Year 1", "Year 10")
+  names(type_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  names(year_labels) <- c("1", "10")
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-                   aes(x = Value, fill = Pops)) +
-      geom_histogram(binwidth = 0.01, position = "identity", show.legend = show.legend) +
-      facet_wrap(.~Type, scales = "free_y") + xlim(x_axis) #xlim removed
-  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), strip.text = strip.text)
+              aes(x = Value, fill = Pops)) +
+    geom_histogram(binwidth = 0.01, position = "identity") +
+    facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y",labeller = labeller(Type = type_labels, Year = year_labels))
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") + scale_x_continuous(breaks=seq(-2, 2, 0.25))
   return(plot)
 }
 
-plotQueensF <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS"), x_axis = NULL, show.legend = NULL) {
+plotQueensF <- function(df, rel = c("Q", "F"), type = c("IBDr", "IBDe", "IBS")) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
   df$Rel <- factor(df$Rel, levels= c("F", "Q"))
+  type_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  year_labels <- c("Year 1", "Year 10")
+  names(type_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  names(year_labels) <- c("1", "10")
   p <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
               aes(x = Value - 1, fill = Pops)) +
-    geom_histogram(binwidth = 0.01, position = "identity", show.legend = show.legend) +
-    facet_wrap(.~Type, scales = "free_y")+ xlim(x_axis) #xlim removed
-  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + theme_classic()
+    geom_histogram(binwidth = 0.01, position = "identity") +
+    facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels))
+  plot <- p + scale_fill_manual("", values=cbPalette, aesthetics = c("colour","fill")) + 
+    theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") + scale_x_continuous(breaks=seq(-2, 2, 0.25))
   return(plot)
 }
 
-plotQueens_heatmap <- function(df, Pop = FALSE, PopIdDF = NULL, show.legend = NULL) {
+plotQueens_heatmap <- function(df, PopIdDF = NULL, years = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
   df$name <- as.factor(as.numeric(df$name))
   df$Method <- factor(df$Method, levels = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"))
-
-  if (Pop) {
-    df <- merge(df, PopIdDF, by = "ID")
-    df <- merge(df, PopIdDF, by.x = "name", by.y = "ID")
-
-    df$PopId1 <- paste0(df$Pop.x, df$ID)
-    df$PopId2 <- paste0(df$Pop.y, df$name)
-
-    n <- length(unique(df$name[df$Pop.y == "Mel"]))/2
-    breaks = list(df %>% group_by(Pop.y) %>% summarise(mean = unique(name)[n]) %>% unite(PopMean, Pop.y, mean, sep=""))[[1]]$PopMean
-    plot <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile(show.legend = show.legend) + scale_fill_gradient(low = "white", high = "blue") + theme_classic() +
-      scale_x_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
-      scale_y_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
-      xlab("") + ylab("") +
-      facet_grid(rows = vars(Method))
-  } else {
-    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() +
-      facet_grid(rows = vars(Method))
-  }
+  method_labels <- c("IBDe", "IBDr", "IBSPopAF", "IBSColonyAF")
+  names(method_labels) <- c("IBDe", "IBDr", "IBS", "IBSOwnFreq")
+  
+  df$Year <- factor(df$Year, levels = years)
+  year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
+  names(year_labels) <- years
+  
+  df <- merge(df, PopIdDF, by = "ID")
+  df <- merge(df, PopIdDF, by.x = "name", by.y = "ID")
+  df$PopId1 <- paste0(df$Pop.x, df$ID)
+  df$PopId2 <- paste0(df$Pop.y, df$name)
+  
+  n <- length(unique(df$name[df$Pop.y == "Mel"]))/2
+  breaks = df %>%
+    arrange(Year, Pop.y) %>%
+    dplyr::mutate(row = row_number()) %>%
+    group_by(Year) %>%
+    dplyr::mutate(min = min(row)) %>%
+    group_by(Year, Pop.y) %>%
+    summarise(breaks = max(row_number()), min = mean(min)) %>%
+    ungroup() %>% group_by(Year) %>%
+    dplyr::mutate(breaks2 = ifelse(test = row_number() > 1, yes = breaks/2 + breaks*(row_number()-1), no =  breaks/2)) %>%
+    ungroup() %>% 
+    dplyr::mutate(breaks3 = dplyr::select(., min, breaks2) %>% 
+                                     rowSums(.)) %>% 
+    dplyr::select(breaks = breaks3)
+  
+  p <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() + scale_fill_gradient(low = "white", high = "blue") + 
+    theme(panel.background = element_blank(), legend.position = "top") +
+  scale_x_discrete(breaks = breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
+  scale_y_discrete(breaks = breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
+  xlab("") + ylab("")
+ 
+   plot <- p + facet_grid2(rows = vars(Method), cols = vars(Year), labeller = labeller(Method = method_labels, Year = year_labels), scales = "free", independent = "y")
   return(plot)
 }
 
@@ -765,59 +798,48 @@ relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibsCdf = ibsCcar1, ibd
 print("Plot carnica year 10")
 relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibsCdf = ibsCcar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
 
-#Carnica WW/WD/DD
-plotCar1 <- plotColony(relCar1, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "WD", "DD"), x_axis = c(-0.55, 2.0), show.legend = FALSE, strip.text = element_blank())
-plotCar1
-#plotCar10 WW/WD/DD
-plotCar10 <- plotColony(relCar10, type = c("IBDe", "IBDr","IBS","IBSOwnFreq"), rel = c("WW", "WD", "DD"), x_axis = c(-0.55, 2.0), show.legend = TRUE, strip.text = element_text())
-plotCar10
+relCar1$Year <- 1
+relCar10$Year <- 10
+data <- rbind(relCar1, relCar10)
 
-plotCarWW <- grid.arrange(plotCar1, plotCar10, ncol = 2)
+CarWWplot<- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "WD", "DD"), legend.position = "top")
+CarWWplot
 
-#Carnica QW/QD
-plotCar1Q <- plotColony(relCar1, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("QW", "QD"), x_axis = c(-0.5, 1.5), show.legend = FALSE, strip.text = element_blank() )
-plotCar1Q
-#plotCar10 QW/QD
-plotCar10Q <- plotColony(relCar10, type = c("IBDe", "IBDr", "IBS"), rel = c("QW", "QD"), x_axis = c(-0.5, 1.5), show.legend = TRUE, strip.text = element_text())
-plotCar10Q
-
-plotCarQW <- grid.arrange(plotCar1Q, plotCar10Q, ncol = 2)
+CarQWplot <- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("QW", "QD"), legend.position = "top")
+CarQWplot
 
 #Plot Car inbreeding
 relCar1F <- prepareDataForPlotting_ColonyDiag(ibsDF = ibsCar1, ibsCdf = ibsCcar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
 relCar10F <- prepareDataForPlotting_ColonyDiag(ibsDF = ibsCar10, ibsCdf = ibsCcar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
+relCar1F$Year <- 1
+relCar10F$Year <- 10 
 
-plotCar1F <- plotColonyF(relCar1F, rel = c("WW", "DD"), type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), x_axis = c(0.0, 2.0), show.legend = FALSE)
-plotCar1F
-plotCar10F <- plotColonyF(relCar10F, rel = c("WW", "DD"), type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), x_axis = c(0.0, 2.0), show.legend = TRUE)
-plotCar10F
+data2 <- rbind(relCar1F, relCar10F)
 
-plotCarF <- grid.arrange(plotCar1F, plotCar10F, ncol = 2)
-
+CarFplot <- plotColony(data2, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "DD"), legend.position = "top")
+CarFplot
 #Plot CAR csd Locus
 #Year 1
 relCar1_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar1_csd, ibdDF = ibdCar1_csd, Sinv = Sinv, idDF = idCar1)
 relCar10_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
+relCar1_csd$Year <- 1
+relCar10_csd$Year <- 10 
 
-plotCar1_csdLoc <- plotColony(relCar1_csd, type = c("IBDe", "IBDr", "IBS"), x_axis = c(-1.25, 2.0), show.legend = FALSE, strip.text = element_blank())
-plotCar1_csdLoc
-plotCar10_csdLoc <- plotColony(relCar10_csd, type = c("IBDe", "IBDr", "IBS"), x_axis = c(-1.25, 2.0), show.legend = TRUE, strip.text = element_text())
-plotCar10_csdLoc
+data3 <- rbind(relCar1_csd, relCar10_csd)
 
-plotCarCsdLoc <- grid.arrange(plotCar1_csdLoc, plotCar10_csdLoc, ncol = 2)
+CarCSDlocplot <- plotColony(data3, type = c("IBDe", "IBDr", "IBS"), legend.position = "top")
+CarCSDlocplot
 
 #Plot CAR csd Chromosome
 relCar1_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar1_csdChr, ibdDF = ibdCar1_csdChr, Sinv = Sinv, idDF = idCar1)
 relCar10_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, Sinv = Sinv, idDF = idCar10)
+relCar1_csdChr$Year <- 1
+relCar10_csdChr$Year <- 10 
 
+data4 <- rbind(relCar1_csdChr, relCar10_csdChr)
 
-plotCar1_csdChr <- plotColony(relCar1_csdChr, type = c("IBDe", "IBDr", "IBS"), x_axis = c(-0.01, 2.0), show.legend = FALSE, strip.text = element_blank())
-plotCar1_csdChr
-plotCar10_csdChr <- plotColony(relCar10_csdChr, type = c("IBDe", "IBDr", "IBS"), x_axis = c(-0.01, 2.0), show.legend = TRUE, strip.text = element_text())
-plotCar10_csdChr
-
-plotCarCsdChr <- grid.arrange(plotCar1_csdChr, plotCar10_csdChr, ncol = 2)
-
+CarCSDchr <- plotColony(data4, type = c("IBDe", "IBDr", "IBS"), legend.position = "top")
+CarCSDchr 
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
@@ -825,51 +847,45 @@ plotCarCsdChr <- grid.arrange(plotCar1_csdChr, plotCar10_csdChr, ncol = 2)
 print("Plot queens")
 relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibsCdf = ibsCQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
 relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibsCdf = ibsCQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueens1$Year <- 1
+relQueens10$Year <- 10
 
+dataQueens <- rbind(relQueens1, relQueens10)
 print("Between populations ")
 #between populations
-plotQueens1QQ <- plotQueensQQ(relQueens1, type = c("IBDr", "IBDe", "IBS"), x_axis = c(-1.0, 1.5), show.legend = FALSE, strip.text = element_text())
-plotQueens1QQ
-plotQueens10QQ <- plotQueensQQ(relQueens10, type = c("IBDe", "IBDr", "IBS"), x_axis = c(-1.0, 1.5), show.legend = TRUE, strip.text = element_text())
-plotQueens10QQ
-
-plotQueensQQ <- grid.arrange(plotQueens1QQ, plotQueens10QQ, nrow = 2)
+QueensQQ <- plotQueensQQ(dataQueens, rel = "QQ", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensQQ
 
 #between populations as a scatter plot
-plotQueensScatter1 <- scatterQueens(relQueens1, type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), x_axis = c(-0.01, 1), show.legend = FALSE)
-plotQueensScatter1
-plotQueensScatter10 <- scatterQueens(relQueens10, type = c("IBDr", "IBS"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), x_axis = c(-0.01, 1), show.legend = TRUE)
-plotQueensScatter10
+QueensScatter <- scatterQueens(dataQueens, type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensScatter
 
-plotQueensScatter <- grid.arrange(plotQueensScatter1, plotQueensScatter10, ncol = 2)
 
 print("Within populations")
 #within population - non-diagonal
-plotQueens1Q <- plotQueensQ(relQueens1, rel = c("Q"), type = c("IBDr", "IBDe", "IBS"), x_axis = c(-0.5, 2.0), show.legend = FALSE, strip.text = element_text())
-plotQueens1Q
-plotQueens10Q <- plotQueensQ(relQueens10, rel = c("Q"), type = c("IBDr", "IBDe", "IBS"), x_axis = c(-0.5, 2.0), show.legend = TRUE, strip.text = element_text())
-plotQueens10Q
-
-plotQueensQ <- grid.arrange(plotQueens1Q, plotQueens10Q, nrow = 2)
-
+QueensQ <- plotQueensQ(dataQueens, rel = "Q",  type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensQ
 #within population - diagonal
-plotQueens1F <- plotQueensF(relQueens1, rel = c("F"), type = c("IBDr", "IBDe", "IBS"), x_axis = c(-0.1, 0.8), show.legend = FALSE)
-plotQueens1F
-plotQueens10F <- plotQueensF(relQueens10, rel = c("F"), type = c("IBDr", "IBDe", "IBS"), x_axis = c(-0.1, 0.8), show.legend = TRUE)
-plotQueens10F
+QueensF <- plotQueensF(dataQueens, rel = "F", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensF
 
-plotQueensF <- grid.arrange(plotQueens1F, plotQueens10F, nrow = 2)
 
 print("HeatMaps")
 relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibsCdf = ibsCQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
 relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibsCdf = ibsCQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idDF = idQueens10)
+relQueens1h$Year <- 1
+relQueens10h$Year <- 10
+dataQh <- rbind(relQueens1h, relQueens10h)
+idPopQueens <- rbind(idPopQueens1, idPopQueens10)
 
-plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1, show.legend = FALSE)
+
+plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1)
 plotQueens1h
-plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10, show.legend = TRUE)
+plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10)
 plotQueens10h
 
-plotQueensHeatMap <- grid.arrange(plotQueens1h, plotQueens10h, ncol = 2)
+QueenH <- plotQueens_heatmap(dataQh, PopIdDF = idPopQueens, years = c("1", "10"))
+QueenH
 
 #CSD STUFF
 #Plot csd Loc as a histogram
