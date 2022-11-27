@@ -782,7 +782,7 @@ plotQueens_heatmap <- function(df, PopIdDF = NULL, years = NULL) {
   
   p <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() + scale_fill_gradient(low = "white", high = "blue") + 
     theme(panel.background = element_blank(), legend.position = "top") +
-  scale_x_discrete(breaks = breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
+  scale_x_discrete(breaks = breaks$breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
   scale_y_discrete(breaks = breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
   xlab("") + ylab("")
  
@@ -802,10 +802,10 @@ relCar1$Year <- 1
 relCar10$Year <- 10
 data <- rbind(relCar1, relCar10)
 
-CarWWplot<- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "WD", "DD"), legend.position = "top")
+CarWWplot<- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "WD", "DD"))
 CarWWplot
 
-CarQWplot <- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("QW", "QD"), legend.position = "top")
+CarQWplot <- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("QW", "QD"))
 CarQWplot
 
 #Plot Car inbreeding
@@ -816,7 +816,7 @@ relCar10F$Year <- 10
 
 data2 <- rbind(relCar1F, relCar10F)
 
-CarFplot <- plotColony(data2, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "DD"), legend.position = "top")
+CarFplot <- plotColony(data2, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel = c("WW", "DD"))
 CarFplot
 #Plot CAR csd Locus
 #Year 1
@@ -827,7 +827,7 @@ relCar10_csd$Year <- 10
 
 data3 <- rbind(relCar1_csd, relCar10_csd)
 
-CarCSDlocplot <- plotColony(data3, type = c("IBDe", "IBDr", "IBS"), legend.position = "top")
+CarCSDlocplot <- plotColony(data3, type = c("IBDe", "IBDr", "IBS"))
 CarCSDlocplot
 
 #Plot CAR csd Chromosome
@@ -838,7 +838,7 @@ relCar10_csdChr$Year <- 10
 
 data4 <- rbind(relCar1_csdChr, relCar10_csdChr)
 
-CarCSDchr <- plotColony(data4, type = c("IBDe", "IBDr", "IBS"), legend.position = "top")
+CarCSDchr <- plotColony(data4, type = c("IBDe", "IBDr", "IBS"))
 CarCSDchr 
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
@@ -853,20 +853,20 @@ relQueens10$Year <- 10
 dataQueens <- rbind(relQueens1, relQueens10)
 print("Between populations ")
 #between populations
-QueensQQ <- plotQueensQQ(dataQueens, rel = "QQ", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensQQ <- plotQueensQQ(dataQueens, rel = "QQ", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
 QueensQQ
 
 #between populations as a scatter plot
-QueensScatter <- scatterQueens(dataQueens, type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensScatter <- scatterQueens(dataQueens, type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
 QueensScatter
 
 
 print("Within populations")
 #within population - non-diagonal
-QueensQ <- plotQueensQ(dataQueens, rel = "Q",  type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensQ <- plotQueensQ(dataQueens, rel = "Q",  type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
 QueensQ
 #within population - diagonal
-QueensF <- plotQueensF(dataQueens, rel = "F", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"), legend.position = "top")
+QueensF <- plotQueensF(dataQueens, rel = "F", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
 QueensF
 
 
@@ -884,67 +884,70 @@ plotQueens1h
 plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10)
 plotQueens10h
 
-QueenH <- plotQueens_heatmap(dataQh, PopIdDF = idPopQueens, years = c("1", "10"))
+QueenH <- plotQueens_heatmap(dataQh, PopIdDF = idPopQueens, years = c(1,10))
 QueenH
 
 #CSD STUFF
-#Plot csd Loc as a histogram
-relQueens1_csd_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
-relQueens10_csd_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
+#Plot csd Loc as a histogram (QQ)
+relQueens1_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
+relQueens10_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueens1_csdLoc_hist$Year <- 1
+relQueens10_csdLoc_hist$Year <- 10 
+dataQueens_csdLoc <- rbind(relQueens1_csdLoc_hist, relQueens10_csdLoc_hist)
 
+Queens_csdLoc_hist <- plotQueensQQ(dataQueens_csdLoc, rel = "QQ", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
+Queens_csdLoc_hist
 
-plotQueens1_csdLoc<- plotQueensQQ(relQueens1_csd_hist, type = c("IBDr", "IBDe", "IBS"), x_axis = c(-1.5, 1.5), show.legend = FALSE, strip.text = element_text())
-plotQueens1_csdLoc
-plotQueens10_csdLoc <- plotQueensQQ(relQueens10_csd_hist, type = c("IBDr", "IBDe", "IBS"), x_axis = c(-1.5, 1.5), show.legend = TRUE, strip.text = element_text())
-plotQueens10_csdLoc
+#Plot csd loc as a heatmap TODO: 
 
-plotQueensCsdLoc <- grid.arrange(plotQueens1_csdLoc, plotQueens10_csdLoc, nrow = 2)
+relQueens1_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
+relQueens10_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
+relQueens1_csdLoc_heat$Year <- 1
+relQueens10_csdLoc_heat$Year <- 10 
+dataQueens_csdLoc_heat <- rbind(relQueens1_csdLoc_heat, relQueens10_csdLoc_heat)
 
-#Plot csd loc as a heatmap
-relQueens1_csd <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
-relQueens10_csd <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
+Queens_csdLoc_heat <- plotQueens_heatMap(DF, PopIdDF = idPopQueens, years = c(1,10))
 
+#Plot csd Chr as Histogram
+relQueen1_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idPopDF = idPopQueens1)
+relQueen10_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueen1_csdChr_hist$Year <- 1
+relQueen10_csdChr_hist$Year <- 10 
+dataQueens_csdChr_hist <- rbind(relQueen1_csdChr_hist, relQueen10_csdChr_hist)
 
-plotQueens1_csdLoc_heat <- plotQueens_heatmap(relQueens1_csd, Pop = TRUE, PopIdDF = idPopQueens1, show.legend = FALSE)
-plotQueens1_csdLoc_heat
-plotQueens10_csdLoc_heat <- plotQueens_heatmap(relQueens10_csd, Pop = TRUE, PopIdDF = idPopQueens10, show.legend = TRUE)
-plotQueens10_csdLoc_heat
+Queens_csdChr_hist <- plotQueensQQ(dataQueens_csdChr_hist, rel = "QQ", type = c("IBDr", "IBDe", "IBS", "IBSOwnFreq"))
 
-plotQueensCsdLocHeatMap <- grid.arrange(plotQueens1_csdLoc_heat, plotQueens10_csdLoc_heat, ncol = 2)
 
 #Plot csd Chr as heatmap
-relQueens1_csdChr <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idDF = idQueens1)
-relQueens10_csdChr <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
+relQueens1_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idDF = idQueens1)
+relQueens10_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
+relQueens1_csdChr_heat$Year <- 1
+relQueens10_csdChr_heat$Year <- 10
+dataQueens_csdChr_heat <- rbind(relQueens1_csdChr_heat, relQueens10_csdChr_heat)
 
-plotQueens1_csdChr_heat <- plotQueens_heatmap(relQueens1_csdChr, Pop = TRUE, PopIdDF = idPopQueens1, show.legend = FALSE)
-plotQueens1_csdChr_heat
-plotQueens10_csdChr_heat <-plotQueens_heatmap(relQueens10_csdChr, Pop = TRUE, PopIdDF = idPopQueens10, show.legend = TRUE)
-plotQueens10_csdChr_heat
-
-plotQueensCSDChrHeapMap <- grid.arrange(plotQueens1_csdChr_heat, plotQueens10_csdChr_heat, ncol = 2)
-
+Queens_CSDchr_head <- plotQueens_heatmap(dataQueens_csdChr_heat, PopIdDF = idPopQueens, years= c(1,10))
 
 ### Csd
-csdVariability <- csdVariability[!is.na(csdVariability$subspecies),]
-pDiploidDrones <- pDiploidDrones[-1,]
-
-csdVariability$nCSD <- as.numeric(csdVariability$nCSD)
-csdVariability$totalCSD <- as.numeric(csdVariability$totalCSD)
-csdVariability$year <- as.numeric(csdVariability$year)
-csdMean <- csdVariability %>%  group_by(subspecies, year) %>%  summarize(meanCSD = mean(nCSD))
-csdMean$subspecies <- factor(csdMean$subspecies, levels = c("Mel", "MelCross", "Car"))
-csdVariability$subspecies <- factor(csdVariability$subspecies, levels = c("Mel", "MelCross", "Car"))
-ggplot(data = csdMean, aes(x = year, y = meanCSD, colour = subspecies)) + geom_line()
-
-ggplot(data = csdVariability, aes(x = year, y = totalCSD, colour = subspecies)) + geom_line()
-
-
-
-pDiploidDrones$pQueenHomBrood <- as.numeric(pDiploidDrones$pQueenHomBrood)
-pDiploidDrones$year <- as.numeric(pDiploidDrones$year)
-pDiploidMean <- pDiploidDrones %>%  group_by(subspecies, year) %>%  summarize(meanHom = mean(pQueenHomBrood))
-pDiploidMean$subspecies <- factor(pDiploidMean$subspecies, levels = c("Mel", "MelCross", "Car"))
-
-ggplot(data = pDiploidMean, aes(x = year, y = meanHom, colour = subspecies)) + geom_line()
+# csdVariability <- csdVariability[!is.na(csdVariability$subspecies),]
+# pDiploidDrones <- pDiploidDrones[-1,]
+# 
+# csdVariability$nCSD <- as.numeric(csdVariability$nCSD)
+# csdVariability$totalCSD <- as.numeric(csdVariability$totalCSD)
+# csdVariability$year <- as.numeric(csdVariability$year)
+# csdMean <- csdVariability %>%  group_by(subspecies, year) %>%  summarize(meanCSD = mean(nCSD))
+# csdMean$subspecies <- factor(csdMean$subspecies, levels = c("Mel", "MelCross", "Car"))
+# csdVariability$subspecies <- factor(csdVariability$subspecies, levels = c("Mel", "MelCross", "Car"))
+# ggplot(data = csdMean, aes(x = year, y = meanCSD, colour = subspecies)) + geom_line()
+# 
+# ggplot(data = csdVariability, aes(x = year, y = totalCSD, colour = subspecies)) + geom_line()
+# 
+# 
+# 
+# pDiploidDrones$pQueenHomBrood <- as.numeric(pDiploidDrones$pQueenHomBrood)
+# pDiploidDrones$year <- as.numeric(pDiploidDrones$year)
+# pDiploidMean <- pDiploidDrones %>%  group_by(subspecies, year) %>%  summarize(meanHom = mean(pQueenHomBrood))
+# pDiploidMean$subspecies <- factor(pDiploidMean$subspecies, levels = c("Mel", "MelCross", "Car"))
+# 
+# ggplot(data = pDiploidMean, aes(x = year, y = meanHom, colour = subspecies)) + geom_line()
 
 
