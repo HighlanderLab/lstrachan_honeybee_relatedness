@@ -17,7 +17,7 @@ Sinv <- readMM("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/Sinv
 #Eddie data
 #data <- load("SpringerSimulation_import_objects.RData")
 #Sinv <- readMM("Sinv.mm")
-#save.image("~/Documents/")
+save.image("~/Documents/")
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
@@ -31,52 +31,6 @@ cbPalette <- c("#FF6DB6", "#490092", "#6DB6FF")
 print("Assigning objects")
 ped <- pedigree
 caste <- caste
-# Colony in year 1
-# Carnica
-colonyCar1 <- springerColony1_Car
-ibsCar1 <- colonyCar1$IBS
-ibsCcar1 <- colonyCar1$IBSOwnFreq
-ibsCar1_csdChr <- colonyCar1$IBScsdChr
-ibsCar1_csd <- colonyCar1$IBSCsd
-ibdCar1 <- colonyCar1$IBD
-ibdCar1_csdChr <- colonyCar1$IBDcsdChr
-ibdCar1_csd <- colonyCar1$IBDCsd
-idCar1 <- colonyCar1$ID
-# Queens in year 1
-queens1 <- springerQueens1
-ibsQueens1 <- queens1$IBS
-ibsCQueens1 <- queens1$IBSOwnFreq
-ibsQueens1_csdChr <- queens1$IBScsdChr
-ibsQueens1_csd <- queens1$IBSCsd
-ibdQueens1 <- queens1$IBD
-ibdQueens1_csdChr <- queens1$IBDcsdChr
-ibdQueens1_csd <- queens1$IBDCsd
-idQueens1 <- queens1$ID
-idPopQueens1 <- springerQueensPop1
-
-# Colony in year 10
-# Carnica
-colonyCar10 <- springerColony10_Car
-ibsCar10 <- colonyCar10$IBS
-ibsCcar10 <- colonyCar10$IBSOwnFreq
-ibsCar10_csdChr <- colonyCar10$IBScsdChr
-ibsCar10_csd <- colonyCar10$IBSCsd
-ibdCar10 <- colonyCar10$IBD
-ibdCar10_csdChr <- colonyCar10$IBDcsdChr
-ibdCar10_csd <- colonyCar10$IBDCsd
-idCar10 <- colonyCar10$ID
-# Queens in year 10
-queens10 <- springerQueens10
-ibsQueens10 <- queens10$IBS
-ibsCQueens10 <- queens10$IBSOwnFreq
-ibsQueens10_csdChr <- queens10$IBScsdChr
-ibsQueens10_csd <- queens10$IBSCsd
-ibdQueens10 <- queens10$IBD
-ibdQueens10_csdChr <- queens10$IBDcsdChr
-ibdQueens10_csd <- queens10$IBDCsd
-idQueens10 <- queens10$ID
-idPopQueens10 <- springerQueensPop10
-
 
 getS <- function(Sinv, ids, with = ids, diagOnly = FALSE, vector = FALSE) {
   ids <- as.numeric(ids)
@@ -783,7 +737,7 @@ plotQueens_heatmap <- function(df, PopIdDF = NULL, years = NULL) {
   p <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() + scale_fill_gradient(low = "white", high = "blue") + 
     theme(panel.background = element_blank(), legend.position = "top") +
   scale_x_discrete(breaks = breaks$breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
-  scale_y_discrete(breaks = breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
+  scale_y_discrete(breaks = breaks$breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
   xlab("") + ylab("")
  
    plot <- p + facet_grid2(rows = vars(Method), cols = vars(Year), labeller = labeller(Method = method_labels, Year = year_labels), scales = "free", independent = "y")
@@ -794,9 +748,9 @@ plotQueens_heatmap <- function(df, PopIdDF = NULL, years = NULL) {
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
 print("Plot carnica year 1")
-relCar1 <- prepareDataForPlotting_Colony(ibsDF = ibsCar1, ibsCdf = ibsCcar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
+relCar1 <- prepareDataForPlotting_Colony(ibsDF = colonyCar1$IBS, ibsCdf = colonyCar1$IBSOwnFreq, ibdDF = colonyCar1$IBD, Sinv = Sinv, idDF = colonyCar1$ID)
 print("Plot carnica year 10")
-relCar10 <- prepareDataForPlotting_Colony(ibsDF = ibsCar10, ibsCdf = ibsCcar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
+relCar10 <- prepareDataForPlotting_Colony(ibsDF = colonyCar10$IBS, ibsCdf = colonyCar10$IBSOwnFreq, ibdDF = colonyCar10$IBD, Sinv = Sinv, idDF = colonyCar10$ID)
 
 relCar1$Year <- 1
 relCar10$Year <- 10
@@ -809,8 +763,8 @@ CarQWplot <- plotColony(data, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel
 CarQWplot
 
 #Plot Car inbreeding
-relCar1F <- prepareDataForPlotting_ColonyDiag(ibsDF = ibsCar1, ibsCdf = ibsCcar1, ibdDF = ibdCar1, Sinv = Sinv, idDF = idCar1)
-relCar10F <- prepareDataForPlotting_ColonyDiag(ibsDF = ibsCar10, ibsCdf = ibsCcar10, ibdDF = ibdCar10, Sinv = Sinv, idDF = idCar10)
+relCar1F <- prepareDataForPlotting_ColonyDiag(ibsDF = colonyCar1$IBS, ibsCdf = colonyCar1$IBSOwnFreq, ibdDF = colonyCar1$IBD, Sinv = Sinv, idDF = colonyCar1$ID)
+relCar10F <- prepareDataForPlotting_ColonyDiag(ibsDF = colonyCar10$IBS, ibsCdf = colonyCar10$IBSOwnFreq, ibdDF = colonyCar10$IBD, Sinv = Sinv, idDF = colonyCar10$ID)
 relCar1F$Year <- 1
 relCar10F$Year <- 10 
 
@@ -820,8 +774,8 @@ CarFplot <- plotColony(data2, type = c("IBDe", "IBDr", "IBS", "IBSOwnFreq"), rel
 CarFplot
 #Plot CAR csd Locus
 #Year 1
-relCar1_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar1_csd, ibdDF = ibdCar1_csd, Sinv = Sinv, idDF = idCar1)
-relCar10_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar10_csd, ibdDF = ibdCar10_csd, Sinv = Sinv, idDF = idCar10)
+relCar1_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = colonyCar1$IBSCsd, ibdDF = colonyCar1$IBDCsd, Sinv = Sinv, idDF = colonyCar1$ID)
+relCar10_csd <- prepareDataForPlotting_ColonyCSD(ibsDF = colonyCar10$IBSCsd, ibdDF = colonyCar10$IBDCsd, Sinv = Sinv, idDF = colonyCar10$ID)
 relCar1_csd$Year <- 1
 relCar10_csd$Year <- 10 
 
@@ -831,8 +785,8 @@ CarCSDlocplot <- plotColony(data3, type = c("IBDe", "IBDr", "IBS"))
 CarCSDlocplot
 
 #Plot CAR csd Chromosome
-relCar1_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar1_csdChr, ibdDF = ibdCar1_csdChr, Sinv = Sinv, idDF = idCar1)
-relCar10_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = ibsCar10_csdChr, ibdDF = ibdCar10_csdChr, Sinv = Sinv, idDF = idCar10)
+relCar1_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = colonyCar1$IBScsdChr, ibdDF = colonyCar1$IBDcsdChr, Sinv = Sinv, idDF = colonyCar1$ID)
+relCar10_csdChr <- prepareDataForPlotting_ColonyCSD(ibsDF = colonyCar10$IBScsdChr, ibdDF = colonyCar10$IBDcsdChr, Sinv = Sinv, idDF = colonyCar10$ID)
 relCar1_csdChr$Year <- 1
 relCar10_csdChr$Year <- 10 
 
@@ -845,8 +799,8 @@ CarCSDchr
 ########################################################
 #Plot queens Year 1
 print("Plot queens")
-relQueens1 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens1, ibsCdf = ibsCQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idPopDF = idPopQueens1)
-relQueens10 <- prepareDataForPlotting_Queens(ibsDF = ibsQueens10, ibsCdf = ibsCQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueens1 <- prepareDataForPlotting_Queens(ibsDF =  queens1$IBS, ibsCdf = queens1$IBSOwnFreq, ibdDF = queens1$IBD, Sinv = Sinv, idPopDF = springerQueensPop1)
+relQueens10 <- prepareDataForPlotting_Queens(ibsDF = queens10$IBS, ibsCdf = queens10$IBSOwnFreq, ibdDF = queens10$IBD, Sinv = Sinv, idPopDF = springerQueensPop10)
 relQueens1$Year <- 1
 relQueens10$Year <- 10
 
@@ -871,17 +825,17 @@ QueensF
 
 
 print("HeatMaps")
-relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens1, ibsCdf = ibsCQueens1, ibdDF = ibdQueens1, Sinv = Sinv, idDF = idQueens1)
-relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsDF = ibsQueens10, ibsCdf = ibsCQueens10, ibdDF = ibdQueens10, Sinv = Sinv, idDF = idQueens10)
+relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsDF =  queens1$IBS, ibsCdf = queens1$IBSOwnFreq, ibdDF = queens1$IBD, Sinv = Sinv, idDF = queens1$ID)
+relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsDF = queens10$IBS, ibsCdf = queens10$IBSOwnFreq, ibdDF = queens10$IBD, Sinv = Sinv, idDF = queens10$ID)
 relQueens1h$Year <- 1
 relQueens10h$Year <- 10
 dataQh <- rbind(relQueens1h, relQueens10h)
-idPopQueens <- rbind(idPopQueens1, idPopQueens10)
+idPopQueens <- rbind(springerQueensPop1, springerQueensPop10)
 
 
-plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = idPopQueens1)
+plotQueens1h <- plotQueens_heatmap(relQueens1h, Pop = TRUE, PopIdDF = springerQueensPop1)
 plotQueens1h
-plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = idPopQueens10)
+plotQueens10h <- plotQueens_heatmap(relQueens10h, Pop = T, PopIdDF = springerQueensPop10)
 plotQueens10h
 
 QueenH <- plotQueens_heatmap(dataQh, PopIdDF = idPopQueens, years = c(1,10))
@@ -889,8 +843,8 @@ QueenH
 
 #CSD STUFF
 #Plot csd Loc as a histogram (QQ)
-relQueens1_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idPopDF = idPopQueens1)
-relQueens10_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueens1_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = queens1$IBSCsd, ibdDF = queens1$IBDCsd, Sinv = Sinv, idPopDF = springerQueensPop1)
+relQueens10_csdLoc_hist <- prepareDataForPlotting_QueensCSD(ibsDF = queens10$IBSCsd, ibdDF = queens10$IBDCsd, Sinv = Sinv, idPopDF = springerQueensPop10)
 relQueens1_csdLoc_hist$Year <- 1
 relQueens10_csdLoc_hist$Year <- 10 
 dataQueens_csdLoc <- rbind(relQueens1_csdLoc_hist, relQueens10_csdLoc_hist)
@@ -900,8 +854,8 @@ Queens_csdLoc_hist
 
 #Plot csd loc as a heatmap TODO: 
 
-relQueens1_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csd, ibdDF = ibdQueens1_csd, Sinv = Sinv, idDF = idQueens1)
-relQueens10_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csd, ibdDF = ibdQueens10_csd, Sinv = Sinv, idDF = idQueens10)
+relQueens1_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = queens1$IBSCsd, ibdDF = queens1$IBDCsd, Sinv = Sinv, idDF = queens1$ID)
+relQueens10_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = queens10$IBSCsd, ibdDF = queens10$IBDCsd, Sinv = Sinv, idDF = queens10$ID)
 relQueens1_csdLoc_heat$Year <- 1
 relQueens10_csdLoc_heat$Year <- 10 
 dataQueens_csdLoc_heat <- rbind(relQueens1_csdLoc_heat, relQueens10_csdLoc_heat)
@@ -909,8 +863,8 @@ dataQueens_csdLoc_heat <- rbind(relQueens1_csdLoc_heat, relQueens10_csdLoc_heat)
 Queens_csdLoc_heat <- plotQueens_heatMap(DF, PopIdDF = idPopQueens, years = c(1,10))
 
 #Plot csd Chr as Histogram
-relQueen1_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idPopDF = idPopQueens1)
-relQueen10_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idPopDF = idPopQueens10)
+relQueen1_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = queens1$IBScsdChr, ibdDF = queens1$IBDcsdChr, Sinv = Sinv, idPopDF = springerQueensPop1)
+relQueen10_csdChr_hist <- prepareDataForPlotting_QueensCSD(ibsDF = queens10$IBScsdChr, ibdDF = queens10$IBDcsdChr, Sinv = Sinv, idPopDF = springerQueensPop10)
 relQueen1_csdChr_hist$Year <- 1
 relQueen10_csdChr_hist$Year <- 10 
 dataQueens_csdChr_hist <- rbind(relQueen1_csdChr_hist, relQueen10_csdChr_hist)
@@ -919,8 +873,8 @@ Queens_csdChr_hist <- plotQueensQQ(dataQueens_csdChr_hist, rel = "QQ", type = c(
 
 
 #Plot csd Chr as heatmap
-relQueens1_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens1_csdChr, ibdDF = ibdQueens1_csdChr, Sinv = Sinv, idDF = idQueens1)
-relQueens10_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = ibsQueens10_csdChr, ibdDF = ibdQueens10_csdChr, Sinv = Sinv, idDF = idQueens10)
+relQueens1_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = queens1$IBScsdChr, ibdDF = queens1$IBDcsdChr, Sinv = Sinv, idDF = queens1$ID)
+relQueens10_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsDF = queens10$IBScsdChr, ibdDF = queens10$IBDcsdChr, Sinv = Sinv, idDF = queens10$ID)
 relQueens1_csdChr_heat$Year <- 1
 relQueens10_csdChr_heat$Year <- 10
 dataQueens_csdChr_heat <- rbind(relQueens1_csdChr_heat, relQueens10_csdChr_heat)
