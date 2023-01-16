@@ -65,7 +65,9 @@ computeRelationship_genomic <- function(x, MultiBaseAF = NULL, SingleBaseAF = NU
   #IBS of CSD
   #csd chromosome
   csdChr <- SP$csdChr
-  csdChrGeno <- geno[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(geno))]
+  csdChrGeno <- pullMarkerGeno(getCastePop(colony, caste = "all", collapse = TRUE), 
+                               markers = names(SP$genMap[[SP$csdChr]]))
+  sex <- getCasteSex(colony, caste = "all", collapse = T)
   ibsMulti_csdChr <- calcBeeGRMIbs(x =  csdChrGeno,
                               sex = sex,
                               alleleFreq = MultiBaseAFcsdChr)
@@ -77,15 +79,11 @@ computeRelationship_genomic <- function(x, MultiBaseAF = NULL, SingleBaseAF = NU
   #csd locus
   if (is.null(MultiBaseAFcsdLoci)){
     MultiBaseAFcsdLoci <- rep(0.5, length(SP$csdPosStart:SP$csdPosStop))
-    ibsMultiBaseCsdLoci <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
-                                                      SP$csdPosStart:SP$csdPosStop,
-                                                      sep = "_")],
+    ibsMultiBaseCsdLoci <- calcBeeGRMIbs(x = getCsdGeno(colony, caste = "all", collapse = TRUE),
                                      sex = sex,
                                      alleleFreq = rep(0.5, length(SP$csdPosStart:SP$csdPosStop)))
   } else {
-    ibsMultiBaseCsdLoci <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
-                                                      SP$csdPosStart:SP$csdPosStop,
-                                                      sep = "_")],
+    ibsMultiBaseCsdLoci <- calcBeeGRMIbs(x = getCsdGeno(colony, caste = "all", collapse = TRUE),
                                      sex = sex,
                                      alleleFreq = MultiBaseAFcsdLoci)
   }
@@ -93,9 +91,7 @@ computeRelationship_genomic <- function(x, MultiBaseAF = NULL, SingleBaseAF = NU
   if (is.null(SingleBaseAFcsdLoci)) {
     ibsSingleBaseCsdLoci <- NULL
   } else {
-    ibsSingleBaseCsdLoci <- calcBeeGRMIbs(x = geno[, paste(SP$csdChr,
-                                                       SP$csdPosStart:SP$csdPosStop,
-                                                       sep = "_")],
+    ibsSingleBaseCsdLoci <- calcBeeGRMIbs(x = getCsdGeno(colony, caste = "all", collapse = TRUE),
                                       sex = sex,
                                       alleleFreq = SingleBaseAFcsdLoci)
   }
@@ -117,14 +113,13 @@ computeRelationship_genomic <- function(x, MultiBaseAF = NULL, SingleBaseAF = NU
   print(Sys.time())
 
   # Only chromosome 3
-  csdChrHaplo <- haplo[, grepl(pattern = paste0(csdChr, "_"), x = colnames(haplo))]
+  csdChrHaplo <- pullMarkerHaplo(getCastePop(colony, caste = "all", collapse = TRUE), 
+                                 markers = names(SP$genMap[[SP$csdChr]]))
   ibd_csdChr <- calcBeeGRMIbd(x = csdChrHaplo)
   ibd_csdChr <- ibd_csdChr$indiv
 
   # Only csd locus
-  ibd_csdLoci <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
-                                             SP$csdPosStart:SP$csdPosStop,
-                                             sep = "_")])
+  ibd_csdLoci <- calcBeeGRMIbd(x = getCsdAlleles(colony, caste = "all", collapse = T))
   ibd_csdLoci <- ibd_csdLoci$indiv
 
 
@@ -350,10 +345,10 @@ for (Rep in 1:nRep) {
   alleleFreqCsdLociBaseQueens <- alleleFreqBaseQueens[csdLoci]
   alleleFreqCsdLociBaseCar <- alleleFreqBaseQueensCar[csdLoci]
 
-  #Get allele freq for csd Chromosome
+  #Get allele freq for csd Chromosome - this pulls out only the 3rd chromosome 
   alleleFreqCsdChrBaseQueens <- t(as.data.frame(alleleFreqBaseQueens))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueens))))] %>% t()
   alleleFreqCsdChrBaseCar <- t(as.data.frame(alleleFreqBaseQueensCar))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensCar))))] %>% t()
-
+  
  
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {

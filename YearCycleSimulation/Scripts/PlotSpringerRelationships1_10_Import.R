@@ -708,7 +708,6 @@ load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/d
 
 #Coded out data prep
 {
-
 # relCar1 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiBF,
 #                                          ibsSingleDF = colonyCar1$IBSsingleBF,
 #                                          ibsColonyDF = colonyCar1$IBScolonyF,
