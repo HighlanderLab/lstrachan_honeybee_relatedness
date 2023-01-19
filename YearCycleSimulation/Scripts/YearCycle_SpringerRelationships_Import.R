@@ -1,6 +1,5 @@
 #setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 # Clean workspace
-library(SIMplyBee)
 rm(list = ls())
 
 # Define functions
@@ -12,7 +11,8 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     # Build the colony up to 1,000 workers and 200 drones
     colony <- buildUp(x = x,
                       nWorkers = 1000,
-                      nDrones = 200)
+                      nDrones = 200,
+                      exact = TRUE)
     # Extract the genotypes of all the colony members
     geno <- getSegSiteGeno(colony, caste = "all", collapse = TRUE)
     # Collect the sex of all the colony members in the order than genotypes
@@ -73,9 +73,15 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
   if (csd) {
     ### --- CSD CHROMOSOME --- ###
     csdChr <- SP$csdChr
+    
+    if (isColony(x)) {
     csdChrGeno <- pullMarkerGeno(getCastePop(colony, caste = "all", collapse = TRUE), 
                                  markers = names(SP$genMap[[SP$csdChr]]))
     sex <- getCasteSex(colony, caste = "all", collapse = T)
+    } else {
+      csdChrGeno <- pullMarkerGeno(x, markers = names(SP$genMap[[SP$csdChr]]))
+      sex <- getCasteSex(x, caste = "all", collapse = T)
+    }
     
     # ALLELE FREQUENCY 0.5
     if (AF0.5) {
@@ -116,7 +122,11 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     
     
     #### --- CSD LOCUS ---###
+    if (isColony(x)) {
     csdLocusGeno <- getCsdGeno(colony, caste = "all", collapse = TRUE)
+    } else {
+      csdLocusGeno <- getCsdGeno(x, caste = "all", collapse = TRUE)
+    }
     
     # ALLELE FREQUENCY 0.5
     if (AF0.5) {
@@ -174,25 +184,33 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     ### --- CSD CHROMOSOME --- ###  
     print("csd IBD")
     print(Sys.time())
+    if (isColony(x)) {
     csdChrHaplo <- pullMarkerHaplo(getCastePop(colony, caste = "all", collapse = TRUE), 
                                    markers = names(SP$genMap[[SP$csdChr]]))
+    } else {
+      csdChrHaplo <- pullMarkerHaplo(x, markers = names(SP$genMap[[SP$csdChr]]))
+    }
     ibd_csdChr <- calcBeeGRMIbd(x = csdChrHaplo)
     ibd_csdChr <- ibd_csdChr$indiv
     
     ### --- CSD LOCUS --- ###
+    if (isColony(x)){
     ibd_csdLocus <- calcBeeGRMIbd(x = getCsdAlleles(colony, caste = "all", collapse = T))
+    } else {
+      ibd_csdLocus <- calcBeeGRMIbd(x = getCsdAlleles(x, caste = "all", collapse = T))
+    }
     ibd_csdLocus <- ibd_csdLocus$indiv
   }
   
   if (csd){
-    return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleBF = ibsSingleBaseAF, IBSmultiBF = ibsMultiBaseAF, IBD = ibd,
-                IBSAF0.5CSDChr = ibsAF0.5_csdChr, colonyAF_CSDChr = ibsColonyAF_csdChr, IBSsingleCSDChr = ibsSingle_csdChr, IBSmultiCSDChr = ibsMulti_csdChr, IBDcsdChr = ibd_csdChr,
-                IBSAF0.5CSDLocus = ibsAF0.5_csdLocus, colobyAF_CSDLocus = ibsColonyAF_csdLocus, IBSsingleBFcsdLocus = ibsSingleBaseCsdLocus, IBSmultiBFCsdLocus = ibsMultiBaseCsdLocus, IBDCsdLocus = ibd_csdLocus, 
+    return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleAF = ibsSingleBaseAF, IBSmultiAF = ibsMultiBaseAF, IBD = ibd,
+                IBSAF0.5CSDChr = ibsAF0.5_csdChr, IBScolonyAF_CSDChr = ibsColonyAF_csdChr, IBSsingleCSDChr = ibsSingle_csdChr, IBSmultiCSDChr = ibsMulti_csdChr, IBDcsdChr = ibd_csdChr,
+                IBSAF0.5CSDLocus = ibsAF0.5_csdLocus, colonyAF_CSDLocus = ibsColonyAF_csdLocus, IBSsingleAFcsdLocus = ibsSingleBaseCsdLocus, IBSmultiAFCsdLocus = ibsMultiBaseCsdLocus, IBDCsdLocus = ibd_csdLocus, 
                 ID = id))
   } else {
-    return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleBF = ibsSingleBaseAF, IBSmultiBF = ibsMultiBaseAF, IBD = ibd,
+    return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleAF = ibsSingleBaseAF, IBSmultiAF = ibsMultiBaseAF, IBD = ibd,
                 IBSAF0.5CSDChr = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleCSDChr = NULL, IBSmultiCSDChr = NULL, IBDcsdChr = NULL,
-                IBSAF0.5CSDLocus = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleBFcsdLocus = NULL, IBSmultiBFCsdLocus = NULL, IBDCsdLocus = NULL, 
+                IBSAF0.5CSDLocus = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleAFcsdLocus = NULL, IBSmultiAFCsdLocus = NULL, IBDCsdLocus = NULL, 
                 ID = id))
   }
 }
@@ -404,14 +422,19 @@ for (Rep in 1:nRep) {
   
   alleleFreqBaseQueensCar <- calcBeeAlleleFreq(x = getSegSiteGeno(virginQueens$Car),
                                                sex = virginQueens$Car@sex)
+  
+  alleleFreqBaseQueensMel <- calcBeeAlleleFreq(x = getSegSiteGeno(virginQueens$Mel),
+                                               sex = virginQueens$Mel@sex)
   #Get allele freq for csd locus
   csdLocus <- paste0(SP$csdChr, "_", SP$csdPosStart:SP$csdPosStop)
   alleleFreqCsdLocusBaseQueens <- alleleFreqBaseQueens[csdLocus]
   alleleFreqCsdLocusBaseCar <- alleleFreqBaseQueensCar[csdLocus]
+  alleleFreqCsdLocusBaseMel <- alleleFreqBaseQueensMel[csdLocus]
   
   #Get allele freq for csd Chromosome - this pulls out only the 3rd chromosome 
   alleleFreqCsdChrBaseQueens <- t(as.data.frame(alleleFreqBaseQueens))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueens))))] %>% t()
   alleleFreqCsdChrBaseCar <- t(as.data.frame(alleleFreqBaseQueensCar))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensCar))))] %>% t()
+  alleleFreqCsdChrBaseMel <- t(as.data.frame(alleleFreqBaseQueensMel))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensMel))))] %>% t()
   
   
   # Start the year-loop ------------------------------------------------------------------
@@ -456,16 +479,28 @@ for (Rep in 1:nRep) {
                                                          MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
       print("Computing queens generation1 colony relationship")
       print(Sys.time())
-      springerQueens1 <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
+      springerQueens1_MelAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
                                                      csd = isCsdActive(SP),
                                                      ColonyAF = TRUE,
                                                      AF0.5 = TRUE,
-                                                     SingleBaseAF = alleleFreqBaseQueensCar,
+                                                     SingleBaseAF = alleleFreqBaseQueensMel,
                                                      MultiBaseAF = alleleFreqBaseQueens,
-                                                     SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseCar,
+                                                     SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
                                                      MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
-                                                     SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar,
+                                                     SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel,
                                                      MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
+      
+      springerQueens1_CarAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
+                                                           csd = isCsdActive(SP),
+                                                           ColonyAF = TRUE,
+                                                           AF0.5 = TRUE,
+                                                           SingleBaseAF = alleleFreqBaseQueensCar,
+                                                           MultiBaseAF = alleleFreqBaseQueens,
+                                                           SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseCar,
+                                                           MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
+                                                           SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar,
+                                                           MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
+      
       springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                   data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                   data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
@@ -825,7 +860,20 @@ for (Rep in 1:nRep) {
                                                       MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
   print("Computing queens relationships")
   print(Sys.time())
-  springerQueens10 <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
+  springerQueens10_MelAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
+                                                        mergePops(getQueen(age1$MelCross)),
+                                                        mergePops(getQueen(age1$Car))),
+                                                  csd = isCsdActive(SP),
+                                                  ColonyAF = TRUE,
+                                                  AF0.5 = TRUE,
+                                                  MultiBaseAF = alleleFreqBaseQueens,
+                                                  SingleBaseAF = alleleFreqBaseQueensMel,
+                                                  MultiBaseAFcsdLocus = alleleFreqCsdLocusBaseQueens,
+                                                  SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
+                                                  MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
+                                                  SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel)
+  
+  springerQueens10_CarAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
                                                         mergePops(getQueen(age1$MelCross)),
                                                         mergePops(getQueen(age1$Car))),
                                                   csd = isCsdActive(SP),
@@ -837,6 +885,7 @@ for (Rep in 1:nRep) {
                                                   SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseCar,
                                                   MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
                                                   SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar)
+  
   springerQueensPop10 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
@@ -849,8 +898,8 @@ for (Rep in 1:nRep) {
   
   save(pedigree, caste,
        springerColony1_Car, springerColony10_Car,
-       springerQueens1, springerQueensPop1,
-       springerQueens10, springerQueensPop10,
+       springerQueens1_MelAF, springerQueens10_CarAF, springerQueensPop1,
+       springerQueens10_MelAF, springerQueens10_CarAF, springerQueensPop10,
        colonyRecords, file = "SpringerSimulation_import_objects.RData")
   
   IBDe <- computeRelationship_pedigree(SP$pedigree)
