@@ -185,20 +185,17 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     print("csd IBD")
     print(Sys.time())
     if (isColony(x)) {
-    csdChrHaplo <- pullMarkerHaplo(getCastePop(colony, caste = "all", collapse = TRUE), 
-                                   markers = names(SP$genMap[[SP$csdChr]]))
+    csdChrHaplo <- getIbdHaplo(x = colony, caste = "all", collapse = TRUE, chr = SP$csdChr)
     } else {
-      csdChrHaplo <- pullMarkerHaplo(x, markers = names(SP$genMap[[SP$csdChr]]))
+      csdChrHaplo <- getIbdHaplo(x = x, caste = "all", collapse = TRUE, chr = SP$csdChr)
     }
     ibd_csdChr <- calcBeeGRMIbd(x = csdChrHaplo)
     ibd_csdChr <- ibd_csdChr$indiv
     
     ### --- CSD LOCUS --- ###
-    if (isColony(x)){
-    ibd_csdLocus <- calcBeeGRMIbd(x = getCsdAlleles(colony, caste = "all", collapse = T))
-    } else {
-      ibd_csdLocus <- calcBeeGRMIbd(x = getCsdAlleles(x, caste = "all", collapse = T))
-    }
+    ibd_csdLocus <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
+                                                    SP$csdPosStart:SP$csdPosStop,
+                                                    sep = "_")])
     ibd_csdLocus <- ibd_csdLocus$indiv
   }
   
@@ -411,9 +408,9 @@ for (Rep in 1:nRep) {
   fathersCar[[1]] <- c(fathersCar[[1]], createDrones(virginQueens$Car[fathersCar[[1]]@mother[1]], 2))
   
   # Mate virgin queens with fathers
-  queens <- list(Mel = cross(x = virginQueens$Mel[1:apiarySize], drones = fathersMel),
-                 MelCross = cross(x = virginQueens$MelCross[1:apiarySize], drones = fathersMelCross),
-                 Car = cross(x = virginQueens$Car[1:apiarySize], drones = fathersCar))
+  queens <- list(Mel = SIMplyBee::cross(x = virginQueens$Mel[1:apiarySize], drones = fathersMel),
+                 MelCross = SIMplyBee::cross(x = virginQueens$MelCross[1:apiarySize], drones = fathersMelCross),
+                 Car = SIMplyBee::cross(x = virginQueens$Car[1:apiarySize], drones = fathersCar))
   
   #Set allele frequency for queens
   tmp <- c(virginQueens$Mel, virginQueens$Car)
@@ -477,7 +474,7 @@ for (Rep in 1:nRep) {
                                                          MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
                                                          SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar,
                                                          MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
-      print("Computing queens generation1 colony relationship")
+       print("Computing queens generation1 colony relationship")
       print(Sys.time())
       springerQueens1_MelAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
                                                      csd = isCsdActive(SP),
