@@ -2,13 +2,13 @@ rm(list = ls())
 setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
 
 #Load libraries
-pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x)
+pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
 
 
 print("Reading in the data")
 #Laura's laptop data
-data <- load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/SpringerSimulation_import.RData")
-Sinv <- readMM("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PLottingData/Sinv.mm")
+data <- load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/SpringerSimulation_import.RData")
+Sinv <- readMM("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PLottingData/Sinv.mm")
 #Eddie data
 #data <- load("SpringerSimulation_import_objects.RData")
 #Sinv <- readMM("Sinv.mm")
@@ -59,18 +59,18 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   #Workers on workers
   
     print("IBSAF0.5 WW")
-    ibsAF0.5WW <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                            yes = data.frame(diag(ibsAF0.5DF[idDF$workers, idDF$workers])),
-                                            no = data.frame(ibsAF0.5DF[idDF$workers, idDF$workers] %>%
+    ibsAF0.5WW <- data.frame(Value = ifelse(inbreeding,
+                                           data.frame(diag(ibsAF0.5DF[idDF$workers, idDF$workers])),
+                                           data.frame(ibsAF0.5DF[idDF$workers, idDF$workers] %>%
                                                               c(.[lower.tri(., diag = FALSE)]))) ,
                              Rel = "WW",
                              Type = "IBSAF0.5")
     colnames(ibsAF0.5WW) <- c("Value", "Rel", "Type")
 
     print("IBSmulti WW")
-    ibsMultiWW <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                            yes = data.frame(diag(ibsMultiDF[idDF$workers, idDF$workers])),
-                                            no = data.frame(ibsMultiDF[idDF$workers, idDF$workers] %>%
+    ibsMultiWW <- data.frame(Value = ifelse(inbreeding,
+                                            data.frame(diag(ibsMultiDF[idDF$workers, idDF$workers])),
+                                            data.frame(ibsMultiDF[idDF$workers, idDF$workers] %>%
                                                               c(.[lower.tri(., diag = FALSE)]))) ,
                              Rel = "WW",
                              Type = "IBSmultiAF")
@@ -78,9 +78,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   
   print("IBSsingle WW")
   start_time <- Sys.time()
-  ibsSingleWW <- data.frame(Value = data.frame(ifelse(test = isTRUE(inbreeding),
-                                                      yes = data.frame(diag(ibsSingleDF[idDF$workers, idDF$workers])),
-                                                      no = data.frame(ibsSingleDF[idDF$workers, idDF$workers] %>%
+  ibsSingleWW <- data.frame(Value = data.frame(ifelse(inbreeding,
+                                                      data.frame(diag(ibsSingleDF[idDF$workers, idDF$workers])),
+                                                      data.frame(ibsSingleDF[idDF$workers, idDF$workers] %>%
                                                            c(.[lower.tri(., diag = FALSE)])))),
                             Rel = "WW",
                             Type = "IBSsingleAF")
@@ -88,9 +88,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   if(!is.null(ibsColonyDF)){ #if dataframe is CSD info then ibdOwnDF is NULL
     print("IBScolony WW")
-    ibsColonyWW <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                          yes = data.frame(diag(ibsColonyDF[idDF$workers, idDF$workers])),
-                                          no = data.frame(ibsColonyDF[idDF$workers, idDF$workers] %>%
+    ibsColonyWW <- data.frame(Value = ifelse(inbreeding,
+                                             data.frame(diag(ibsColonyDF[idDF$workers, idDF$workers])),
+                                             data.frame(ibsColonyDF[idDF$workers, idDF$workers] %>%
                                                 c(.[lower.tri(., diag = FALSE)]))),
                            Rel = "WW",
                            Type = "IBScolonyAF")
@@ -99,9 +99,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   }
 
   print("IBDr WW")
-  ibdrWW <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                      yes = data.frame(diag(ibdDF[idDF$workers, idDF$workers])),
-                                      no =  data.frame(ibdDF[idDF$workers, idDF$workers] %>%
+  ibdrWW <- data.frame(Value = ifelse(inbreeding,
+                                      data.frame(diag(ibdDF[idDF$workers, idDF$workers])),
+                                      data.frame(ibdDF[idDF$workers, idDF$workers] %>%
                                                          c(.[lower.tri(., diag = FALSE)]))),
                          Rel = "WW",
                        Type = "IBDr")
@@ -109,10 +109,10 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   if (!is.null(Sinv)) {
     print("IBDe WW")
-    ibdeWW <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                        yes = data.frame(getS(Sinv, ids = idDF$workers, vector = TRUE, diagOnly = TRUE)),
-                                        no = data.frame(getS(Sinv, ids = idDF$workers, vector = TRUE) %>%
-                                                        c(.[lower.tri(., diag = FALSE)]))),
+    ibdeWW <- data.frame(Value = ifelse(inbreeding,
+                                        data.frame(getS(Sinv, ids = idDF$workers, vector = TRUE, diagOnly = TRUE)),
+                                        getS(Sinv, ids = idDF$workers, vector = FALSE) %>%
+                                                    with(.[lower.tri(., diag = FALSE)]) %>% data.frame(.)),
                          Rel = "WW",
                          Type = "IBDe")
     colnames(ibdeWW) <- c("Value", "Rel", "Type")
@@ -164,9 +164,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   #Drones vs drones
     print("IBSAF0.5 DD")
     start_time <- Sys.time()
-    ibsAF0.5DD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                            yes = data.frame(diag(ibsAF0.5DF[idDF$drones, idDF$drones])),
-                                            no = data.frame(ibsAF0.5DF[idDF$drones, idDF$drones] %>%
+    ibsAF0.5DD <- data.frame(Value = ifelse(inbreeding,
+                                            data.frame(diag(ibsAF0.5DF[idDF$drones, idDF$drones])),
+                                            data.frame(ibsAF0.5DF[idDF$drones, idDF$drones] %>%
                                                               c(.[lower.tri(., diag = FALSE)]))),
                              Rel = "DD",
                              Type = "IBSAF0.5")
@@ -174,9 +174,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
     
   print("IBSmulti DD")
   start_time <- Sys.time()
-  ibsMultiDD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                          yes = data.frame(diag(ibsMultiDF[idDF$drones, idDF$drones])),
-                                          no = data.frame(ibsMultiDF[idDF$drones, idDF$drones] %>%
+  ibsMultiDD <- data.frame(Value = ifelse(inbreeding,
+                                          data.frame(diag(ibsMultiDF[idDF$drones, idDF$drones])),
+                                          data.frame(ibsMultiDF[idDF$drones, idDF$drones] %>%
                                             c(.[lower.tri(., diag = FALSE)]))),
                            Rel = "DD",
                            Type = "IBSmultiAF")
@@ -186,18 +186,18 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   print("IBSsingle DD")
   start_time <- Sys.time()
-  ibsSingleDD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                           yes = data.frame(diag(ibsSingleDF[idDF$drones, idDF$drones])),
-                                           no = data.frame(ibsSingleDF[idDF$drones, idDF$drones] %>%
+  ibsSingleDD <- data.frame(Value = ifelse(inbreeding,
+                                           data.frame(diag(ibsSingleDF[idDF$drones, idDF$drones])),
+                                           data.frame(ibsSingleDF[idDF$drones, idDF$drones] %>%
                                              c(.[lower.tri(., diag = FALSE)]))),
                             Rel = "DD",
                             Type = "IBSsingleAF")
   colnames(ibsSingleDD) <- c("Value", "Rel", "Type")
   if(!is.null(ibsColonyDF)){ #if dataframe is CSD info then ibdCdf is NULL
     print("IBScolony DD")
-    ibsColonyDD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                          yes = data.frame(diag(ibsColonyDF[idDF$drones, idDF$drones])),
-                                          no = data.frame(ibsColonyDF[idDF$drones, idDF$drones] %>%
+    ibsColonyDD <- data.frame(Value = ifelse(inbreeding,
+                                          data.frame(diag(ibsColonyDF[idDF$drones, idDF$drones])),
+                                          data.frame(ibsColonyDF[idDF$drones, idDF$drones] %>%
                                             c(.[lower.tri(., diag = FALSE)]))),
                            Rel = "DD",
                            Type = "IBScolonyAF")
@@ -205,9 +205,9 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   }
 
   print("IBDr DD")
-  ibdrDD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                      yes = data.frame(diag(ibdDF[idDF$drones, idDF$drones])),
-                                      no = data.frame(ibdDF[idDF$drones, idDF$drones] %>%
+  ibdrDD <- data.frame(Value = ifelse(inbreeding,
+                                      data.frame(diag(ibdDF[idDF$drones, idDF$drones])),
+                                      data.frame(ibdDF[idDF$drones, idDF$drones] %>%
                                         c(.[lower.tri(., diag = FALSE)]))),
                        Rel = "DD",
                        Type = "IBDr")
@@ -215,10 +215,10 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   if (!is.null(Sinv)) {
     print("IBDe DD")
-    ibdeDD <- data.frame(Value = ifelse(test = isTRUE(inbreeding),
-                                         yes = data.frame(getS(Sinv, ids = idDF$drones, vector = TRUE, diagOnly = TRUE)),
-                                         no = data.frame(getS(Sinv, ids = idDF$drones, vector = TRUE) %>%
-                                          c(.[lower.tri(., diag = FALSE)]))),
+    ibdeDD <- data.frame(Value = ifelse(inbreeding,
+                                        data.frame(getS(Sinv, ids = idDF$drones, vector = TRUE, diagOnly = TRUE)),
+                                        getS(Sinv, ids = idDF$drones, vector = FALSE) %>%
+                                          with(.[lower.tri(., diag = FALSE)]) %>% data.frame(.)),
                          Rel = "DD",
                          Type = "IBDe")
     colnames(ibdeDD) <- c("Value", "Rel", "Type")
@@ -335,7 +335,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   #Compute relationships between queens of different populations (QQ)
   #IBSmulti
-  if (is.null(ibsMultiDF)){
+ 
     print("IBSAF0.5QQ")
     IBSAF0.5QQ <- rbind(data.frame(Value = as.vector(list(ibsAF0.5DF[melID, melCrossID])[[1]]),
                                    Pops = "Mel_MelCross"),
@@ -345,8 +345,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                    Pops = "MelCross_Car"))
     IBSAF0.5QQ$Rel = "QQ"
     IBSAF0.5QQ$Type = "IBSAF0.5"
-    IBSmultiQQ <- NULL
-  } else {
+
   print("IBSmultiQQ")
   IBSmultiQQ <- rbind(data.frame(Value = as.vector(list(ibsMultiDF[melID, melCrossID])[[1]]),
                                  Pops = "Mel_MelCross"),
@@ -356,8 +355,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                  Pops = "MelCross_Car"))
   IBSmultiQQ$Rel = "QQ"
   IBSmultiQQ$Type = "IBSmultiAF"
-  IBSAF0.5QQ <- NULL
-  }
+
 
   #IBSsingle
   print("IBSsingleQQ")
@@ -411,7 +409,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   }
 
   # Compute relationships between queens of the same populations/ without diagonal (Q)
-  if (is.null(ibsMultiDF)) {
+
     print("IBSAF0.5Q")
     IBSAF0.5Q <- rbind(data.frame(Value = as.vector(list(c(ibsAF0.5DF[melID, melID][lower.tri(ibsAF0.5DF[melID, melID],
                                                                                               diag = FALSE)]))[[1]]),
@@ -424,8 +422,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                   Pops = "MelCross"))
     IBSAF0.5Q$Rel <- "Q"
     IBSAF0.5Q$Type <- "IBSAF0.5"
-    IBSmultiQ <- NULL
-  } else {
+
   #IBSmultiAF
   print("IBSmultiQ")
   IBSmultiQ <- rbind(data.frame(Value = as.vector(list(c(ibsMultiDF[melID, melID][lower.tri(ibsMultiDF[melID, melID],
@@ -439,8 +436,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                 Pops = "MelCross"))
   IBSmultiQ$Rel <- "Q"
   IBSmultiQ$Type <- "IBSmultiAF"
-  IBSAF0.5Q <- NULL
-  }
+
 
   #IBSsingleAF
   print("IBSsingleQ")
@@ -506,7 +502,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
 
   # Inbreeding (diagonal!!!) if queens (F)
-  if (is.null(ibsMultiDF)) {
+
     print("IBSAF0.5F")
     IBSfAF0.5 <- rbind(data.frame(Value = diag(ibsAF0.5DF[melID, melID]),
                                   Pops = "Mel"),
@@ -516,8 +512,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                   Pops = "Car"))
     IBSfAF0.5$Type = "IBSAF0.5"
     IBSfAF0.5$Rel = "F"
-    IBSfMulti <- NULL
-  } else {
+
   #IBSfMulti
   print("IBSfMulti")
   IBSfMulti <- rbind(data.frame(Value = diag(ibsMultiDF[melID, melID]),
@@ -528,8 +523,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                 Pops = "Car"))
   IBSfMulti$Type = "IBSmultiAF"
   IBSfMulti$Rel = "F"
-  IBSfAF0.5 <- NULL
-  }
+
 
   #IBSfSingle
   print("IBSfSingle")
@@ -686,7 +680,7 @@ plotQueens <- function(df, rel = NULL, type = NULL, pops = NULL, years = NULL, p
           geom_histogram(binwidth = 0.01, position = "identity") +
           facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
           scale_fill_manual("", values = palette, aesthetics = c("colour","fill")) +
-          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") +
+          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top", axis.text=element_text(size=12), axis.title = element_text(size= 20), strip.text.x = element_text(size = 20)) +
           scale_x_continuous(breaks=seq(-3, 8, 0.25))
   return(plot)
 }
@@ -808,59 +802,59 @@ relCar1 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
                                          Sinv = Sinv,
                                          idDF = colonyCar1$ID,
                                          inbreeding = FALSE)
-# 
-# 
-# 
-# print("Plot carnica year 10")
-# relCar10 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
-#                                           ibsSingleDF = colonyCar10$IBSsingleAF,
-#                                           ibsColonyDF = colonyCar10$IBScolonyAF,
-#                                           ibsAF0.5DF = colonyCar10$IBSAF0.5,
-#                                           ibdDF = colonyCar10$IBD,
-#                                           Sinv = Sinv,
-#                                           idDF = colonyCar10$ID,
-#                                           inbreeding = FALSE)
-# 
-# relCar1$Year <- 1
-# relCar10$Year <- 10
-# dataCar <- rbind(relCar1, relCar10)
-# save(... = dataCar, file = "dataCar.RData")
+
+
+
+print("Plot carnica year 10")
+relCar10 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
+                                          ibsSingleDF = colonyCar10$IBSsingleAF,
+                                          ibsColonyDF = colonyCar10$IBScolonyAF,
+                                          ibsAF0.5DF = colonyCar10$IBSAF0.5,
+                                          ibdDF = colonyCar10$IBD,
+                                          Sinv = Sinv,
+                                          idDF = colonyCar10$ID,
+                                          inbreeding = FALSE)
+
+relCar1$Year <- 1
+relCar10$Year <- 10
+dataCar <- rbind(relCar1, relCar10)
+save(... = dataCar, file = "dataCar.RData")
 }
 
-CarWWplot<- plotColony(dataCar, type = c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF"), rel = c("WW", "WD", "DD"), years = c(1,10))
+CarWWplot<- plotColony(dataCar, type = c("IBSmultiAF"), rel = c("WW", "WD", "DD"), years = c(1,10))
 
-CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF"),  rel = c("QW", "QD"), years = c(1,10))
+CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"),  rel = c("QW", "QD"), years = c(1,10))
 
 #Plot Car inbreeding
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarF.RData")
 
 # Coded out prep
 {
-# relCar1F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
-#                                           ibsSingleDF = colonyCar1$IBSsingleAF,
-#                                           ibsColonyDF = colonyCar1$IBScolonyAF,
-#                                           ibsAF0.5DF = colonyCar1$IBSAF0.5,
-#                                           ibdDF = colonyCar1$IBD,
-#                                           Sinv = Sinv,
-#                                           idDF = colonyCar1$ID,
-#                                           inbreeding = TRUE)
-# 
-# relCar10F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
-#                                            ibsSingleDF = colonyCar10$IBSsingleAF,
-#                                            ibsColonyDF = colonyCar10$IBScolonyAF,
-#                                            ibsAF0.5DF = colonyCar10$IBSAF0.5,
-#                                            ibdDF = colonyCar10$IBD,
-#                                            Sinv = Sinv,
-#                                            idDF = colonyCar10$ID,
-#                                            inbreeding = TRUE)
-# relCar1F$Year <- 1
-# relCar10F$Year <- 10
-# 
-# dataCarF <- rbind(relCar1F, relCar10F)
-# save(dataCarF, file = "dataCarF.Rdata")
+relCar1F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
+                                          ibsSingleDF = colonyCar1$IBSsingleAF,
+                                          ibsColonyDF = colonyCar1$IBScolonyAF,
+                                          ibsAF0.5DF = colonyCar1$IBSAF0.5,
+                                          ibdDF = colonyCar1$IBD,
+                                          Sinv = Sinv,
+                                          idDF = colonyCar1$ID,
+                                          inbreeding = TRUE)
+
+relCar10F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
+                                           ibsSingleDF = colonyCar10$IBSsingleAF,
+                                           ibsColonyDF = colonyCar10$IBScolonyAF,
+                                           ibsAF0.5DF = colonyCar10$IBSAF0.5,
+                                           ibdDF = colonyCar10$IBD,
+                                           Sinv = Sinv,
+                                           idDF = colonyCar10$ID,
+                                           inbreeding = TRUE)
+relCar1F$Year <- 1
+relCar10F$Year <- 10
+
+dataCarF <- rbind(relCar1F, relCar10F)
+save(dataCarF, file = "dataCarF.Rdata")
 }
 
-CarFplot <- plotColony(dataCarF, type =  c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF"), rel = c("WW", "WD", "DD"), years = c(1,10))
+CarFplot <- plotColony(dataCarF, type =  c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "DD"), years = c(1,10))
 
 
 #Plot CAR csd Locus
@@ -869,7 +863,7 @@ load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/d
 {
 relCar1_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAFCsdLocus,
                                              ibsSingleDF = colonyCar1$IBSsingleAFcsdLocus,
-                                             ibsColonyDF = colonyCar1$colobyAF_CSDLocus,
+                                             ibsColonyDF = colonyCar1$colonyAF_CSDLocus,
                                              ibsAF0.5DF = colonyCar1$IBSAF0.5CSDLocus,
                                              ibdDF = colonyCar1$IBDCsdLocus,
                                              Sinv = Sinv,
@@ -878,7 +872,7 @@ relCar1_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAFC
 
 relCar10_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAFCsdLocus,
                                                ibsSingleDF = colonyCar10$IBSsingleAFcsdLocus,
-                                              ibsColonyDF = colonyCar10$colobyAF_CSDLocus,
+                                              ibsColonyDF = colonyCar10$colonyAF_CSDLocus,
                                                ibsAF0.5DF = colonyCar10$IBSAF0.5CSDLocus,
                                                ibdDF = colonyCar10$IBDCsdLocus,
                                                Sinv = Sinv,
@@ -889,84 +883,84 @@ dataCarCSDloc <- rbind(relCar1_csd, relCar10_csd)
 save(dataCarCSDloc, file = "dataCarCSDloc.Rdata")
 }
 
-CarCSDlocplot <- plotColony(dataCarCSDloc, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF"), rel = c("WW", "WD", "DD"), years = c(1,10))
+CarCSDlocplot <- plotColony(dataCarCSDloc, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "WD", "DD"), years = c(1,10))
 
 #Plot CAR csd Chromosome
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarCsdChr.RData")
 {
-# relCar1_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiCSDChr,
-#                                                 ibsSingleDF = colonyCar1$IBSsingleCSDChr,
-#                                                 ibsColonyDF = colonyCar1$colonyAF_CSDChr,
-#                                                 ibsAF0.5DF = colonyCar1$IBSAF0.5CSDChr,
-#                                                 ibdDF = colonyCar1$IBDcsdChr,
-#                                                 Sinv = Sinv,
-#                                                 idDF = colonyCar1$ID)
-# relCar10_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiCSDChr,
-#                                                   ibsSingleDF = colonyCar10$IBSsingleCSDChr,
-#                                                  ibsColonyDF = colonyCar10$colonyAF_CSDChr,
-#                                                   ibsAF0.5DF = colonyCar10$IBSAF0.5CSDChr,
-#                                                   ibdDF = colonyCar10$IBDcsdChr,
-#                                                   Sinv = Sinv,
-#                                                   idDF = colonyCar10$ID)
-# relCar1_csdChr$Year <- 1
-# relCar10_csdChr$Year <- 10
-# 
-# dataCarCSDchr <- rbind(relCar1_csdChr, relCar10_csdChr)
-# save(... = dataCarCSDchr, file = "dataCarCsdChr.RData")
+relCar1_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiCSDChr,
+                                                ibsSingleDF = colonyCar1$IBSsingleCSDChr,
+                                                ibsColonyDF = colonyCar1$IBScolonyAF_CSDChr,
+                                                ibsAF0.5DF = colonyCar1$IBSAF0.5CSDChr,
+                                                ibdDF = colonyCar1$IBDcsdChr,
+                                                Sinv = Sinv,
+                                                idDF = colonyCar1$ID)
+relCar10_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiCSDChr,
+                                                  ibsSingleDF = colonyCar10$IBSsingleCSDChr,
+                                                 ibsColonyDF = colonyCar10$IBScolonyAF_CSDChr,
+                                                  ibsAF0.5DF = colonyCar10$IBSAF0.5CSDChr,
+                                                  ibdDF = colonyCar10$IBDcsdChr,
+                                                  Sinv = Sinv,
+                                                  idDF = colonyCar10$ID)
+relCar1_csdChr$Year <- 1
+relCar10_csdChr$Year <- 10
+
+dataCarCSDchr <- rbind(relCar1_csdChr, relCar10_csdChr)
+save(... = dataCarCSDchr, file = "dataCarCsdChr.RData")
 
 }
 
-CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe", "IBDr", "IBSsingleAF", "IBSmultiAF"), years = c(1,10))
+CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe", "IBDr", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), years = c(1,10))
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
 #Plot queens Year 1
 print("Plot queens")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens.RData")
+load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
 
 #Coded out prep
 {
-relQueens1 <- prepareDataForPlotting_Queens(ibsMultiDF =  queens1$IBSmultiAF,
-                                            ibsSingleDF = queens1$IBSsingleAF,
-                                            ibsColonyDF = queens1$IBScolonyAF,
-                                            ibsAF0.5DF = queens1$IBSAF0.5,
-                                            ibdDF = queens1$IBD,
+relQueens1_MelAF <- prepareDataForPlotting_Queens(ibsMultiDF =  queens1_MelAF$IBSmultiAF,
+                                            ibsSingleDF = queens1_MelAF$IBSsingleAF,
+                                            ibsColonyDF = queens1_MelAF$IBScolonyAF,
+                                            ibsAF0.5DF = queens1_MelAF$IBSAF0.5,
+                                            ibdDF = queens1_MelAF$IBD,
                                             Sinv = Sinv,
                                             idPopDF = springerQueensPop1)
 
-relQueens10 <-  prepareDataForPlotting_Queens(ibsMultiDF =  queens10$IBSmultiAF,
-                                              ibsSingleDF = queens10$IBSsingleAF,
-                                              ibsColonyDF = queens10$IBScolonyAF,
-                                              ibsAF0.5DF = queens10$IBSAF0.5,
-                                              ibdDF = queens10$IBD,
+relQueens10_MelAF <-  prepareDataForPlotting_Queens(ibsMultiDF =  queens10_MelAF$IBSmultiAF,
+                                              ibsSingleDF = queens10_MelAF$IBSsingleAF,
+                                              ibsColonyDF = queens10_MelAF$IBScolonyAF,
+                                              ibsAF0.5DF = queens10_MelAF$IBSAF0.5,
+                                              ibdDF = queens10_MelAF$IBD,
                                               Sinv = Sinv,
                                               idPopDF = springerQueensPop10)
-relQueens1$Year <- 1
-relQueens10$Year <- 10
+relQueens1_MelAF$Year <- 1
+relQueens10_MelAF$Year <- 10
 
-dataQueens <- rbind(relQueens1, relQueens10)
-save(relQueens10, file = "relQueens10.Rdata")
-save(dataQueens, file = "dataQueens.Rdata")
+dataQueens_MelAF <- rbind(relQueens1_MelAF, relQueens10_MelAF)
+save(relQueens10_MelAF, file = "relQueens10_MelAF.Rdata")
+save(dataQueens_MelAF, file = "dataQueens_MelAF.Rdata")
 }
 
 print("Between populations ")
 #between populations
-QueensQQ <- plotQueens(dataQueens, rel = "QQ", type = c("IBDe", "IBDr", "IBSmultiAF"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
+QueensQQ <- plotQueens(dataQueens_MelAF, rel = "QQ", type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQQ)
 QueensQQ
 
 print("Within populations")
 #within population - non-diagonal
-QueensQ <- plotQueens(dataQueens, rel = "Q", type = c("IBDe", "IBDr","IBSmultiAF"), pops = c("Mel", "Car", "MelCross"), years = c(1,10), palette = cbPaletteQ)
+QueensQ <- plotQueens(relQueens10_MelAF, rel = "Q", type = c("IBDe", "IBDr", "IBSmultiAF") , pops = c("Mel", "Car", "MelCross", "IBSAF0.5"), years = c(10), palette = cbPaletteQ)
 QueensQ
 #within population - diagonal
-QueensF <- plotQueens(dataQueens, rel = "F", type = c("IBDe", "IBDr","IBSmultiAF"), pops = c("Mel", "Car", "MelCross"), years = c(1,10), palette = cbPaletteQ)
+QueensF <- plotQueens(dataQueens_MelAF, rel = "F", type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel", "Car", "MelCross", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQ)
 QueensF
 
 #scatter plot looking at Q and QQ
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/relQueens10.RData")
+load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/relQueens10_MelAF.RData")
 
-QueensScatterQQ <- scatterQueens(relQueens10, type = c("IBDr", "IBSmultiAF"), rel = "QQ", pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), palette = cbPaletteQQ, years = 10 , legend.position = "top")
-QueensScatterQ <- scatterQueens(relQueens10, type = c("IBDr", "IBSmultiAF"),  rel = "Q", pops = c("Mel", "Car", "MelCross"), palette = cbPaletteQ, years= 10, legend.position = "top")
+QueensScatterQQ <- scatterQueens(relQueens10_MelAF, type = c("IBDr", "IBSmultiAF"), rel = "QQ", pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), palette = cbPaletteQQ, years = 10 , legend.position = "top")
+QueensScatterQ <- scatterQueens(relQueens10_MelAF, type = c("IBDr", "IBSmultiAF"),  rel = "Q", pops = c("Mel", "Car", "MelCross"), palette = cbPaletteQ, years= 10, legend.position = "top")
 QueensScatter <- grid.arrange(QueensScatterQ, QueensScatterQQ, ncol = 2)
 
 
@@ -1014,19 +1008,19 @@ QueenH
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueensCSDloc.RData")
 
 {
-relQueens1_csdLoc_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1$IBSmultiAFCsdLocus,
-                                                        ibsSingleDF = springerQueens1$IBSsingleAFcsdLocus,
-                                                        ibsColonyDF = springerQueens1$colobyAF_CSDLocus,
-                                                        ibsAF0.5DF = springerQueens1$IBSAF0.5CSDLocus,
-                                                        ibdDF = springerQueens1$IBDCsdLocus,
+relQueens1_csdLoc_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1_MelAF$IBSmultiAFCsdLocus,
+                                                        ibsSingleDF = springerQueens1_MelAF$IBSsingleAFcsdLocus,
+                                                        ibsColonyDF = springerQueens1_MelAF$colonyAF_CSDLocus,
+                                                        ibsAF0.5DF = springerQueens1_MelAF$IBSAF0.5CSDLocus,
+                                                        ibdDF = springerQueens1_MelAF$IBDCsdLocus,
                                                         Sinv = Sinv,
                                                         idPopDF = springerQueensPop1)
 
-relQueens10_csdLoc_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens10$IBSmultiAFCsdLocus,
-                                                            ibsSingleDF = springerQueens10$IBSsingleAFcsdLocus,
-                                                            ibsColonyDF = springerQueens10$colobyAF_CSDLocus,
-                                                         ibsAF0.5DF = springerQueens10$IBSAF0.5CSDLocus,
-                                                            ibdDF = queens10$IBDCsdLocus,
+relQueens10_csdLoc_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens10_MelAF$IBSmultiAFCsdLocus,
+                                                            ibsSingleDF = springerQueens10_MelAF$IBSsingleAFcsdLocus,
+                                                            ibsColonyDF = springerQueens10_MelAF$colonyAF_CSDLocus,
+                                                         ibsAF0.5DF = springerQueens10_MelAF$IBSAF0.5CSDLocus,
+                                                            ibdDF = springerQueens10_MelAF$IBDCsdLocus,
                                                             Sinv = Sinv,
                                                             idPopDF = springerQueensPop10)
 relQueens1_csdLoc_hist$Year <- 1
@@ -1035,7 +1029,7 @@ dataQueens_csdLoc <- rbind(relQueens1_csdLoc_hist, relQueens10_csdLoc_hist)
 save(dataQueens_csdLoc, file = "dataQueensCSDloc.RData")
 }
 
-Queens_csdLoc_hist <- plotQueens(dataQueens_csdLoc, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBScolonyAF", "IBSsingleAF"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ) 
+Queens_csdLoc_hist <- plotQueens(dataQueens_csdLoc, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ) 
 Queens_csdLoc_hist
 
 #Plot csd loc as a heatmap TODO:
@@ -1055,19 +1049,19 @@ QueensCSDLocHeat <- grid.arrange(QueensCSDloc1h, QueensCSDloc10h, ncol = 2)
 #Plot csd Chr as Histogram
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueensCSDchr.RData")
 {
-relQueen1_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1$IBSmultiCSDChr,
-                                                        ibsSingleDF = springerQueens1$IBSsingleCSDChr,
-                                                        ibsColonyDF = springerQueens1$IBScolonyAF_CSDChr,
-                                                       ibsAF0.5DF = springerQueens1$IBSAF0.5CSDChr,
-                                                        ibdDF = springerQueens1$IBDcsdChr,
+relQueen1_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1_MelAF$IBSmultiCSDChr,
+                                                        ibsSingleDF = springerQueens1_MelAF$IBSsingleCSDChr,
+                                                        ibsColonyDF = springerQueens1_MelAF$IBScolonyAF_CSDChr,
+                                                       ibsAF0.5DF = springerQueens1_MelAF$IBSAF0.5CSDChr,
+                                                        ibdDF = springerQueens1_MelAF$IBDcsdChr,
                                                         Sinv = Sinv,
                                                         idPopDF = springerQueensPop1)
 
-relQueen10_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens10$IBSmultiCSDChr,
-                                                        ibsSingleDF = springerQueens10$IBSsingleCSDChr,
-                                                        ibsColonyDF = springerQueens10$colonyAF_CSDChr,
-                                                        ibsAF0.5DF = springerQueens10$IBSAF0.5CSDChr,
-                                                        ibdDF = springerQueens10$IBDcsdChr,
+relQueen10_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens10_MelAF$IBSmultiCSDChr,
+                                                        ibsSingleDF = springerQueens10_MelAF$IBSsingleCSDChr,
+                                                        ibsColonyDF = springerQueens10_MelAF$colonyAF_CSDChr,
+                                                        ibsAF0.5DF = springerQueens10_MelAF$IBSAF0.5CSDChr,
+                                                        ibdDF = springerQueens10_MelAF$IBDcsdChr,
                                                         Sinv = Sinv,
                                                         idPopDF = springerQueensPop10)
 
@@ -1077,13 +1071,13 @@ dataQueensCSDchr <- rbind(relQueen1_csdChr_hist, relQueen10_csdChr_hist)
 save(dataQueensCSDchr, file = "dataQueensCSDchr.RData")
 }
 
-Queens_csdChr_hist <- plotQueens(dataQueensCSDchr, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBScolonyAF", "IBSsingleAF"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
+Queens_csdChr_hist <- plotQueens(dataQueensCSDchr, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
 
 #Plot csd Chr as heatmap
 relQueens1_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens1$IBScsdChr, ibdDF = queens1$IBDcsdChr, Sinv = Sinv, idDF = queens1$ID)
 relQueens10_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens10$IBScsdChr, ibdDF = queens10$IBDcsdChr, Sinv = Sinv, idDF = queens10$ID)
 relQueens1_csdChr_heat$Year <- 1
-relQueens10_csdChr_heat$Year <- 10s
+relQueens10_csdChr_heat$Year <- 10
 dataQueens_csdChr_heat <- rbind(relQueens1_csdChr_heat, relQueens10_csdChr_heat)
 
 QueensCSDchrHeat1 <- plotQueens_heatmapSOLO(relQueens1_csdChr_heat, Pop = TRUE, PopIdDF = springerQueensPop1, legend.position = "left")
