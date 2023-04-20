@@ -1,5 +1,5 @@
 rm(list = ls())
-setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation")
+setwd("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData")
 
 #Load libraries
 pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
@@ -15,7 +15,7 @@ Sinv <- readMM("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
-# Melifera gets mated with a proportion of carnica drones
+# Mellifera gets mated with a proportion of carnica drones
 
 #Plotting help
 # The colourblind palettes:
@@ -42,8 +42,18 @@ getS <- function(Sinv, ids, with = ids, diagOnly = FALSE, vector = FALSE) {
   with <- as.numeric(with)
   x <- sparseMatrix(i = ids, j = 1:length(ids), dims = c(nrow(Sinv), length(ids)))
   M1 <- as(x, "dMatrix")
-  Sids <- solve(Sinv, M1)[with,]
+  Sids <- as.matrix(solve(Sinv, M1)[with,])
+  if (dim(Sids)[1] == length(ids)){
+    rownames(Sids) <- ids
+  } else {
+    rownames(Sids) <- with
+  }
 
+  if (dim(Sids)[2] == length(ids)){
+    colnames(Sids) <- ids
+  } else {
+    colnames(Sids) <- with
+    }
   if (diagOnly) {
     Sids <- diag(Sids)
   }
@@ -53,73 +63,160 @@ getS <- function(Sinv, ids, with = ids, diagOnly = FALSE, vector = FALSE) {
   return(Sids)
 }
 
+determine_sister_type = function(x , df = NULL, WorkersFatherTable = NULL){
+  if ((WorkersFatherTable$DPQ[WorkersFatherTable$workers == df$id1[x]] == WorkersFatherTable$DPQ[WorkersFatherTable$workers == df$id2[x]]) &
+      (WorkersFatherTable$fathers[WorkersFatherTable$workers == df$id1[x]] != WorkersFatherTable$fathers[WorkersFatherTable$workers == df$id2[x]])){
+    ret = "FS"
+  } else if (WorkersFatherTable$fathers[WorkersFatherTable$workers == df$id1[x]] == WorkersFatherTable$fathers[WorkersFatherTable$workers == df$id2[x]]){
+    ret = "SS"
+  } else {
+    ret = "HS"
+  }
+  return(ret)
+}
+
+SisterTypeDF <- function(x){
+  Ibdr <- x[x$Rel == "WW" & x$Type == "IBDr", ] %>%
+          group_by(SisterType) %>%
+          reframe(Value = mean(Value), Type = "IBDr", Year = unique(x$Year))
+
+  Ibde <- x[x$Rel == "WW" & x$Type == "IBDe", ] %>%
+          group_by(SisterType) %>%
+          reframe(Value = mean(Value), Type = "IBDe", Year = unique(x$Year))
+
+  IBSmulti <- x[x$Rel == "WW" & x$Type == "IBSmultiAF", ] %>%
+              group_by(SisterType) %>%
+              reframe(Value = mean(Value), Type = "IBSmultiAF", Year = unique(x$Year))
+
+  IBSAF0.5 <- x[x$Rel == "WW" & x$Type == "IBSAF0.5", ] %>%
+              group_by(SisterType) %>%
+              reframe(Value = mean(Value), Type = "IBSAF0.5", Year = unique(x$Year))
+
+  IBSsingleAF <- x[x$Rel == "WW" & x$Type == "IBSsingleAF", ] %>%
+                 group_by(SisterType) %>%
+                 reframe(Value = mean(Value), Type = "IBSsingleAF", Year = unique(x$Year))
+
+  IBScolonyAF <- x[x$Rel == "WW" & x$Type == "IBScolonyAF", ] %>%
+                 group_by(SisterType) %>%
+                 reframe(Value = mean(Value), Type = "IBScolonyAF", Year = unique(x$Year))
+
+  df <- list(Ibdr, Ibde, IBSmulti, IBSAF0.5, IBSsingleAF, IBScolonyAF) %>%
+        Reduce(function(x, y) merge(x, y, all=TRUE), .)
+
+  return(df)
+}
+
 # Plotting functions
-prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idDF, inbreeding = FALSE) {
+prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idDF, inbreeding = FALSE, WorkersFatherTable = NULL) {
 
   #Workers on workers
-  
+
     print("IBSAF0.5 WW")
-    ibsAF0.5WW <- data.frame(Value = ifelse(inbreeding,
-                                           data.frame(diag(ibsAF0.5DF[idDF$workers, idDF$workers])),
-                                           data.frame(ibsAF0.5DF[idDF$workers, idDF$workers] %>%
-                                                              c(.[lower.tri(., diag = FALSE)]))) ,
-                             Rel = "WW",
-                             Type = "IBSAF0.5")
-    colnames(ibsAF0.5WW) <- c("Value", "Rel", "Type")
+    if (inbreeding) {
+      ibsAF0.5WW <-  data.frame(Value = diag(ibsAF0.5DF[idDF$workers, idDF$workers]),
+                                Rel = "WW",
+                                Type = "IBSAF0.5")
+    } else {
+      x <- ibsAF0.5DF[idDF$workers, idDF$workers]
+      ind <- which(lower.tri(x , diag = FALSE) , arr.ind = TRUE )
+      ibsAF0.5WW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                               id2 = dimnames(x)[[1]][ind[,1]] ,
+                               Value = x[ind],
+                               Rel = "WW",
+                               Type = "IBSAF0.5")
+    }
+    ibsAF0.5WW$SisterType <- sapply(1:nrow(ibsAF0.5WW), FUN = function(x) determine_sister_type(x = x, df = ibsAF0.5WW, WorkersFatherTable = WorkersFatherTable))
+
+
 
     print("IBSmulti WW")
-    ibsMultiWW <- data.frame(Value = ifelse(inbreeding,
-                                            data.frame(diag(ibsMultiDF[idDF$workers, idDF$workers])),
-                                            data.frame(ibsMultiDF[idDF$workers, idDF$workers] %>%
-                                                              c(.[lower.tri(., diag = FALSE)]))) ,
-                             Rel = "WW",
-                             Type = "IBSmultiAF")
-    colnames(ibsMultiWW) <- c("Value", "Rel", "Type")
-  
+    if (inbreeding) {
+      ibsMultiWW <-  data.frame(Value = diag(ibsMultiDF[idDF$workers, idDF$workers]),
+                                Rel = "WW",
+                                Type = "IBSmultiAF")
+    } else {
+      x <- ibsMultiDF[idDF$workers, idDF$workers]
+      ind <- which(lower.tri(x , diag = FALSE) , arr.ind = TRUE )
+      ibsMultiWW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                               id2 = dimnames(x)[[1]][ind[,1]] ,
+                               Value = x[ind],
+                               Rel = "WW",
+                               Type = "IBSmultiAF")
+    }
+    ibsMultiWW$SisterType <- sapply(1:nrow(ibsMultiWW), FUN = function(x) determine_sister_type(x = x, df = ibsMultiWW, WorkersFatherTable = WorkersFatherTable))
+
+
   print("IBSsingle WW")
-  start_time <- Sys.time()
-  ibsSingleWW <- data.frame(Value = data.frame(ifelse(inbreeding,
-                                                      data.frame(diag(ibsSingleDF[idDF$workers, idDF$workers])),
-                                                      data.frame(ibsSingleDF[idDF$workers, idDF$workers] %>%
-                                                           c(.[lower.tri(., diag = FALSE)])))),
-                            Rel = "WW",
-                            Type = "IBSsingleAF")
-  colnames(ibsSingleWW) <- c("Value", "Rel", "Type")
+  if (inbreeding) {
+    ibsSingleWW <-  data.frame(Value = diag(ibsSingleDF[idDF$workers, idDF$workers]),
+                              Rel = "WW",
+                              Type = "IBSsingleAF")
+  } else {
+    x <- ibsSingleDF[idDF$workers, idDF$workers]
+    ind <- which(lower.tri(x , diag = FALSE) , arr.ind = TRUE )
+    ibsSingleWW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                              id2 = dimnames(x)[[1]][ind[,1]] ,
+                              Value = x[ind],
+                              Rel = "WW",
+                              Type = "IBSsingleAF")
+  }
+  ibsSingleWW$SisterType <- sapply(1:nrow(ibsSingleWW), FUN =  function(x) determine_sister_type(x = x, df = ibsSingleWW, WorkersFatherTable = WorkersFatherTable))
 
   if(!is.null(ibsColonyDF)){ #if dataframe is CSD info then ibdOwnDF is NULL
     print("IBScolony WW")
-    ibsColonyWW <- data.frame(Value = ifelse(inbreeding,
-                                             data.frame(diag(ibsColonyDF[idDF$workers, idDF$workers])),
-                                             data.frame(ibsColonyDF[idDF$workers, idDF$workers] %>%
-                                                c(.[lower.tri(., diag = FALSE)]))),
-                           Rel = "WW",
-                           Type = "IBScolonyAF")
-    colnames(ibsColonyWW) <- c("Value", "Rel", "Type")
-
+    if (inbreeding) {
+      ibsColonyWW <-  data.frame(Value = diag(ibsColonyDF[idDF$workers, idDF$workers]),
+                                 Rel = "WW",
+                                 Type = "IBScolonyAF")
+    } else {
+      x <- ibsColonyDF[idDF$workers, idDF$workers]
+      ind <- which(lower.tri(x , diag = FALSE) , arr.ind = TRUE )
+      ibsColonyWW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                                id2 = dimnames(x)[[1]][ind[,1]] ,
+                                Value = x[ind],
+                                Rel = "WW",
+                                Type = "IBScolonyAF")
+    }
+    ibsColonyWW$SisterType <- sapply(1:nrow(ibsColonyWW), FUN =  function(x) determine_sister_type(x = x, df = ibsColonyWW, WorkersFatherTable = WorkersFatherTable))
   }
 
   print("IBDr WW")
-  ibdrWW <- data.frame(Value = ifelse(inbreeding,
-                                      data.frame(diag(ibdDF[idDF$workers, idDF$workers])),
-                                      data.frame(ibdDF[idDF$workers, idDF$workers] %>%
-                                                         c(.[lower.tri(., diag = FALSE)]))),
-                         Rel = "WW",
-                       Type = "IBDr")
-  colnames(ibdrWW) <- c("Value", "Rel", "Type")
+  if (inbreeding) {
+    ibdrWW <-  data.frame(Value = diag(ibdDF[idDF$workers, idDF$workers]),
+                               Rel = "WW",
+                               Type = "IBDr")
+  } else {
+    x <- ibdDF[idDF$workers, idDF$workers]
+    ind <- which(lower.tri(x , diag = FALSE) , arr.ind = TRUE)
+    ibdrWW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                              id2 = dimnames(x)[[1]][ind[,1]] ,
+                              Value = x[ind],
+                              Rel = "WW",
+                              Type = "IBDr")
+  }
+  ibdrWW$SisterType <- sapply(1:nrow(ibdrWW), FUN =  function(x) determine_sister_type(x = x, df = ibdrWW, WorkersFatherTable = WorkersFatherTable))
 
   if (!is.null(Sinv)) {
     print("IBDe WW")
-    ibdeWW <- data.frame(Value = ifelse(inbreeding,
-                                        data.frame(getS(Sinv, ids = idDF$workers, vector = TRUE, diagOnly = TRUE)),
-                                        getS(Sinv, ids = idDF$workers, vector = FALSE) %>%
-                                                    with(.[lower.tri(., diag = FALSE)]) %>% data.frame(.)),
-                         Rel = "WW",
-                         Type = "IBDe")
-    colnames(ibdeWW) <- c("Value", "Rel", "Type")
+    if (inbreeding){
+      ibdeWW <- data.frame(Value = getS(Sinv, ids = idDF$workers, vector = TRUE, diagOnly = TRUE),
+                           Rel = "WW",
+                           Type = "IBDe")
+    } else {
+      x <- getS(Sinv, ids = idDF$workers, vector = FALSE)
+      ind <- which(lower.tri(x, diag = FALSE), arr.ind = TRUE)
+      ibdeWW <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                           id2 = dimnames(x)[[1]][ind[,1]] ,
+                           Value = x[ind],
+                           Rel = "WW",
+                           Type = "IBDe")
+    }
+     ibdeWW$SisterType <- sapply(1:nrow(ibdeWW), FUN = function(x) determine_sister_type(x = x, df = ibdeWW, WorkersFatherTable = WorkersFatherTable))
+
   }
   # Workers vs drones
   if (isFALSE(inbreeding)) {
-    
+
       print("IBSAF0.5 WD")
       ibsAF0.5WD <- data.frame(Value = c(ibsAF0.5DF[idDF$workers, idDF$drones]),
                                Rel = "WD",
@@ -166,18 +263,16 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
     start_time <- Sys.time()
     ibsAF0.5DD <- data.frame(Value = ifelse(inbreeding,
                                             data.frame(diag(ibsAF0.5DF[idDF$drones, idDF$drones])),
-                                            data.frame(ibsAF0.5DF[idDF$drones, idDF$drones] %>%
-                                                              c(.[lower.tri(., diag = FALSE)]))),
+                                            ibsAF0.5DF[idDF$drones, idDF$drones] %>% .[lower.tri(., diag = FALSE)] %>% data.frame(.)),
                              Rel = "DD",
                              Type = "IBSAF0.5")
     colnames(ibsAF0.5DD) <- c("Value", "Rel", "Type")
-    
+
   print("IBSmulti DD")
   start_time <- Sys.time()
   ibsMultiDD <- data.frame(Value = ifelse(inbreeding,
                                           data.frame(diag(ibsMultiDF[idDF$drones, idDF$drones])),
-                                          data.frame(ibsMultiDF[idDF$drones, idDF$drones] %>%
-                                            c(.[lower.tri(., diag = FALSE)]))),
+                                          ibsMultiDF[idDF$drones, idDF$drones] %>% .[lower.tri(., diag = FALSE)] %>% data.frame(.)),
                            Rel = "DD",
                            Type = "IBSmultiAF")
   colnames(ibsMultiDD) <- c("Value", "Rel", "Type")
@@ -188,17 +283,15 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   start_time <- Sys.time()
   ibsSingleDD <- data.frame(Value = ifelse(inbreeding,
                                            data.frame(diag(ibsSingleDF[idDF$drones, idDF$drones])),
-                                           data.frame(ibsSingleDF[idDF$drones, idDF$drones] %>%
-                                             c(.[lower.tri(., diag = FALSE)]))),
+                                           ibsSingleDF[idDF$drones, idDF$drones] %>% .[lower.tri(., diag = FALSE)] %>% data.frame(.)),
                             Rel = "DD",
                             Type = "IBSsingleAF")
   colnames(ibsSingleDD) <- c("Value", "Rel", "Type")
   if(!is.null(ibsColonyDF)){ #if dataframe is CSD info then ibdCdf is NULL
     print("IBScolony DD")
     ibsColonyDD <- data.frame(Value = ifelse(inbreeding,
-                                          data.frame(diag(ibsColonyDF[idDF$drones, idDF$drones])),
-                                          data.frame(ibsColonyDF[idDF$drones, idDF$drones] %>%
-                                            c(.[lower.tri(., diag = FALSE)]))),
+                                             data.frame(diag(ibsColonyDF[idDF$drones, idDF$drones])),
+                                             ibsColonyDF[idDF$drones, idDF$drones] %>% .[lower.tri(., diag = FALSE)] %>% data.frame(.)),
                            Rel = "DD",
                            Type = "IBScolonyAF")
     colnames(ibsColonyDD) <- c("Value", "Rel", "Type")
@@ -207,26 +300,30 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   print("IBDr DD")
   ibdrDD <- data.frame(Value = ifelse(inbreeding,
                                       data.frame(diag(ibdDF[idDF$drones, idDF$drones])),
-                                      data.frame(ibdDF[idDF$drones, idDF$drones] %>%
-                                        c(.[lower.tri(., diag = FALSE)]))),
+                                      ibdDF[idDF$drones, idDF$drones] %>% .[lower.tri(., diag = FALSE)] %>% data.frame(.)),
                        Rel = "DD",
                        Type = "IBDr")
   colnames(ibdrDD) <- c("Value", "Rel", "Type")
 
   if (!is.null(Sinv)) {
     print("IBDe DD")
-    ibdeDD <- data.frame(Value = ifelse(inbreeding,
-                                        data.frame(getS(Sinv, ids = idDF$drones, vector = TRUE, diagOnly = TRUE)),
-                                        getS(Sinv, ids = idDF$drones, vector = FALSE) %>%
-                                          with(.[lower.tri(., diag = FALSE)]) %>% data.frame(.)),
-                         Rel = "DD",
-                         Type = "IBDe")
-    colnames(ibdeDD) <- c("Value", "Rel", "Type")
-  }
+    if (inbreeding){
+      ibdeDD <- data.frame(Value = getS(Sinv, ids = idDF$drones, vector = TRUE, diagOnly = TRUE),
+                           Rel = "DD",
+                           Type = "IBDe")
+    } else {
+      x <- getS(Sinv, ids = idDF$drones, vector = FALSE)
+      ind <- which(lower.tri(x, diag = FALSE), arr.ind = TRUE)
+      ibdeDD <- data.frame(id1 = dimnames(x)[[2]][ind[,2]] ,
+                           id2 = dimnames(x)[[1]][ind[,1]] ,
+                           Value = x[ind],
+                           Rel = "DD",
+                           Type = "IBDe")
+  }}
 
   # Queens vs workers
   if (isFALSE(inbreeding)){
-    
+
       print("IBSAF0.5 QW")
       ibsAF0.5QW <- data.frame(Value = c(ibsAF0.5DF[idDF$workers, idDF$queen]),
                                Rel = "QW",
@@ -335,7 +432,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   #Compute relationships between queens of different populations (QQ)
   #IBSmulti
- 
+
     print("IBSAF0.5QQ")
     IBSAF0.5QQ <- rbind(data.frame(Value = as.vector(list(ibsAF0.5DF[melID, melCrossID])[[1]]),
                                    Pops = "Mel_MelCross"),
@@ -583,7 +680,7 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 }
 
 prepareDataForPlottingHeatMap_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idDF = NULL) {
-  
+
   if (is.null(ibsMultiDF)){
     ibsAF0.5DF <- as.data.frame(ibsAF0.5DF)
     columns <- colnames(ibsAF0.5DF)
@@ -639,11 +736,11 @@ prepareDataForPlottingHeatMap_Queens <- function(ibsMultiDF = NULL, ibsSingleDF 
 }
 
 plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5"))
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
   df$Rel <- factor(df$Rel, levels= c("WW", "WD", "DD", "QW", "QD"))
 
-  type_labels <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
+  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
+  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
 
   df$Year <- factor(df$Year, levels = years)
   year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
@@ -652,7 +749,7 @@ plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
   plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
               aes(x = Value, fill = Rel)) +
           geom_vline(xintercept = c(0, 0.25, 0.5, 0.75), linewidth = 0.25, colour = "grey") +
-          geom_histogram(binwidth = 0.01, position = "identity") +
+          geom_histogram(bins = 200, position = "identity") +
           facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y",independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
           scale_fill_manual("", values = paletteViridis, aesthetics = c("colour","fill")) +
           theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") +
@@ -661,13 +758,13 @@ plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
 }
 
 plotQueens <- function(df, rel = NULL, type = NULL, pops = NULL, years = NULL, palette = NULL) { #Use palette = cbPaletteQ with same pop and palette = cbPaletteQQ with different pops
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5"))
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "Mel", "Car", "MelCross"))
   df$Rel  <- factor(df$Rel, levels = c("QQ", "Q", "F"))
 
   #TODO new type labels required?
-  type_labels <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
+  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
+  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
 
   df$Year <- factor(df$Year, levels = years)
   year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
@@ -680,19 +777,21 @@ plotQueens <- function(df, rel = NULL, type = NULL, pops = NULL, years = NULL, p
           geom_histogram(binwidth = 0.01, position = "identity") +
           facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
           scale_fill_manual("", values = palette, aesthetics = c("colour","fill")) +
-          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top", axis.text=element_text(size=12), axis.title = element_text(size= 20), strip.text.x = element_text(size = 20)) +
+          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") +
           scale_x_continuous(breaks=seq(-3, 8, 0.25))
   return(plot)
 }
 
+#to change text size axis.text=element_text(size=12), axis.title = element_text(size= 20), strip.text.x = element_text(size = 20))
+
 scatterQueens <-  function(df, rel = NULL, type = NULL, pops = NULL, legend.position = NULL, palette = NULL, years = NULL) {
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5"))
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
   df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "Car", "Mel", "MelCross"))
   df$Rel  <- factor(df$Rel, levels = c("QQ", "Q"))
 
 
-  type_labels <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
+  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
+  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
 
 
   df$Year <- factor(df$Year, levels = years)
@@ -714,9 +813,9 @@ scatterQueens <-  function(df, rel = NULL, type = NULL, pops = NULL, legend.posi
 plotQueens_heatmapBIND <- function(df, PopIdDF = NULL, years = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
   df$name <- as.factor(as.numeric(df$name))
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5"))
-  type_labels <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
+  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
+  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
 
   df$Year <- factor(df$Year, levels = years)
   year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
@@ -756,9 +855,9 @@ plotQueens_heatmapBIND <- function(df, PopIdDF = NULL, years = NULL) {
 plotQueens_heatmapSOLO <- function(df, Pop = FALSE, PopIdDF = NULL, legend.position = NULL, years = NULL) {
   df$ID <- as.factor(as.numeric(df$ID))
   df$name <- as.factor(as.numeric(df$name))
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5"))
-  type_labels <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBScolonyAF", "IBSsingleAF",  "IBSmultiAF", "IBSAF0.5")
+  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
+  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
+  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
 
   df$Year <- factor(df$Year, levels = years)
   year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
@@ -790,7 +889,7 @@ plotQueens_heatmapSOLO <- function(df, Pop = FALSE, PopIdDF = NULL, legend.posit
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
 print("Plot carnica year 1")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCar.RData")
+load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCar.RData")
 
 #Coded out data prep
 {
@@ -801,7 +900,8 @@ relCar1 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
                                          ibdDF = colonyCar1$IBD,
                                          Sinv = Sinv,
                                          idDF = colonyCar1$ID,
-                                         inbreeding = FALSE)
+                                         inbreeding = FALSE,
+                                         WorkersFatherTable = colonyCar1$WorkersFatherTable)
 
 
 
@@ -813,7 +913,8 @@ relCar10 <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
                                           ibdDF = colonyCar10$IBD,
                                           Sinv = Sinv,
                                           idDF = colonyCar10$ID,
-                                          inbreeding = FALSE)
+                                          inbreeding = FALSE,
+                                          WorkersFatherTable = colonyCar10$WorkersFatherTable)
 
 relCar1$Year <- 1
 relCar10$Year <- 10
@@ -821,9 +922,19 @@ dataCar <- rbind(relCar1, relCar10)
 save(... = dataCar, file = "dataCar.RData")
 }
 
-CarWWplot<- plotColony(dataCar, type = c("IBSmultiAF"), rel = c("WW", "WD", "DD"), years = c(1,10))
+CarWWplot<- plotColony(relCar1, type = c("IBSmultiAF"), rel = c("WW"), years = c(1))
 
-CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"),  rel = c("QW", "QD"), years = c(1,10))
+CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"),  rel = c("QW", "QD"), years = c(1,10))
+
+dataCarSisters <- SisterTypeDF(dataCar)
+Fig1Table <- dataCarSisters[dataCarSisters$Type %in% c("IBDe", "IBDr", "IBSsingleAF"),]
+Year1 <- Fig1Table %>% filter(Year == 1 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Value) %>% as.data.frame(.) %>% .[, c(1,4,2,3)]
+Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Value) %>% as.data.frame(.)  %>% .[, c(1,4,2,3)]
+
+
+#Get average mean of SisterType information: e.g using ibdeWW
+# tapply(ibdeWW$Value, INDEX= ibdeWW$SisterType, FUN = mean)
+
 
 #Plot Car inbreeding
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarF.RData")
@@ -854,7 +965,7 @@ dataCarF <- rbind(relCar1F, relCar10F)
 save(dataCarF, file = "dataCarF.Rdata")
 }
 
-CarFplot <- plotColony(dataCarF, type =  c("IBDe", "IBDr",  "IBScolonyAF", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "DD"), years = c(1,10))
+CarFplot <- plotColony(dataCarF, type =  c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "DD"), years = c(1,10))
 
 
 #Plot CAR csd Locus
@@ -910,7 +1021,7 @@ save(... = dataCarCSDchr, file = "dataCarCsdChr.RData")
 
 }
 
-CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe", "IBDr", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), years = c(1,10))
+CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), years = c(1,10))
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################
@@ -945,7 +1056,7 @@ save(dataQueens_MelAF, file = "dataQueens_MelAF.Rdata")
 
 print("Between populations ")
 #between populations
-QueensQQ <- plotQueens(dataQueens_MelAF, rel = "QQ", type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQQ)
+QueensQQ <- plotQueens(dataQueens_MelAF, rel = "QQ", type = c("IBDe", "IBDr", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQQ)
 QueensQQ
 
 print("Within populations")
@@ -977,7 +1088,7 @@ load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/d
 #                                                     ibdDF = queens1$IBD,
 #                                                     Sinv = Sinv,
 #                                                     idDF = queens1$ID)
-# 
+#
 # relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsMultiDF =  queens10$IBSmultiAF,
 #                                                      ibsSingleDF = queens10$IBSsingleAF,
 #                                                      ibsColonyDF = queens10$IBScolonyAF,
@@ -985,7 +1096,7 @@ load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/d
 #                                                      ibdDF = queens10$IBD,
 #                                                      Sinv = Sinv,
 #                                                      idDF = queens10$ID)
-# 
+#
 # relQueens1h$Year <- 1
 # relQueens10h$Year <- 10
 # dataQh <- rbind(relQueens1h, relQueens10h)
@@ -1029,7 +1140,7 @@ dataQueens_csdLoc <- rbind(relQueens1_csdLoc_hist, relQueens10_csdLoc_hist)
 save(dataQueens_csdLoc, file = "dataQueensCSDloc.RData")
 }
 
-Queens_csdLoc_hist <- plotQueens(dataQueens_csdLoc, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ) 
+Queens_csdLoc_hist <- plotQueens(dataQueens_csdLoc, rel = "QQ",  type = c("IBDe", "IBDr","IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
 Queens_csdLoc_hist
 
 #Plot csd loc as a heatmap TODO:
@@ -1048,28 +1159,7 @@ QueensCSDLocHeat <- grid.arrange(QueensCSDloc1h, QueensCSDloc10h, ncol = 2)
 
 #Plot csd Chr as Histogram
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueensCSDchr.RData")
-{
-relQueen1_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1_MelAF$IBSmultiCSDChr,
-                                                        ibsSingleDF = springerQueens1_MelAF$IBSsingleCSDChr,
-                                                        ibsColonyDF = springerQueens1_MelAF$IBScolonyAF_CSDChr,
-                                                       ibsAF0.5DF = springerQueens1_MelAF$IBSAF0.5CSDChr,
-                                                        ibdDF = springerQueens1_MelAF$IBDcsdChr,
-                                                        Sinv = Sinv,
-                                                        idPopDF = springerQueensPop1)
 
-relQueen10_csdChr_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens10_MelAF$IBSmultiCSDChr,
-                                                        ibsSingleDF = springerQueens10_MelAF$IBSsingleCSDChr,
-                                                        ibsColonyDF = springerQueens10_MelAF$colonyAF_CSDChr,
-                                                        ibsAF0.5DF = springerQueens10_MelAF$IBSAF0.5CSDChr,
-                                                        ibdDF = springerQueens10_MelAF$IBDcsdChr,
-                                                        Sinv = Sinv,
-                                                        idPopDF = springerQueensPop10)
-
-relQueen1_csdChr_hist$Year <- 1
-relQueen10_csdChr_hist$Year <- 10
-dataQueensCSDchr <- rbind(relQueen1_csdChr_hist, relQueen10_csdChr_hist)
-save(dataQueensCSDchr, file = "dataQueensCSDchr.RData")
-}
 
 Queens_csdChr_hist <- plotQueens(dataQueensCSDchr, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
 
