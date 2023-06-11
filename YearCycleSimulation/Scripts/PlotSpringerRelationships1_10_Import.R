@@ -32,7 +32,7 @@ caste <- caste
 colonyCar1 <- springerColony1_Car
 colonyCar10 <- springerColony10_Car
 queens1_MelAF <- springerQueens1_MelAF
-queens1_CarAF <- springerQueens10_CarAF
+queens1_CarAF <- springerQueens1_CarAF
 queens10_MelAF <- springerQueens10_MelAF
 queens10_CarAF <- springerQueens10_CarAF
 
@@ -75,30 +75,30 @@ determine_sister_type = function(x , df = NULL, WorkersFatherTable = NULL){
   return(ret)
 }
 
-SisterTypeDF <- function(x){
+SisterTypeDF <- function(x){ #Doesn't work with merged dataframes, Works with only relCar1/relCar10 then use rbind to merge them
   Ibdr <- x[x$Rel == "WW" & x$Type == "IBDr", ] %>%
           group_by(SisterType) %>%
-          reframe(Value = mean(Value), Type = "IBDr", Year = unique(x$Year))
+          reframe(Mean = mean(Value), SD = sd(Value), Type = "IBDr", Year = unique(x$Year))
 
   Ibde <- x[x$Rel == "WW" & x$Type == "IBDe", ] %>%
           group_by(SisterType) %>%
-          reframe(Value = mean(Value), Type = "IBDe", Year = unique(x$Year))
+          reframe(Mean = mean(Value), SD = sd(Value), Type = "IBDe", Year = unique(x$Year))
 
   IBSmulti <- x[x$Rel == "WW" & x$Type == "IBSmultiAF", ] %>%
               group_by(SisterType) %>%
-              reframe(Value = mean(Value), Type = "IBSmultiAF", Year = unique(x$Year))
+              reframe(Mean = mean(Value), SD = sd(Value), Type = "IBSmultiAF", Year = unique(x$Year))
 
   IBSAF0.5 <- x[x$Rel == "WW" & x$Type == "IBSAF0.5", ] %>%
               group_by(SisterType) %>%
-              reframe(Value = mean(Value), Type = "IBSAF0.5", Year = unique(x$Year))
+              reframe(Mean = mean(Value), SD = sd(Value), Type = "IBSAF0.5", Year = unique(x$Year))
 
   IBSsingleAF <- x[x$Rel == "WW" & x$Type == "IBSsingleAF", ] %>%
                  group_by(SisterType) %>%
-                 reframe(Value = mean(Value), Type = "IBSsingleAF", Year = unique(x$Year))
+                 reframe(Mean = mean(Value), SD = sd(Value), Type = "IBSsingleAF", Year = unique(x$Year))
 
   IBScolonyAF <- x[x$Rel == "WW" & x$Type == "IBScolonyAF", ] %>%
                  group_by(SisterType) %>%
-                 reframe(Value = mean(Value), Type = "IBScolonyAF", Year = unique(x$Year))
+                 reframe(Mean = mean(Value), SD = sd(Value), Type = "IBScolonyAF", Year = unique(x$Year))
 
   df <- list(Ibdr, Ibde, IBSmulti, IBSAF0.5, IBSsingleAF, IBScolonyAF) %>%
         Reduce(function(x, y) merge(x, y, all=TRUE), .)
@@ -125,7 +125,7 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
                                Rel = "WW",
                                Type = "IBSAF0.5")
     }
-    ibsAF0.5WW$SisterType <- sapply(1:nrow(ibsAF0.5WW), FUN = function(x) determine_sister_type(x = x, df = ibsAF0.5WW, WorkersFatherTable = WorkersFatherTable))
+    ibsAF0.5WW$SisterType <- sapply(1:nrow(ibsAF0.5WW), FUN = function(z) determine_sister_type(x = z, df = ibsAF0.5WW, WorkersFatherTable = WorkersFatherTable))
 
 
 
@@ -424,7 +424,7 @@ prepareDataForPlotting_Colony <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   })
 }
 
-prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idPopDF) {
+prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsCarDF = NULL, ibsMelDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idPopDF) {
   #Get populations IDs
   melID <- idPopDF$ID[idPopDF$Pop == "Mel"]
   melCrossID <- idPopDF$ID[idPopDF$Pop == "MelCross"]
@@ -454,16 +454,27 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   IBSmultiQQ$Type = "IBSmultiAF"
 
 
-  #IBSsingle
-  print("IBSsingleQQ")
-  IBSsingleQQ <- rbind(data.frame(Value = as.vector(list(ibsSingleDF[melID, melCrossID])[[1]]),
+  #IBScar - Using the Carnica AF is the single base AF
+  print("IBScarQQ")
+  IBScarQQ <- rbind(data.frame(Value = as.vector(list(ibsCarDF[melID, melCrossID])[[1]]),
                                   Pops = "Mel_MelCross"),
-                       data.frame(Value = as.vector(list(ibsSingleDF[melID, carID])[[1]]),
+                       data.frame(Value = as.vector(list(ibsCarDF[melID, carID])[[1]]),
                                   Pops = "Mel_Car"),
-                       data.frame(Value = as.vector(list(ibsSingleDF[melCrossID, carID])[[1]]),
+                       data.frame(Value = as.vector(list(ibsCarDF[melCrossID, carID])[[1]]),
                                   Pops = "MelCross_Car"))
-  IBSsingleQQ$Rel = "QQ"
-  IBSsingleQQ$Type = "IBSsingleAF"
+  IBScarQQ$Rel = "QQ"
+  IBScarQQ$Type = "IBScarAF"
+
+  #IBSmel - Using the Mellifera AF as the single base AF
+  print("IBSmelQQ")
+  IBSmelQQ <- rbind(data.frame(Value = as.vector(list(ibsMelDF[melID, melCrossID])[[1]]),
+                               Pops = "Mel_MelCross"),
+                    data.frame(Value = as.vector(list(ibsMelDF[melID, carID])[[1]]),
+                               Pops = "Mel_Car"),
+                    data.frame(Value = as.vector(list(ibsMelDF[melCrossID, carID])[[1]]),
+                               Pops = "MelCross_Car"))
+  IBSmelQQ$Rel = "QQ"
+  IBSmelQQ$Type = "IBSmelAF"
 
   #IBScolony
   if(is.null(ibsColonyDF)){
@@ -535,19 +546,33 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   IBSmultiQ$Type <- "IBSmultiAF"
 
 
-  #IBSsingleAF
-  print("IBSsingleQ")
-  IBSsingleQ <- rbind(data.frame(Value = as.vector(list(c(ibsSingleDF[melID, melID][lower.tri(ibsSingleDF[melID, melID],
+  #IBSCarAF
+  print("IBScarQ")
+  IBScarQ <- rbind(data.frame(Value = as.vector(list(c(ibsCarDF[melID, melID][lower.tri(ibsCarDF[melID, melID],
                                                                                               diag = FALSE)]))[[1]]),
                                  Pops = "Mel"),
-                      data.frame(Value = as.vector(list(c(ibsSingleDF[carID, carID][lower.tri(ibsSingleDF[carID, carID],
+                      data.frame(Value = as.vector(list(c(ibsCarDF[carID, carID][lower.tri(ibsCarDF[carID, carID],
                                                                                               diag = FALSE)]))[[1]]),
                                  Pops = "Car"),
-                      data.frame(Value = as.vector(list(c(ibsSingleDF[melCrossID, melCrossID][lower.tri(ibsSingleDF[melCrossID, melCrossID],
+                      data.frame(Value = as.vector(list(c(ibsCarDF[melCrossID, melCrossID][lower.tri(ibsCarDF[melCrossID, melCrossID],
                                                                                                         diag = FALSE)]))[[1]]),
                                  Pops = "MelCross"))
-  IBSsingleQ$Rel <- "Q"
-  IBSsingleQ$Type <- "IBSsingleAF"
+  IBScarQ$Rel <- "Q"
+  IBScarQ$Type <- "IBScarAF"
+
+  #IBSMelAF
+  print("IBSMelQ")
+  IBSmelQ <- rbind(data.frame(Value = as.vector(list(c(ibsMelDF[melID, melID][lower.tri(ibsMelDF[melID, melID],
+                                                                                        diag = FALSE)]))[[1]]),
+                              Pops = "Mel"),
+                   data.frame(Value = as.vector(list(c(ibsMelDF[carID, carID][lower.tri(ibsMelDF[carID, carID],
+                                                                                        diag = FALSE)]))[[1]]),
+                              Pops = "Car"),
+                   data.frame(Value = as.vector(list(c(ibsMelDF[melCrossID, melCrossID][lower.tri(ibsMelDF[melCrossID, melCrossID],
+                                                                                                  diag = FALSE)]))[[1]]),
+                              Pops = "MelCross"))
+  IBSmelQ$Rel <- "Q"
+  IBSmelQ$Type <- "IBSmelAF"
 
 
   #IBSsingleAF
@@ -622,18 +647,30 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
   IBSfMulti$Rel = "F"
 
 
-  #IBSfSingle
-  print("IBSfSingle")
-  IBSfSingle <- rbind(data.frame(Value = diag(ibsSingleDF[melID, melID]),
+  #IBSfCar
+  print("IBSfCar")
+  IBSfCar<- rbind(data.frame(Value = diag(ibsCarDF[melID, melID]),
                                  Pops = "Mel"),
-                      data.frame(Value = diag(ibsSingleDF[melCrossID, melCrossID]),
+                      data.frame(Value = diag(ibsCarDF[melCrossID, melCrossID]),
                                  Pops = "MelCross"),
-                      data.frame(Value = diag(ibsSingleDF[carID, carID]),
+                      data.frame(Value = diag(ibsCarDF[carID, carID]),
                                  Pops = "Car"))
-  IBSfSingle$Type = "IBSsingleAF"
-  IBSfSingle$Rel = "F"
+  IBSfCar$Type = "IBScarAF"
+  IBSfCar$Rel = "F"
 
-  #IBSfColony
+
+  #IBSfMel
+  print("IBSfMel")
+  IBSfMel<- rbind(data.frame(Value = diag(ibsMelDF[melID, melID]),
+                             Pops = "Mel"),
+                  data.frame(Value = diag(ibsMelDF[melCrossID, melCrossID]),
+                             Pops = "MelCross"),
+                  data.frame(Value = diag(ibsMelDF[carID, carID]),
+                             Pops = "Car"))
+  IBSfMel$Type = "IBSmelAF"
+  IBSfMel$Rel = "F"
+
+   #IBSfColony
   if (is.null(ibsColonyDF)){
     IBSfColony <- NULL
   } else {
@@ -673,9 +710,9 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL,
 
   return(
     bind_rows(
-      IBSmultiQQ, IBSsingleQQ, IBScolonyQQ, IBSAF0.5QQ, IBDrQQ, IBDeQQ,
-      IBSmultiQ, IBSsingleQ, IBScolonyQ, IBSAF0.5Q, IBDrQ, IBDeQ,
-      IBSfMulti, IBSfSingle, IBSfColony, IBSfAF0.5, IBDrF, IBDeF)
+      IBSmultiQQ, IBScarQQ, IBSmelQQ, IBScolonyQQ, IBSAF0.5QQ, IBDrQQ, IBDeQQ,
+      IBSmultiQ, IBScarQ, IBSmelQ, IBScolonyQ, IBSAF0.5Q, IBDrQ, IBDeQ,
+      IBSfMulti, IBSfCar, IBSfMel, IBSfColony, IBSfAF0.5, IBDrF, IBDeF)
   )
 }
 
@@ -922,14 +959,18 @@ dataCar <- rbind(relCar1, relCar10)
 save(... = dataCar, file = "dataCar.RData")
 }
 
-CarWWplot<- plotColony(relCar1, type = c("IBSmultiAF"), rel = c("WW"), years = c(1))
+CarWWplot<- plotColony(dataCar, type = c("IBDe", "IBDr", "IBSsingleAF"), rel = c("WW", "WD", "DD"), years = c(1, 10))
 
 CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"),  rel = c("QW", "QD"), years = c(1,10))
 
-dataCarSisters <- SisterTypeDF(dataCar)
+dataCar1Sister <- SisterTypeDF(dataCar[dataCar$Year == 1, ])
+dataCar10Sister<- SisterTypeDF(dataCar[dataCar$Year == 10, ])
+
+dataCarSisters <- rbind(dataCar1Sister, dataCar10Sister)
+
 Fig1Table <- dataCarSisters[dataCarSisters$Type %in% c("IBDe", "IBDr", "IBSsingleAF"),]
-Year1 <- Fig1Table %>% filter(Year == 1 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Value) %>% as.data.frame(.) %>% .[, c(1,4,2,3)]
-Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Value) %>% as.data.frame(.)  %>% .[, c(1,4,2,3)]
+Year1 <- Fig1Table %>% filter(Year == 1 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Mean) %>% as.data.frame(.) %>% .[, c(1,4,2,3)]
+Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterType), names_from = Type, values_from = Mean) %>% as.data.frame(.)  %>% .[, c(1,4,2,3)]
 
 
 #Get average mean of SisterType information: e.g using ibdeWW
@@ -1027,7 +1068,7 @@ CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe
 ########################################################
 #Plot queens Year 1
 print("Plot queens")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
+load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
 
 #Coded out prep
 {
@@ -1053,7 +1094,53 @@ dataQueens_MelAF <- rbind(relQueens1_MelAF, relQueens10_MelAF)
 save(relQueens10_MelAF, file = "relQueens10_MelAF.Rdata")
 save(dataQueens_MelAF, file = "dataQueens_MelAF.Rdata")
 }
+{relQueens1_CarAF <- prepareDataForPlotting_Queens(ibsMultiDF =  queens1_CarAF$IBSmultiAF,
+                                                    ibsSingleDF = queens1_CarAF$IBSsingleAF,
+                                                    ibsColonyDF = queens1_CarAF$IBScolonyAF,
+                                                    ibsAF0.5DF = queens1_CarAF$IBSAF0.5,
+                                                    ibdDF = queens1_CarAF$IBD,
+                                                    Sinv = Sinv,
+                                                    idPopDF = springerQueensPop1)
 
+  relQueens10_CarAF <-  prepareDataForPlotting_Queens(ibsMultiDF =  queens10_CarAF$IBSmultiAF,
+                                                      ibsSingleDF = queens10_CarAF$IBSsingleAF,
+                                                      ibsColonyDF = queens10_CarAF$IBScolonyAF,
+                                                      ibsAF0.5DF = queens10_CarAF$IBSAF0.5,
+                                                      ibdDF = queens10_CarAF$IBD,
+                                                      Sinv = Sinv,
+                                                      idPopDF = springerQueensPop10)
+  relQueens1_CarAF$Year <- 1
+  relQueens10_CarAF$Year <- 10
+
+  dataQueens_CarAF <- rbind(relQueens1_CarAF, relQueens10_CarAF)
+  save(relQueens10_CarAF, file = "relQueens10_CarAF.Rdata")
+  save(dataQueens_CarAF, file = "dataQueens_CarAF.Rdata")
+}
+
+#Queens with Mel and Car allele frequencies for separate "SingleAF" plots
+{
+  relQueens1 <- prepareDataForPlotting_Queens(ibsMultiDF = queens1_MelAF$IBSmultiAF, #doesn't matter which since both use same multibase pop
+                                            ibsCarDF = queens1_CarAF$IBSsingleAF,
+                                            ibsMelDF = queens1_MelAF$IBSsingleAF,
+                                            ibsAF0.5DF = queens1_MelAF$IBSAF0.5,
+                                            ibdDF = queens1_MelAF$IBD,
+                                            Sinv = Sinv,
+                                            idPopDF = springerQueensPop1)
+
+relQueens10 <- prepareDataForPlotting_Queens(ibsMultiDF = queens10_MelAF$IBSmultiAF, #doesn't matter which since both use same multibase pop
+                                            ibsCarDF = queens10_CarAF$IBSsingleAF,
+                                            ibsMelDF = queens10_MelAF$IBSsingleAF,
+                                            ibsAF0.5DF = queens10_MelAF$IBSAF0.5,
+                                            ibdDF = queens10_MelAF$IBD,
+                                            Sinv = Sinv,
+                                            idPopDF = springerQueensPop10)
+
+relQueens1$Year <- 1
+relQueens10$Year <- 10
+
+dataQueens <- rbind(relQueens1, relQueens10)
+save(dataQueens, file = "dataQueens.Rdata")
+}
 print("Between populations ")
 #between populations
 QueensQQ <- plotQueens(dataQueens_MelAF, rel = "QQ", type = c("IBDe", "IBDr", "IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQQ)

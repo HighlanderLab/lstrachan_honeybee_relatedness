@@ -4,8 +4,8 @@ rm(list = ls())
 
 # Define functions
 computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 = FALSE,
-                                        SingleBaseAF = NULL, MultiBaseAF = NULL, 
-                                        SingleBaseAFcsdLocus = NULL, MultiBaseAFcsdLocus = NULL, 
+                                        SingleBaseAF = NULL, MultiBaseAF = NULL,
+                                        SingleBaseAFcsdLocus = NULL, MultiBaseAFcsdLocus = NULL,
                                         SingleBaseAFcsdChr = NULL, MultiBaseAFcsdChr = NULL) {
   if (isColony(x)) {
     # Build the colony up to 1,000 workers and 200 drones
@@ -19,19 +19,29 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     sex <- getCasteSex(colony, caste = "all", collapse = TRUE)
     #get colony IDs
     id <- getCasteId(colony, caste = "all")
+
+    #Determine sister type:
+    CarWorkerFathers <- colony@workers@father #collect the fathers information for the workers
+    FathersPop <- colony@queen@misc[[1]][["fathers"]] # Extract father Pop object
+    WorkersFatherTable <- data.frame(workers= colony@workers@id, fathers = colony@workers@father)
+    WorkersFatherTable$DPQ <-  sapply(WorkersFatherTable$father, FUN = function(x) FathersPop[x]@mother)
+
   } else if (isPop(x)) {
     geno <- getSegSiteGeno(x)
     sex <- x@sex
     id <- x@id
-  }
-  
+    # Queens populations- making a null object to simplify for now
+    CarWorkerFathers = NULL
+    WorkersFatherTable = NULL
+    }
+
   ##################################################
   # IBS
   ##################################################
   # TODO: Combine generations 1 and 10 - so that they have the same reference population (regarding allele frequencies)
   print("IBS")
   print(Sys.time())
-  
+
   ### --- WHOLE GENOME --- ###
   # ALLELE FREQUENCY 0.5
   if (AF0.5) {
@@ -41,7 +51,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
   } else {
     ibsAF0.5 <- NULL
   }
-  
+
   #COLONY ALLELE FREQUENCY
   if (ColonyAF){
     ColonyAF_wg = calcBeeAlleleFreq(x = geno, sex = sex)
@@ -51,7 +61,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
   } else {
     ibsColonyAF <- NULL
   }
-  
+
   #SINGLE POPULATION BASE QUEENS ALLELE FREQUENCY
   if (is.null(SingleBaseAF)){
     ibsSingleBaseAF <- NULL
@@ -60,7 +70,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
                                      sex = sex,
                                      alleleFreq = SingleBaseAF)
   }
-  
+
   #MULIPLE POPULATION BASE QUEENS ALLELE FREQUENCY
   if (is.null(MultiBaseAF)){
     ibsMultiBaseAF <- NULL
@@ -69,20 +79,20 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
                                     sex = sex,
                                     alleleFreq = MultiBaseAF)
   }
-  
+
   if (csd) {
     ### --- CSD CHROMOSOME --- ###
     csdChr <- SP$csdChr
-    
+
     if (isColony(x)) {
-    csdChrGeno <- pullMarkerGeno(getCastePop(colony, caste = "all", collapse = TRUE), 
+    csdChrGeno <- pullMarkerGeno(getCastePop(colony, caste = "all", collapse = TRUE),
                                  markers = names(SP$genMap[[SP$csdChr]]))
     sex <- getCasteSex(colony, caste = "all", collapse = T)
     } else {
       csdChrGeno <- pullMarkerGeno(x, markers = names(SP$genMap[[SP$csdChr]]))
       sex <- getCasteSex(x, caste = "all", collapse = T)
     }
-    
+
     # ALLELE FREQUENCY 0.5
     if (AF0.5) {
       ibsAF0.5_csdChr <- calcBeeGRMIbs(x = csdChrGeno,
@@ -91,7 +101,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     } else {
       ibsAF0.5_csdChr <- NULL
     }
-    
+
     #COLONY ALLELE FREQUENCY
     if (ColonyAF){
       ColonyAF_csdChr = calcBeeAlleleFreq(x = csdChrGeno, sex = sex)
@@ -101,7 +111,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     } else {
       ibsColonyAF_csdChr <- NULL
     }
-    
+
     #SINGLE POPULATION BASE QUEENS ALLELE FREQUENCY
     if (is.null(SingleBaseAFcsdChr)) {
       ibsSingle_csdChr <- NULL
@@ -110,7 +120,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
                                         sex = sex,
                                         alleleFreq = SingleBaseAFcsdChr)
     }
-    
+
     #MULIPLE POPULATION BASE QUEENS ALLELE FREQUENCY
     if (is.null(MultiBaseAFcsdChr)) {
       ibsMulti_csdChr <- NULL
@@ -119,15 +129,15 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
                                        sex = sex,
                                        alleleFreq = MultiBaseAFcsdChr)
     }
-    
-    
+
+
     #### --- CSD LOCUS ---###
     if (isColony(x)) {
     csdLocusGeno <- getCsdGeno(colony, caste = "all", collapse = TRUE)
     } else {
       csdLocusGeno <- getCsdGeno(x, caste = "all", collapse = TRUE)
     }
-    
+
     # ALLELE FREQUENCY 0.5
     if (AF0.5) {
       ibsAF0.5_csdLocus <- calcBeeGRMIbs(x = csdLocusGeno,
@@ -136,7 +146,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     } else {
       ibsAF0.5_csdLocus <- NULL
     }
-    
+
     #COLONY ALLELE FREQUENCY
     if (ColonyAF){
       ColonyAF_csdLocus = calcBeeAlleleFreq(x = csdLocusGeno, sex = sex)
@@ -146,7 +156,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     } else {
       ibsColonyAF_csdLocus <- NULL
     }
-    
+
     #MULIPLE POPULATION BASE QUEENS ALLELE FREQUENCY
     if (is.null(MultiBaseAFcsdLocus)){
       ibsMultiBaseCsdLocus <- NULL
@@ -155,7 +165,7 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
                                             sex = sex,
                                             alleleFreq = MultiBaseAFcsdLocus)
     }
-    
+
     #SINGLE POPULATION BASE QUEENS ALLELE FREQUENCY
     if (is.null(SingleBaseAFcsdLocus)) {
       ibsSingleBaseCsdLocus <- NULL
@@ -179,9 +189,9 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
   }
   ibd <- calcBeeGRMIbd(x = haplo)
   ibd <- ibd$indiv
-  
+
   if (csd) {
-    ### --- CSD CHROMOSOME --- ###  
+    ### --- CSD CHROMOSOME --- ###
     print("csd IBD")
     print(Sys.time())
     if (isColony(x)) {
@@ -191,24 +201,24 @@ computeRelationship_genomic <- function(x, csd = TRUE,  ColonyAF = FALSE, AF0.5 
     }
     ibd_csdChr <- calcBeeGRMIbd(x = csdChrHaplo)
     ibd_csdChr <- ibd_csdChr$indiv
-    
+
     ### --- CSD LOCUS --- ###
     ibd_csdLocus <- calcBeeGRMIbd(x = haplo[, paste(SP$csdChr,
                                                     SP$csdPosStart:SP$csdPosStop,
                                                     sep = "_")])
     ibd_csdLocus <- ibd_csdLocus$indiv
   }
-  
+
   if (csd){
     return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleAF = ibsSingleBaseAF, IBSmultiAF = ibsMultiBaseAF, IBD = ibd,
                 IBSAF0.5CSDChr = ibsAF0.5_csdChr, IBScolonyAF_CSDChr = ibsColonyAF_csdChr, IBSsingleCSDChr = ibsSingle_csdChr, IBSmultiCSDChr = ibsMulti_csdChr, IBDcsdChr = ibd_csdChr,
-                IBSAF0.5CSDLocus = ibsAF0.5_csdLocus, colonyAF_CSDLocus = ibsColonyAF_csdLocus, IBSsingleAFcsdLocus = ibsSingleBaseCsdLocus, IBSmultiAFCsdLocus = ibsMultiBaseCsdLocus, IBDCsdLocus = ibd_csdLocus, 
-                ID = id))
+                IBSAF0.5CSDLocus = ibsAF0.5_csdLocus, colonyAF_CSDLocus = ibsColonyAF_csdLocus, IBSsingleAFcsdLocus = ibsSingleBaseCsdLocus, IBSmultiAFCsdLocus = ibsMultiBaseCsdLocus, IBDCsdLocus = ibd_csdLocus,
+                ID = id, CarWorkerFathers = CarWorkerFathers, WorkersFatherTable = WorkersFatherTable))
   } else {
     return(list(IBSAF0.5 = ibsAF0.5, IBScolonyAF = ibsColonyAF, IBSsingleAF = ibsSingleBaseAF, IBSmultiAF = ibsMultiBaseAF, IBD = ibd,
                 IBSAF0.5CSDChr = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleCSDChr = NULL, IBSmultiCSDChr = NULL, IBDcsdChr = NULL,
-                IBSAF0.5CSDLocus = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleAFcsdLocus = NULL, IBSmultiAFCsdLocus = NULL, IBDCsdLocus = NULL, 
-                ID = id))
+                IBSAF0.5CSDLocus = NULL, IBScolonyAF_CSDChr = NULL, IBSsingleAFcsdLocus = NULL, IBSmultiAFCsdLocus = NULL, IBDCsdLocus = NULL,
+                ID = id, CarWorkerFathers = CarWorkerFathers, WorkersFatherTable = WorkersFatherTable))
   }
 }
 
@@ -218,13 +228,13 @@ computeRelationship_pedigree <- function(pedigree) {
   pedigree$mother[pedigree$mother == 0] <- NA
   pedigree$father[pedigree$father == 0] <- NA
   pedigree$ID <- rownames(pedigree)
-  
+
   # Females are 1, males are 0
   colnames(pedigree) <- c("Dam", "Sire", "Sex", "ID")
   # The order for nadiv should be ID, Dam, Sire, Sex
   pedigree <- pedigree[, c("ID", "Dam", "Sire", "Sex")]
   pedigree$Sire[pedigree$Sex == 1] <- NA
-  
+
   tmp <- makeS(pedigree = pedigree, heterogametic = "1", returnS = FALSE)
   IBDe <- tmp #$S
   #  dimnames(IBDe) <- list(rownames(pedigree), rownames(pedigree))
@@ -346,8 +356,8 @@ for (Rep in 1:nRep) {
   tic(paste0(nYear, 'y loop'))
   # Start profiling
   Rprof()
-  
-  
+
+
   # Founder population ---------------------------------------------------------
   # Create a founder population of A. m. mellifera and A. m. carnica bees
   #founderGenomes <- simulateHoneyBeeGenomes(nMelN = nMelN,
@@ -373,7 +383,7 @@ for (Rep in 1:nRep) {
   SP$setTrackRec(TRUE)
   # Add a SNP chip with 3 SNPs per chromosome
   SP$addSnpChip(nSnpPerChr = 3)
-  # define csd chromomsome 
+  # define csd chromomsome
   csdChr <- SP$csdChr
   # Add traits - taken from the QuantGen vignettte
   mean <- c(20, 0)
@@ -382,14 +392,14 @@ for (Rep in 1:nRep) {
                            -0.5,  1.0), nrow = 2, byrow = TRUE)
   SP$addTraitA(nQtlPerChr = 100, mean = mean, var = varA, corA = corA,
                name = c("queenTrait", "workersTrait"))
-  
+
   varE <- c(3, 3 / SP$nWorkers)
   # TODO: what is a reasonable environmental correlation between queen and worker effects?
   corE <- matrix(data = c(1.0, 0.3,
                           0.3, 1.0), nrow = 2, byrow = TRUE)
   SP$setVarE(varE = varE, corE = corE)
-  
-  
+
+
   # Create a base population for A. m. mellifera, A. m. mellifera cross, and A. m. carnica
   virginQueens <- list(Mel = createVirginQueens(x = founderGenomes[1:(nMelN/2)]),
                        MelCross = createVirginQueens(x = founderGenomes[(nMelN/2 + 1):nMelN]),
@@ -406,20 +416,20 @@ for (Rep in 1:nRep) {
   fathersMel[[1]] <- c(fathersMel[[1]], createDrones(virginQueens$Mel[fathersMel[[1]]@mother[1]], 2))
   fathersMelCross[[1]] <- c(fathersMelCross[[1]], createDrones(virginQueens$MelCross[fathersMelCross[[1]]@mother[1]], 2))
   fathersCar[[1]] <- c(fathersCar[[1]], createDrones(virginQueens$Car[fathersCar[[1]]@mother[1]], 2))
-  
+
   # Mate virgin queens with fathers
   queens <- list(Mel = SIMplyBee::cross(x = virginQueens$Mel[1:apiarySize], drones = fathersMel),
                  MelCross = SIMplyBee::cross(x = virginQueens$MelCross[1:apiarySize], drones = fathersMelCross),
                  Car = SIMplyBee::cross(x = virginQueens$Car[1:apiarySize], drones = fathersCar))
-  
+
   #Set allele frequency for queens
   tmp <- c(virginQueens$Mel, virginQueens$Car)
   alleleFreqBaseQueens <- calcBeeAlleleFreq(x = getSegSiteGeno(tmp),
                                             sex = tmp@sex)
-  
+
   alleleFreqBaseQueensCar <- calcBeeAlleleFreq(x = getSegSiteGeno(virginQueens$Car),
                                                sex = virginQueens$Car@sex)
-  
+
   alleleFreqBaseQueensMel <- calcBeeAlleleFreq(x = getSegSiteGeno(virginQueens$Mel),
                                                sex = virginQueens$Mel@sex)
   #Get allele freq for csd locus
@@ -427,13 +437,13 @@ for (Rep in 1:nRep) {
   alleleFreqCsdLocusBaseQueens <- alleleFreqBaseQueens[csdLocus]
   alleleFreqCsdLocusBaseCar <- alleleFreqBaseQueensCar[csdLocus]
   alleleFreqCsdLocusBaseMel <- alleleFreqBaseQueensMel[csdLocus]
-  
-  #Get allele freq for csd Chromosome - this pulls out only the 3rd chromosome 
+
+  #Get allele freq for csd Chromosome - this pulls out only the 3rd chromosome
   alleleFreqCsdChrBaseQueens <- t(as.data.frame(alleleFreqBaseQueens))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueens))))] %>% t()
   alleleFreqCsdChrBaseCar <- t(as.data.frame(alleleFreqBaseQueensCar))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensCar))))] %>% t()
   alleleFreqCsdChrBaseMel <- t(as.data.frame(alleleFreqBaseQueensMel))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensMel))))] %>% t()
-  
-  
+
+
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
     print("Starting the cycle")
@@ -451,7 +461,7 @@ for (Rep in 1:nRep) {
       colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$Mel, year = year, population = "Mel")
       colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$MelCross, year = year, population = "MelCross")
       colonyRecords <- data_rec(datafile = colonyRecords, colonies = age1$Car, year = year, population = "Car")
-      
+
     } else {
       age2 <- list(Mel = age1$Mel, MelCross = age1$MelCross, Car = age1$Car)
       age1 <- list(Mel = age0$Mel, MelCross = age0$MelCross, Car = age0$Car)
@@ -459,7 +469,7 @@ for (Rep in 1:nRep) {
       age0p1 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
       age0p2 <- list(Mel = NULL, MelCross = NULL, Car = NULL)
     }
-    
+
     #In year 1, inspect the relationship in one of the colonies
     if (year == 1) {
       print("Computing carnica generation1 colony relationship")
@@ -486,7 +496,7 @@ for (Rep in 1:nRep) {
                                                      MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
                                                      SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel,
                                                      MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
-      
+
       springerQueens1_CarAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
                                                            csd = isCsdActive(SP),
                                                            ColonyAF = TRUE,
@@ -497,14 +507,14 @@ for (Rep in 1:nRep) {
                                                            MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
                                                            SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar,
                                                            MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
-      
+
       springerQueensPop1 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                   data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                   data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
-      
+
     }
     print("Done computing initial relationships")
-    
+
     # Period1 ------------------------------------------------------------------
     # Build-up the colonies
     print(paste0("Building up the colonies to ", nWorkers, " and ", nDrones))
@@ -517,7 +527,7 @@ for (Rep in 1:nRep) {
                    MelCross = buildUp(age2$MelCross),
                    Car = buildUp(age2$Car))
     }
-    
+
     # Split all age1 colonies
     print("Splitting the colonies")
     print(Sys.time())
@@ -529,7 +539,7 @@ for (Rep in 1:nRep) {
                  Car = tmp$Car$remnant)
     # The queens of the splits are 0 years old
     age0p1 <- list(Mel = tmp$Mel$split, MelCross = tmp$MelCross$split, Car = tmp$Car$split)
-    
+
     if (year > 1) {
       # Split all age2 colonies
       tmp <- list(Mel = split(age2$Mel),
@@ -543,7 +553,7 @@ for (Rep in 1:nRep) {
                      MelCross = c(age0p1$MelCross, tmp$MelCross$split),
                      Car = c(age0p1$Car, tmp$Car$split))
     }
-    
+
     # Create virgin queens
     # Sample colony for the virgin queens
     # TODO: this is likely an inbreeding bottleneck - just one colony producing all virgin queens!
@@ -559,12 +569,12 @@ for (Rep in 1:nRep) {
     virginQueens <- list(Mel = createVirginQueens(age1$Mel[[virginDonor$Mel]], nInd = nColonies(age0p1$Mel)),
                          MelCross = createVirginQueens(age1$MelCross[[virginDonor$MelCross]], nInd = nColonies(age0p1$MelCross)),
                          Car = createVirginQueens(age1$Car[[virginDonor$Car]], nInd = nColonies(age0p1$Car)))
-    
+
     # Requeen the splits --> queens are now 0 years old
     age0p1 <- list(Mel = reQueen(age0p1$Mel, queen = virginQueens$Mel),
                    MelCross = reQueen(age0p1$MelCross, queen = virginQueens$MelCross),
                    Car = reQueen(age0p1$Car, queen = virginQueens$Car))
-    
+
     # Swarm a percentage of age1 colonies
     print("Swarm colonies, P1")
     print(Sys.time())
@@ -583,8 +593,8 @@ for (Rep in 1:nRep) {
     age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarm),
                  MelCross = c(age1$MelCross, tmp$MelCross$swarm),
                  Car = c(age1$Car, tmp$Car$swarm))
-    
-    
+
+
     if (year > 1) {
       # Swarm a percentage of age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p1swarm),
@@ -603,7 +613,7 @@ for (Rep in 1:nRep) {
                    MelCross = c(age2$MelCross, tmp$MelCross$swarm),
                    Car = c(age2$Car, tmp$Car$swarm))
     }
-    
+
     # Supersede age1 colonies
     print("Supersede colonies, P1")
     print(Sys.time())
@@ -619,8 +629,8 @@ for (Rep in 1:nRep) {
     age0p1 <- list(Mel = c(age0p1$Mel, tmp$Mel),
                    MelCross = c(age0p1$MelCross, tmp$MelCross),
                    Car = c(age0p1$Car, tmp$Car))
-    
-    
+
+
     if (year > 1) {
       # Supersede age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p1supersede),
@@ -636,7 +646,7 @@ for (Rep in 1:nRep) {
                      MelCross = c(age0p1$MelCross, tmp$MelCross),
                      Car = c(age0p1$Car, tmp$Car))
     }
-    
+
     # Mate the split colonies
     print("Mate split colonies, P1")
     print(Sys.time())
@@ -659,7 +669,7 @@ for (Rep in 1:nRep) {
       DCACar <- createDCA(c(age1$Car, age2$Car))
       age0p1$Car <- cross(age0p1$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson))
     }
-    
+
     # Collapse
     print("Collapse colonies, P1")
     print(Sys.time())
@@ -671,7 +681,7 @@ for (Rep in 1:nRep) {
                    MelCross = selectColonies(age2$MelCross, p = 1 - p1collapse),
                    Car = selectColonies(age2$Car, p = 1 - p1collapse))
     }
-    
+
     # Period2 ------------------------------------------------------------------
     print("PERIOD 2")
     # Swarm a percentage of age1 colonies
@@ -694,7 +704,7 @@ for (Rep in 1:nRep) {
     age1 <- list(Mel = c(age1$Mel, tmp$Mel$swarm),
                  MelCross = c(age1$MelCross, tmp$MelCross$swarm),
                  Car = c(age1$Car, tmp$Car$swarm))
-    
+
     if (year > 1) {
       # Swarm a percentage of age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p2swarm),
@@ -714,11 +724,11 @@ for (Rep in 1:nRep) {
                    MelCross = c(age2$MelCross, tmp$MelCross$swarm),
                    Car = c(age2$Car, tmp$Car$swarm))
     }
-    
+
     # Supersede a part of age1 colonies
     print("Supersede colonies, P2")
     print(Sys.time())
-    
+
     tmp <- list(Mel = pullColonies(age1$Mel, p = p2supersede),
                 MelCross = pullColonies(age1$MelCross, p = p2supersede),
                 Car = pullColonies(age1$Car, p = p2supersede))
@@ -732,7 +742,7 @@ for (Rep in 1:nRep) {
     age0p2 <- list(Mel = c(age0p2$Mel, tmp$Mel),
                    MelCross = c(age0p2$MelCross, tmp$MelCross),
                    Car = c(age0p2$Car, tmp$Car))
-    
+
     if (year > 1) {
       # Supersede a part of age2 colonies
       tmp <- list(Mel = pullColonies(age2$Mel, p = p2supersede),
@@ -749,11 +759,11 @@ for (Rep in 1:nRep) {
                      MelCross = c(age0p2$MelCross, tmp$MelCross),
                      Car = c(age0p2$Car, tmp$Car))
     }
-    
+
     # Replace all the drones
     print("Replace Drones, P2")
     print(Sys.time())
-    
+
     age1$Mel <- replaceDrones(age1$Mel)
     age1$MelCross <- replaceDrones(age1$MelCross)
     age1$Car <- replaceDrones(age1$Car)
@@ -762,13 +772,13 @@ for (Rep in 1:nRep) {
       age2$MelCross <- replaceDrones(age2$MelCross)
       age2$Car <- replaceDrones(age2$Car)
     }
-    
+
     # Mate the colonies
     # Import p percentage of carnica colonies into mellifera DCA
     print("Mate colonies, P2")
     print(Sys.time())
-    
-    
+
+
     if (year == 1) {
       DCAMel <- createDCA(age1$Mel)
       age0p2$Mel <- cross(age0p2$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nDrones = nFathersPoisson))
@@ -778,18 +788,34 @@ for (Rep in 1:nRep) {
       DCACar <- createDCA(age1$Car)
       age0p2$Car <- cross(age0p2$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nDrones = nFathersPoisson))
     } else {
+      #Mel
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
-      age0p2$Mel <- cross(age0p2$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nDrones = nFathersPoisson))
+      fathersMel <- pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p2$Mel), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersMel)){
+        fathersMel[[x]] <- c(fathersMel[[x]], createDrones(age1$Mel[[1]], nInd = 2))
+      }
+      age0p2$Mel <- cross(age0p2$Mel, drones = fathersMel)
+      
+      #MelCross
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
                                  age2$MelCross,
                                  selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
-      age0p2$MelCross <- cross(age0p2$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nDrones = nFathersPoisson))
+      fathersMelCross <- pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p2$MelCross), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersMelCross)){
+        fathersMelCross[[x]] <- c(fathersMelCross[[x]], createDrones(age1$MelCross[[1]], nInd = 2))
+      }
+      age0p2$MelCross <- cross(age0p2$MelCross, drones = fathersMelCross)
+      
+      #Car
       DCACar <- createDCA(c(age1$Car, age2$Car))
-      age0p2$Car <- cross(age0p2$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nDrones = nFathersPoisson))
+      fathersCar <-  pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p2$Car), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersCar)){
+        fathersCar[[x]] <- c(fathersCar[[x]], createDrones(age1$Car[[1]], nInd = 2))
+      }
+      age0p2$Car <- cross(age0p2$Car, drones = fathersCar)
     }
-    
-    
+
     # Collapse
     age1 <- list(Mel = selectColonies(age1$Mel, p = 1 - p2collapse),
                  MelCross = selectColonies(age1$MelCross, p = 1 - p2collapse),
@@ -799,7 +825,7 @@ for (Rep in 1:nRep) {
                    MelCross = selectColonies(age2$MelCross, p = 1 - p2collapse),
                    Car = selectColonies(age2$Car, p = 1 - p2collapse))
     }
-    
+
     # Merge all age 0 colonies (from both periods)
     age0 <- list(Mel = c(age0p1$Mel, age0p2$Mel),
                  MelCross = c(age0p1$MelCross, age0p2$MelCross),
@@ -807,13 +833,13 @@ for (Rep in 1:nRep) {
     colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$Mel, year = year, population = "Mel")
     colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$MelCross, year = year, population = "MelCross")
     colonyRecords <- data_rec(datafile = colonyRecords, colonies = age0$Car, year = year, population = "Car")
-    
+
     # Period3 ------------------------------------------------------------------
     # Collapse age0 queens
     print("PERIOD 3")
     print("Collapse colonies, P3")
     print(Sys.time())
-    
+
     age0 <- list(Mel = selectColonies(age0$Mel, p = (1 - p3collapseAge0)),
                  MelCross = selectColonies(age0$MelCross, p = (1 - p3collapseAge0)),
                  Car = selectColonies(age0$Car, p = (1 - p3collapseAge0)))
@@ -821,31 +847,32 @@ for (Rep in 1:nRep) {
                  MelCross = selectColonies(age1$MelCross, p = (1 - p3collapseAge1)),
                  Car = selectColonies(age1$Car, p = (1 - p3collapseAge1)))
     age2 <- list(Mel = NULL, MelCross=NULL, Car = NULL) #We don't need this but just to show the workflow!!!
-    
-    
+
+
     # Maintain the number of colonies ------------------------------------------
     # Keep all of age1, age0 swarmed so we build it up with some splits, while we remove (sell) the other splits
     print("Maintain the number, P2")
     print(Sys.time())
-    
+
     age0$Mel <- maintainApiarySize(age0 = age0$Mel, age1 = age1$Mel)
     age0$MelCross <- maintainApiarySize(age0 = age0$MelCross, age1 = age1$MelCross)
     age0$Car <- maintainApiarySize(age0 = age0$Car, age1 = age1$Car)
-    
+
     for (subspecies in c("Mel", "MelCross", "Car")) {
       if ((nColonies(age0[[subspecies]]) + nColonies(age1[[subspecies]])) != apiarySize) {
         stop(paste0("The number of colonies for ", subspecies, " does not match the apiary size!"))
       }
     }
-    
+
   } # Year-loop
-  
+
   a <- toc()
   loopTime <- rbind(loopTime, c(Rep, a$tic, a$toc, a$msg, (a$toc - a$tic)))
-  
+
   print("Computing carnica year 10 relationships")
   print(Sys.time())
-  springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[1]],
+  pHomBroodYear10 <- sample(names(which(pHomBrood(age1$Car) > 0.2)), 1)
+  springerColony10_Car <- computeRelationship_genomic(x = age1$Car[[pHomBroodYear10]],
                                                       csd = isCsdActive(SP),
                                                       ColonyAF = TRUE,
                                                       AF0.5 = TRUE,
@@ -869,7 +896,7 @@ for (Rep in 1:nRep) {
                                                   SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
                                                   MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
                                                   SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel)
-  
+
   springerQueens10_CarAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
                                                         mergePops(getQueen(age1$MelCross)),
                                                         mergePops(getQueen(age1$Car))),
@@ -882,26 +909,26 @@ for (Rep in 1:nRep) {
                                                   SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseCar,
                                                   MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
                                                   SingleBaseAFcsdChr = alleleFreqCsdChrBaseCar)
-  
+
   springerQueensPop10 <- rbind(data.frame(ID = sapply(getQueen(age1$Mel), FUN = function(x) x@id), Pop = "Mel"),
                                data.frame(ID = sapply(getQueen(age1$MelCross), FUN = function(x) x@id), Pop = "MelCross"),
                                data.frame(ID = sapply(getQueen(age1$Car), FUN = function(x) x@id), Pop = "Car"))
-  
+
   # Compute the pedigree relationship matrix
   print("Computing pedigree relationships")
   print(Sys.time())
   pedigree <- SP$pedigree
   caste <- SP$caste
-  
+
   save(pedigree, caste,
        springerColony1_Car, springerColony10_Car,
        springerQueens1_MelAF, springerQueens10_CarAF, springerQueensPop1,
        springerQueens10_MelAF, springerQueens10_CarAF, springerQueensPop10,
        colonyRecords, file = "SpringerSimulation_import_objects.RData")
-  
+
   IBDe <- computeRelationship_pedigree(SP$pedigree)
   save(IBDe, file = "IBDe_SpringerSimulation.RData")
-  
+
 } # Rep-loop
 
 print("Saving image data")
