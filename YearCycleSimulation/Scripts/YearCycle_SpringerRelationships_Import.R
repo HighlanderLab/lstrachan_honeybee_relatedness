@@ -659,17 +659,34 @@ for (Rep in 1:nRep) {
       DCACar <- createDCA(age1$Car)
       age0p1$Car <- cross(age0p1$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson))
     } else {
+      #Mel
       DCAMel <- createDCA(c(age1$Mel, age2$Mel))
-      age0p1$Mel <- cross(age0p1$Mel, drones = pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nDrones = nFathersPoisson))
+      fathersMel <-  pullDroneGroupsFromDCA(DCA = DCAMel, n = nColonies(age0p1$Mel), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersMel)){
+        fathersMel[[x]] <- c(fathersMel[[x]], createDrones(age1$Mel[[1]], nInd = 2))
+      }
+      age0p1$Mel <- cross(age0p1$Mel, drones = fathersMel)
+      
+      #MelCross
       DCAMelCross <- createDCA(c(age1$MelCross,
                                  selectColonies(age1$Car, n = round(nColonies(age1$MelCross) * pImport, 0)),
                                  age2$MelCross,
                                  selectColonies(age2$Car, n = round(nColonies(age2$MelCross) * pImport, 0))))
-      age0p1$MelCross <- cross(age0p1$MelCross, drones = pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nDrones = nFathersPoisson))
+      fathersMelCross <-  pullDroneGroupsFromDCA(DCA = DCAMelCross, n = nColonies(age0p1$MelCross), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersMelCross)){
+        fathersMelCross[[x]] <- c(fathersMelCross[[x]], createDrones(age1$MelCross[[1]], nInd = 2))
+      }
+      age0p1$MelCross <- cross(age0p1$MelCross, drones = fathersMelCross)
+      
+      #Car
       DCACar <- createDCA(c(age1$Car, age2$Car))
-      age0p1$Car <- cross(age0p1$Car, drones = pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson))
+      fathersCar <-  pullDroneGroupsFromDCA(DCA = DCACar, n = nColonies(age0p1$Car), nDrones = nFathersPoisson)
+      for (x in 1:length(fathersCar)){
+        fathersCar[[x]] <- c(fathersCar[[x]], createDrones(age1$Car[[1]], nInd = 2))
+      }
+      age0p1$Car <- cross(age0p1$Car, drones = fathersCar)
     }
-
+    
     # Collapse
     print("Collapse colonies, P1")
     print(Sys.time())
