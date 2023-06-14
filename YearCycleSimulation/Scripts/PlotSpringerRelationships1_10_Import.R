@@ -1,5 +1,5 @@
 rm(list = ls())
-setwd("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData")
+setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData")
 
 #Load libraries
 pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
@@ -7,8 +7,8 @@ pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
 
 print("Reading in the data")
 #Laura's laptop data
-data <- load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/SpringerSimulation_import.RData")
-Sinv <- readMM("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PLottingData/Sinv.mm")
+data <- load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/SpringerSimulation_import.RData")
+Sinv <- readMM("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PLottingData/Sinv.mm")
 #Eddie data
 #data <- load("SpringerSimulation_import_objects.RData")
 #Sinv <- readMM("Sinv.mm")
@@ -775,6 +775,7 @@ prepareDataForPlottingHeatMap_Queens <- function(ibsMultiDF = NULL, ibsSingleDF 
 plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
   df$Rel <- factor(df$Rel, levels= c("WW", "WD", "DD", "QW", "QD"))
+  df$SisterType <- factor(df$SisterType, level = c("HS", "FS", "SS"))
 
   type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
   names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
@@ -784,7 +785,7 @@ plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
   names(year_labels) <- years
 
   plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-              aes(x = Value, fill = Rel)) +
+              aes(x = Value, fill = SisterType)) +
           geom_vline(xintercept = c(0, 0.25, 0.5, 0.75), linewidth = 0.25, colour = "grey") +
           geom_histogram(bins = 200, position = "identity") +
           facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y",independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
@@ -926,7 +927,7 @@ plotQueens_heatmapSOLO <- function(df, Pop = FALSE, PopIdDF = NULL, legend.posit
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
 print("Plot carnica year 1")
-load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCar.RData")
+load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCar.RData")
 
 #Coded out data prep
 {
@@ -976,6 +977,9 @@ Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterTy
 #Get average mean of SisterType information: e.g using ibdeWW
 # tapply(ibdeWW$Value, INDEX= ibdeWW$SisterType, FUN = mean)
 
+#Get mean or sd 
+#  tmp<- (relCar1[relCar1$Type == "IBDe",])
+# tapply(tmp$Value, INDEX = tmp$Rel, FUN= sd)
 
 #Plot Car inbreeding
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarF.RData")
@@ -1068,7 +1072,7 @@ CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe
 ########################################################
 #Plot queens Year 1
 print("Plot queens")
-load("~/Desktop/For GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
+load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
 
 #Coded out prep
 {
