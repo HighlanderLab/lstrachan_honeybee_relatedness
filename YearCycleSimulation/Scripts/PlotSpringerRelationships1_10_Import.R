@@ -785,12 +785,13 @@ plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
   names(year_labels) <- years
 
   plot <- ggplot(df[df$Rel %in% rel & df$Type %in% type, ],
-              aes(x = Value, fill = SisterType)) +
+              aes(x = Value, fill = Rel)) +
           geom_vline(xintercept = c(0, 0.25, 0.5, 0.75), linewidth = 0.25, colour = "grey") +
           geom_histogram(bins = 200, position = "identity") +
           facet_grid2(rows = vars(Type), cols = vars(Year), scales = "free_y",independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
           scale_fill_manual("", values = paletteViridis, aesthetics = c("colour","fill")) +
-          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top") +
+          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "top" , axis.text.y=element_blank(),
+                axis.ticks.y=element_blank(), axis.title.y = element_blank()) +
           scale_x_continuous(breaks=seq(-2, 10, 0.25))
   return(plot)
 }
@@ -960,7 +961,7 @@ dataCar <- rbind(relCar1, relCar10)
 save(... = dataCar, file = "dataCar.RData")
 }
 
-CarWWplot<- plotColony(dataCar, type = c("IBDe", "IBDr", "IBSsingleAF"), rel = c("WW", "WD", "DD"), years = c(1, 10))
+CarWWplot<- plotColony(relCar1, type = c("IBDe", "IBDr", "IBSsingleAF"), rel = c("WW", "WD", "DD"), years = c(1))
 
 CarQWplot <- plotColony(dataCar, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"),  rel = c("QW", "QD"), years = c(1,10))
 
@@ -976,7 +977,6 @@ Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterTy
 
 #Get average mean of SisterType information: e.g using ibdeWW
 # tapply(ibdeWW$Value, INDEX= ibdeWW$SisterType, FUN = mean)
-
 #Get mean or sd 
 #  tmp<- (relCar1[relCar1$Type == "IBDe",])
 # tapply(tmp$Value, INDEX = tmp$Rel, FUN= sd)
@@ -993,7 +993,8 @@ relCar1F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
                                           ibdDF = colonyCar1$IBD,
                                           Sinv = Sinv,
                                           idDF = colonyCar1$ID,
-                                          inbreeding = TRUE)
+                                          inbreeding = TRUE,
+                                          WorkersFatherTable = colonyCar1$WorkersFatherTable)
 
 relCar10F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
                                            ibsSingleDF = colonyCar10$IBSsingleAF,
@@ -1002,7 +1003,8 @@ relCar10F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAF,
                                            ibdDF = colonyCar10$IBD,
                                            Sinv = Sinv,
                                            idDF = colonyCar10$ID,
-                                           inbreeding = TRUE)
+                                           inbreeding = TRUE,
+                                           WorkersFatherTable = colonyCar1$WorkersFatherTable)
 relCar1F$Year <- 1
 relCar10F$Year <- 10
 
@@ -1023,7 +1025,8 @@ relCar1_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAFC
                                              ibsAF0.5DF = colonyCar1$IBSAF0.5CSDLocus,
                                              ibdDF = colonyCar1$IBDCsdLocus,
                                              Sinv = Sinv,
-                                             idDF = colonyCar1$ID)
+                                             idDF = colonyCar1$ID,
+                                             WorkersFatherTable = colonyCar1$WorkersFatherTable)
 
 
 relCar10_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiAFCsdLocus,
@@ -1032,14 +1035,15 @@ relCar10_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiA
                                                ibsAF0.5DF = colonyCar10$IBSAF0.5CSDLocus,
                                                ibdDF = colonyCar10$IBDCsdLocus,
                                                Sinv = Sinv,
-                                               idDF = colonyCar10$ID)
+                                               idDF = colonyCar10$ID,
+                                              WorkersFatherTable = colonyCar10$WorkersFatherTable)
 relCar1_csd$Year <- 1
 relCar10_csd$Year <- 10
 dataCarCSDloc <- rbind(relCar1_csd, relCar10_csd)
 save(dataCarCSDloc, file = "dataCarCSDloc.Rdata")
 }
 
-CarCSDlocplot <- plotColony(dataCarCSDloc, type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "WD", "DD"), years = c(1,10))
+CarCSDlocplot <- plotColony(dataCarCSDloc, type = c("IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "WD", "DD"), years = c(1,10))
 
 #Plot CAR csd Chromosome
 load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarCsdChr.RData")
@@ -1050,14 +1054,16 @@ relCar1_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmulti
                                                 ibsAF0.5DF = colonyCar1$IBSAF0.5CSDChr,
                                                 ibdDF = colonyCar1$IBDcsdChr,
                                                 Sinv = Sinv,
-                                                idDF = colonyCar1$ID)
+                                                idDF = colonyCar1$ID,
+                                                WorkersFatherTable = colonyCar1$WorkersFatherTable)
 relCar10_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar10$IBSmultiCSDChr,
                                                   ibsSingleDF = colonyCar10$IBSsingleCSDChr,
                                                  ibsColonyDF = colonyCar10$IBScolonyAF_CSDChr,
                                                   ibsAF0.5DF = colonyCar10$IBSAF0.5CSDChr,
                                                   ibdDF = colonyCar10$IBDcsdChr,
                                                   Sinv = Sinv,
-                                                  idDF = colonyCar10$ID)
+                                                  idDF = colonyCar10$ID,
+                                                 WorkersFatherTable = colonyCar10$WorkersFatherTable)
 relCar1_csdChr$Year <- 1
 relCar10_csdChr$Year <- 10
 
@@ -1066,7 +1072,10 @@ save(... = dataCarCSDchr, file = "dataCarCsdChr.RData")
 
 }
 
-CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), years = c(1,10))
+tmp<- (relCar1_csdChr[relCar1_csdChr$Rel == "WW",])
+tapply(tmp$Value, INDEX = tmp$Type, FUN= sd)
+
+CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), years = c(1, 10))
 ########################################################
 ### --- FIGURE 4: Between queens of different subspecies (carnica vs. mellifera) ---###
 ########################################################

@@ -442,7 +442,7 @@ for (Rep in 1:nRep) {
   alleleFreqCsdChrBaseQueens <- t(as.data.frame(alleleFreqBaseQueens))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueens))))] %>% t()
   alleleFreqCsdChrBaseCar <- t(as.data.frame(alleleFreqBaseQueensCar))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensCar))))] %>% t()
   alleleFreqCsdChrBaseMel <- t(as.data.frame(alleleFreqBaseQueensMel))[, grepl(pattern = paste0("^", csdChr, "_"), x = colnames(t(as.data.frame(alleleFreqBaseQueensMel))))] %>% t()
-
+  
 
   # Start the year-loop ------------------------------------------------------------------
   for (year in 1:nYear) {
@@ -486,16 +486,16 @@ for (Rep in 1:nRep) {
                                                          MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
        print("Computing queens generation1 colony relationship")
       print(Sys.time())
-      springerQueens1_MelAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
-                                                     csd = isCsdActive(SP),
-                                                     ColonyAF = TRUE,
-                                                     AF0.5 = TRUE,
-                                                     SingleBaseAF = alleleFreqBaseQueensMel,
-                                                     MultiBaseAF = alleleFreqBaseQueens,
-                                                     SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
-                                                     MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
-                                                     SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel,
-                                                     MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
+      # springerQueens1_MelAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
+      #                                                csd = isCsdActive(SP),
+      #                                                ColonyAF = TRUE,
+      #                                                AF0.5 = TRUE,
+      #                                                SingleBaseAF = alleleFreqBaseQueensMel,
+      #                                                MultiBaseAF = alleleFreqBaseQueens,
+      #                                                SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
+      #                                                MultiBaseAFcsdLocus  = alleleFreqCsdLocusBaseQueens,
+      #                                                SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel,
+      #                                                MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
 
       springerQueens1_CarAF <- computeRelationship_genomic(x = c(queens$Mel, queens$MelCross, queens$Car),
                                                            csd = isCsdActive(SP),
@@ -901,18 +901,18 @@ for (Rep in 1:nRep) {
                                                       MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens)
   print("Computing queens relationships")
   print(Sys.time())
-  springerQueens10_MelAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
-                                                        mergePops(getQueen(age1$MelCross)),
-                                                        mergePops(getQueen(age1$Car))),
-                                                  csd = isCsdActive(SP),
-                                                  ColonyAF = TRUE,
-                                                  AF0.5 = TRUE,
-                                                  MultiBaseAF = alleleFreqBaseQueens,
-                                                  SingleBaseAF = alleleFreqBaseQueensMel,
-                                                  MultiBaseAFcsdLocus = alleleFreqCsdLocusBaseQueens,
-                                                  SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
-                                                  MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
-                                                  SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel)
+  # springerQueens10_MelAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
+  #                                                       mergePops(getQueen(age1$MelCross)),
+  #                                                       mergePops(getQueen(age1$Car))),
+  #                                                 csd = isCsdActive(SP),
+  #                                                 ColonyAF = TRUE,
+  #                                                 AF0.5 = TRUE,
+  #                                                 MultiBaseAF = alleleFreqBaseQueens,
+  #                                                 SingleBaseAF = alleleFreqBaseQueensMel,
+  #                                                 MultiBaseAFcsdLocus = alleleFreqCsdLocusBaseQueens,
+  #                                                 SingleBaseAFcsdLocus = alleleFreqCsdLocusBaseMel,
+  #                                                 MultiBaseAFcsdChr = alleleFreqCsdChrBaseQueens,
+  #                                                 SingleBaseAFcsdChr = alleleFreqCsdChrBaseMel)
 
   springerQueens10_CarAF <- computeRelationship_genomic(x = c(mergePops(getQueen(age1$Mel)),
                                                         mergePops(getQueen(age1$MelCross)),
@@ -939,17 +939,17 @@ for (Rep in 1:nRep) {
 
   save(pedigree, caste,
        springerColony1_Car, springerColony10_Car,
-       springerQueens1_MelAF, springerQueens10_CarAF, springerQueensPop1,
-       springerQueens10_MelAF, springerQueens10_CarAF, springerQueensPop10,
-       colonyRecords, file = "SpringerSimulation_import_objects.RData")
+       springerQueens1_CarAF, springerQueensPop1,
+       springerQueens10_CarAF, springerQueensPop10,
+       colonyRecords, file = "SpringerSimulation_import_objectsJuly5.RData")
 
   IBDe <- computeRelationship_pedigree(SP$pedigree)
-  save(IBDe, file = "IBDe_SpringerSimulation.RData")
+  save(IBDe, file = "IBDe_SpringerSimulationJuly5.RData")
 
 } # Rep-loop
 
 print("Saving image data")
-save.image("SpringerSimulation_import.RData")
+save.image("SpringerSimulation_importJuly5.RData")
 
 
 
