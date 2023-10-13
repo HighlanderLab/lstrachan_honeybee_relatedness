@@ -566,29 +566,25 @@ for (Rep in 1:nRep) {
     #       and createDrones()
     print("Create virgin queens, period 1")
     print(Sys.time())
-    virginDonor <- list(Mel = sample.int(n = nColonies(age1$Mel), size = 1),
-                        MelCross = sample.int(n = nColonies(age1$MelCross), size = 1),
-                        Car = sample.int(n = nColonies(age1$Car), size = 1))
-    # Virgin queens for splits!
-    virginQueens2 <- list(Mel = createVirginQueens(age1$Mel[[virginDonor$Mel]], nInd = nColonies(age0p1$Mel)),
-                          MelCross = createVirginQueens(age1$MelCross[[virginDonor$MelCross]], nInd = nColonies(age0p1$MelCross)),
-                          Car = createVirginQueens(age1$Car[[virginDonor$Car]], nInd = nColonies(age0p1$Car)))
+  
+    virginDonor <- list(Mel = selectColonies(multicolony = age1$Mel, n = nColonies(age1$Mel)),
+                        MelCross = selectColonies(multicolony = age1$MelCross, n = nColonies(age1$MelCross)),
+                        Car = selectColonies(multicolony = age1$Car, n = nColonies(age1$Car)))
     
+    virginQueens <- list(Mel = createVirginQueens(virginDonor$Mel, nInd = 5 ),
+                          MelCross = createVirginQueens(virginDonor$MelCross, nInd = 5),
+                          Car = createVirginQueens(virginDonor$Car, nInd = 5))
     
-    #Attempt to see if this bottle neck can be avoided- take 1 virgin queen from each colony rather than from one 
-    virginQueens <- list(Mel = createVirginQueens(age1$Mel, nInd = 1),
-                         MelCross = createVirginQueens(age1$MelCross, nInd = 1),
-                         Car = createVirginQueens(age1$Car, nInd = 1))
-    #Create a list of pop objects so we need to merge for next step to work 
     virginQueens$Mel <- mergePops(virginQueens$Mel[1:length(virginQueens$Mel)])
     virginQueens$MelCross <- mergePops(virginQueens$MelCross[1:length(virginQueens$MelCross)])
     virginQueens$Car <- mergePops(virginQueens$Car[1:length(virginQueens$Car)])
     
+
     # Requeen the splits --> queens are now 0 years old
-    age0p1 <- list(Mel = reQueen(age0p1$Mel, queen = virginQueens$Mel),
-                   MelCross = reQueen(age0p1$MelCross, queen = virginQueens$MelCross),
-                   Car = reQueen(age0p1$Car, queen = virginQueens$Car))
-    
+    age0p1 <- list(Mel = reQueen(age0p1$Mel, queen = sample(virginQueens$Mel, size = nColonies(age0p1$Mel), replace = TRUE)),
+                   MelCross = reQueen(age0p1$MelCross, queen = sample(virginQueens$MelCross, size = nColonies(age0p1$MelCross), replace = TRUE)),
+                   Car = reQueen(age0p1$Car, queen = sample(virginQueens$Car, size = nColonies(age0p1$Car), replace = TRUE)))
+
     # Swarm a percentage of age1 colonies
     print("Swarm colonies, P1")
     print(Sys.time())
