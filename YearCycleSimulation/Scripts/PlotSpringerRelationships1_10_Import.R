@@ -1,17 +1,12 @@
 rm(list = ls())
-setwd("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData")
 
 #Load libraries
 pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
 
 
 print("Reading in the data")
-#Laura's laptop data
-data <- load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/SpringerSimulation_import.RData")
-Sinv <- readMM("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PLottingData/Sinv.mm")
-#Eddie data
-#data <- load("SpringerSimulation_import_objects.RData")
-#Sinv <- readMM("Sinv.mm")
+data <- load("SpringerSimulation_import.RData") #file created when running YearlyCycle script
+Sinv <- readMM("Sinv.mm")
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
