@@ -9,6 +9,6 @@ TODO: Cite pre-print/manuscript
 
 ## Respository contents
 - ```README.md``` is this file
-- ```SimulateFounderPop.R``` demonstrates how SIMplyBee functions are used to create founder population genomes. Since this process can be timely, we have also provided the output file ```FounderGenomes_ThreePop_16chr.RData``` which can be downloaded and used to explore our scripts.
-- ```YearCycle_Relatedness.R``` is the script of a 10 year simulation cycle, where genomic relationships are calculated for three different honeybee populations
-- ```Plot_YearCycle_output.R``` demonstrates how to process the output data of the ```YearlyCycle_Relatedness.R``` and create plots to visually view the data.
+- ```SimulateFounderPop.R``` uses SIMplyBee to create founder population genomes. Since this process can be time-consuming, we have also provided the output file ```FounderGenomes_ThreePop_16chr.RData``` that can be downloaded and used to by-pass this part of the simulation.
+- ```YearCycle_Relatedness.R``` runs a yearly cycle of honeybee population for 10 years and calculates and summarizes genetic relatedness for three different honeybee populations.
+- ```Plot_YearCycle_output.R``` processes the output data of the ```YearlyCycle_Relatedness.R``` and create plots to visualise the data.
