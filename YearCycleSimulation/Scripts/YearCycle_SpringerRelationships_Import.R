@@ -958,6 +958,8 @@ for (Rep in 1:nRep) {
   
   IBDe <- computeRelationship_pedigree(SP$pedigree)
   save(IBDe, file = "IBDe_SpringerSimulationOct10.RData")
+  Sinv <- IBDe$Sinv
+  save(Sinv, file = "Sinv.mm")
   
 } # Rep-loop
 
