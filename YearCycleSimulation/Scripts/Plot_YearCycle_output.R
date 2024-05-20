@@ -6,7 +6,7 @@ pacman::p_load(tidyverse, Matrix, SIMplyBee, gridExtra, ggh4x, viridisLite)
 
 print("Reading in the data")
 data <- load("SpringerSimulation_import.RData") #file created when running YearlyCycle script
-Sinv <- readMM("Sinv.mm")
+Sinv <- IBDe$Sinv
 
 # The data contains two populations - mellifera and carnica
 # The carnica stays "pure" throughout the simulation
