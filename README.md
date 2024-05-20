@@ -1,9 +1,11 @@
-# Genetic relatedness of honeybees using SIMplyBee
+# Genetic relatedness of individual honeybees using SIMplyBee
 
-## Introduction 
+## Introduction
 This repository contain R scripts that demonstrates the principles of expected and realised genetic relatedness among individual honeybees using [SIMplyBee](https://cran.r-project.org/web/packages/SIMplyBee/index.html). 
 
-If you have no experience with SIMplyBee, we suggest you go to the software's website [simplybee.info](http://www.simplybee.info).
+If you have no experience with SIMplyBee, we suggest you go to the software's website [simplybee.info](http://www.simplybee.info) and study the tutorials. This repository uses SIMplyBee to simulate honeybee populations as described in the below manuscript and to calculate and summarise relatedness between individual honeybees.
+
+TODO: Cite pre-print/manuscript
 
 ## Respository contents
 - ```README.md``` is this file
