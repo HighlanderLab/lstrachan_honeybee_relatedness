@@ -711,62 +711,6 @@ prepareDataForPlotting_Queens <- function(ibsMultiDF = NULL, ibsCarDF = NULL, ib
   )
 }
 
-prepareDataForPlottingHeatMap_Queens <- function(ibsMultiDF = NULL, ibsSingleDF = NULL, ibsColonyDF = NULL, ibsAF0.5DF = NULL, ibdDF = NULL, Sinv = NULL, idDF = NULL) {
-
-  if (is.null(ibsMultiDF)){
-    ibsAF0.5DF <- as.data.frame(ibsAF0.5DF)
-    columns <- colnames(ibsAF0.5DF)
-    ibsAF0.5DF$ID <- rownames(ibsAF0.5DF)
-    ibsAF0.5DFL <- ibsAF0.5DF %>% pivot_longer(cols = all_of(columns))
-    ibsAF0.5DFL$Type <- "IBSAF0.5"
-    ibsMultiDFL <- NULL
-  } else {
-   #multi
-  ibsMultiDF <- as.data.frame(ibsMultiDF)
-  columns <- colnames(ibsMultiDF)
-  ibsMultiDF$ID <- rownames(ibsMultiDF)
-  ibsMultiDFL <- ibsMultiDF %>% pivot_longer(cols = all_of(columns))
-  ibsMultiDFL$Type <- "IBSmultiAF"
-  ibsAF0.5DFL <- NULL
-  }
-
-  #single
-  ibsSingleDF <- as.data.frame(ibsSingleDF)
-  columns <- colnames(ibsSingleDF)
-  ibsSingleDF$ID <- rownames(ibsSingleDF)
-  ibsSingleDFL <- ibsSingleDF %>% pivot_longer(cols = all_of(columns))
-  ibsSingleDFL$Type <- "IBSsingleAF"
-
-  #own
-  if (!is.null(ibsColonyDF)) {
-  ibsColonyDF <- as.data.frame(ibsColonyDF)
-  columns <- colnames(ibsColonyDF)
-  ibsColonyDF$ID <- rownames(ibsColonyDF)
-  ibsColonyDFL <- ibsColonyDF %>% pivot_longer(cols = all_of(columns))
-  ibsColonyDFL$Type <- "IBScolonyAF"
-  }
-
-  #IBDr
-  ibdrDF <- as.data.frame(ibdDF)
-  columns <- colnames(ibdrDF)
-  ibdrDF$ID <- rownames(ibdrDF)
-  ibdrDFL <- ibdrDF %>% pivot_longer(cols = all_of(columns))
-  ibdrDFL$Type <- "IBDr"
-
-  #IBDe
-  if (!is.null(Sinv)) {
-    ibdeDF <-  as.data.frame(as.matrix(getS(Sinv, ids = idDF)))
-    rownames(ibdeDF) <- idDF
-    colnames(ibdeDF) <- idDF
-    columns <- colnames(ibdeDF)
-    ibdeDF$ID <- as.character(idDF)
-    ibdeDFL <- ibdeDF %>% pivot_longer(cols = all_of(columns))
-    ibdeDFL$Type <- "IBDe"
-  }
-  return(rbind(
-         ibsMultiDFL, ibsSingleDFL, ibsColonyDFL, ibsAF0.5DFL, ibdrDFL, ibdeDFL))
-}
-
 plotColony <- function(df, rel = NULL, type = NULL, years = NULL) {
   df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
   df$Rel <- factor(df$Rel, levels= c("WW", "WD", "DD", "QW", "QD"))
@@ -818,112 +762,10 @@ plotQueens <- function(df, rel = NULL, type = NULL, pops = NULL, years = NULL, p
 
 #to change text size axis.text=element_text(size=12), axis.title = element_text(size= 20), strip.text.x = element_text(size = 20))
 
-scatterQueens <-  function(df, rel = NULL, type = NULL, pops = NULL, legend.position = NULL, palette = NULL, years = NULL) {
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
-  df$Pops <- factor(df$Pops, levels = c("Mel_MelCross", "Mel_Car", "MelCross_Car", "Car", "Mel", "MelCross"))
-  df$Rel  <- factor(df$Rel, levels = c("QQ", "Q"))
-
-
-  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-
-
-  df$Year <- factor(df$Year, levels = years)
-  year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
-  names(year_labels) <- years
-
-  a <- pivot_wider(df[df$Rel %in% rel & df$Type %in% type & df$Pops %in% pops, ], names_from = Type, values_from = Value, values_fn = list)
-  b <- unnest(a, cols = all_of(type))
-
-  plot <- ggplot(data = b, aes(x = IBDr, y = IBSmultiAF)) +
-          geom_point(aes(colour = Pops)) +
-          facet_grid2(cols = vars(Year), scales = "free", independent = "y", labeller = labeller(Type = type_labels, Year = year_labels)) +
-          scale_fill_manual("", values = palette, aesthetics = c("colour","fill")) +
-          theme(panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = legend.position) +
-          scale_x_continuous(breaks=seq(-2, 2, 0.25))
-  return(plot)
-}
-
-plotQueens_heatmapBIND <- function(df, PopIdDF = NULL, years = NULL) {
-  df$ID <- as.factor(as.numeric(df$ID))
-  df$name <- as.factor(as.numeric(df$name))
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
-  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-
-  df$Year <- factor(df$Year, levels = years)
-  year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
-  names(year_labels) <- years
-
-  df <- merge(df, PopIdDF, by = "ID")
-  df <- merge(df, PopIdDF, by.x = "name", by.y = "ID")
-  df$PopId1 <- paste0(df$Pop.x, df$ID)
-  df$PopId2 <- paste0(df$Pop.y, df$name)
-
-  n <- length(unique(df$name[df$Pop.y == "Mel"]))/2
-  breaks = df %>%
-    arrange(Year, Pop.y) %>%
-    dplyr::mutate(row = row_number()) %>%
-    group_by(Year) %>%
-    dplyr::mutate(min = min(row)) %>%
-    group_by(Year, Pop.y) %>%
-    summarise(breaks = max(row_number()), min = mean(min)) %>%
-    ungroup() %>% group_by(Year) %>%
-    dplyr::mutate(breaks2 = ifelse(test = row_number() > 1, yes = breaks/2 + breaks*(row_number()-1), no =  breaks/2)) %>%
-    ungroup() %>%
-    dplyr::mutate(breaks3 = dplyr::select(., min, breaks2) %>%
-                                     rowSums(.)) %>%
-    dplyr::select(breaks = breaks3)
-
-  plot <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() + scale_fill_gradient(low = "white", high = "blue") +
-    theme(panel.background = element_blank(), legend.position = "top") +
-    scale_x_discrete(breaks = breaks$breaks, labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
-    scale_y_discrete(labels = rep(c("Car", "Mel", "MelCross"), length(unique(df$Year)))) +
-    xlab("") +
-    ylab("") +
-    facet_grid2(rows = vars(Type), cols = vars(Year), labeller = labeller(Type = type_labels, Year = year_labels), scales = "free", independent = "y")
-
-  return(plot)
-}
-
-plotQueens_heatmapSOLO <- function(df, Pop = FALSE, PopIdDF = NULL, legend.position = NULL, years = NULL) {
-  df$ID <- as.factor(as.numeric(df$ID))
-  df$name <- as.factor(as.numeric(df$name))
-  df$Type <- factor(df$Type, levels = c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"))
-  type_labels <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-  names(type_labels) <- c("IBDe", "IBDr", "IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5")
-
-  df$Year <- factor(df$Year, levels = years)
-  year_labels <- unlist(paste("Year", years, collapse = "_") %>% stringr::str_split("_"))
-  names(year_labels) <- years
-
-  if (Pop) {
-    df <- merge(df, PopIdDF, by = "ID")
-    df <- merge(df, PopIdDF, by.x = "name", by.y = "ID")
-
-    df$PopId1 <- paste0(df$Pop.x, df$ID)
-    df$PopId2 <- paste0(df$Pop.y, df$name)
-
-    n <- length(unique(df$name[df$Pop.y == "Mel"]))/2
-    breaks = list(df %>% group_by(Pop.y) %>% summarise(mean = unique(name)[n]) %>% unite(PopMean, Pop.y, mean, sep=""))[[1]]$PopMean
-    plot <- ggplot(data = df, aes(x = PopId1, y = PopId2, fill = value)) + geom_tile() + scale_fill_gradient(low = "white", high = "blue") +
-      theme(panel.background = element_blank(), legend.position = legend.position) +
-      scale_x_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
-      scale_y_discrete(breaks = breaks, labels = c("Car", "Mel", "MelCross")) +
-      xlab("") + ylab("") +
-      facet_grid(rows = vars(Type))
-  } else {
-    plot <- ggplot(data = df, aes(x = ID, y = name, fill = value)) + geom_tile() +
-      facet_grid2(rows = vars(Type), labeller = labeller(Type = type_labels), scales = "free")
-  }
-  return(plot)
-}
-
 ########################################################
 ### --- FIGURE 1&2: Pure subspecies (carnica) in years 1 and 10 ---###
 ########################################################
 print("Plot carnica year 1")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCar.RData")
 
 #Coded out data prep
 {
@@ -977,8 +819,6 @@ Year10 <- Fig1Table %>% filter(Year == 10 ) %>% pivot_wider(id_cols = c(SisterTy
 # tapply(tmp$Value, INDEX = tmp$Rel, FUN= sd)
 
 #Plot Car inbreeding
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarF.RData")
-
 # Coded out prep
 {
 relCar1F <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAF,
@@ -1011,7 +851,6 @@ CarFplot <- plotColony(dataCarF, type =  c("IBDe", "IBDr", "IBSsingleAF", "IBSco
 
 
 #Plot CAR csd Locus
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarCSDloc.RData")
 #Coded out prep
 {
 relCar1_csd <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiAFCsdLocus,
@@ -1041,7 +880,6 @@ save(dataCarCSDloc, file = "dataCarCSDloc.Rdata")
 CarCSDlocplot <- plotColony(dataCarCSDloc, type = c("IBSsingleAF", "IBScolonyAF", "IBSmultiAF", "IBSAF0.5"), rel = c("WW", "WD", "DD"), years = c(1,10))
 
 #Plot CAR csd Chromosome
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataCarCsdChr.RData")
 {
 relCar1_csdChr <- prepareDataForPlotting_Colony(ibsMultiDF = colonyCar1$IBSmultiCSDChr,
                                                 ibsSingleDF = colonyCar1$IBSsingleCSDChr,
@@ -1076,8 +914,6 @@ CarCSDchr <- plotColony(dataCarCSDchr, rel = c("WW", "WD", "DD"), type = c("IBSs
 ########################################################
 #Plot queens Year 1
 print("Plot queens")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueens_MelAF.RData")
-
 #Coded out prep
 {
 relQueens1_MelAF <- prepareDataForPlotting_Queens(ibsMultiDF =  queens1_MelAF$IBSmultiAF,
@@ -1162,57 +998,10 @@ QueensQ
 QueensF <- plotQueens(dataQueens_MelAF, rel = "F", type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel", "Car", "MelCross", "IBSAF0.5"), years = c(1,10), palette = cbPaletteQ)
 QueensF
 
-#scatter plot looking at Q and QQ
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/relQueens10_MelAF.RData")
 
-QueensScatterQQ <- scatterQueens(relQueens10_MelAF, type = c("IBDr", "IBSmultiAF"), rel = "QQ", pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), palette = cbPaletteQQ, years = 10 , legend.position = "top")
-QueensScatterQ <- scatterQueens(relQueens10_MelAF, type = c("IBDr", "IBSmultiAF"),  rel = "Q", pops = c("Mel", "Car", "MelCross"), palette = cbPaletteQ, years= 10, legend.position = "top")
-QueensScatter <- grid.arrange(QueensScatterQ, QueensScatterQQ, ncol = 2)
-
-
-
-print("HeatMaps")
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQheat.RData")
-
-#Coded out prep
-{
-# relQueens1h <- prepareDataForPlottingHeatMap_Queens(ibsMultiDF =  queens1$IBSmultiAF,
-#                                                     ibsSingleDF = queens1$IBSsingleAF,
-#                                                     ibsColonyDF = queens1$IBScolonyAF,
-#                                                     ibsAF0.5DF = queens1$IBSAF0.5,
-#                                                     ibdDF = queens1$IBD,
-#                                                     Sinv = Sinv,
-#                                                     idDF = queens1$ID)
-#
-# relQueens10h <- prepareDataForPlottingHeatMap_Queens(ibsMultiDF =  queens10$IBSmultiAF,
-#                                                      ibsSingleDF = queens10$IBSsingleAF,
-#                                                      ibsColonyDF = queens10$IBScolonyAF,
-#                                                      ibsAF0.5DF = queens10$IBSAF0.5,
-#                                                      ibdDF = queens10$IBD,
-#                                                      Sinv = Sinv,
-#                                                      idDF = queens10$ID)
-#
-# relQueens1h$Year <- 1
-# relQueens10h$Year <- 10
-# dataQh <- rbind(relQueens1h, relQueens10h)
-# save(dataQh, file = "dataQHeat.Rdata")
-}
-
-idPopQueens <- rbind(springerQueensPop1, springerQueensPop10)
-relQueens1h$Year <- 1
-relQueens10h$Year <- 10
-
-plotQueens1h <- plotQueens_heatmapSOLO(relQueens1h, Pop = TRUE, PopIdDF = springerQueensPop1, legend.position = "left")
-plotQueens10h <- plotQueens_heatmapSOLO(relQueens10h, Pop = TRUE, PopIdDF = springerQueensPop10, legend.position = "right")
-arrangedPlots <- grid.arrange(plotQueens1h, plotQueens10h, ncol = 2)
-
-QueenH <- plotQueens_heatmapBIND(dataQh, PopIdDF = idPopQueens, years = c(1,10))
-QueenH
 
 #CSD STUFF
 #Plot csd Loc as a histogram (QQ)
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueensCSDloc.RData")
-
 {
 relQueens1_csdLoc_hist <- prepareDataForPlotting_Queens(ibsMultiDF = springerQueens1_MelAF$IBSmultiAFCsdLocus,
                                                         ibsSingleDF = springerQueens1_MelAF$IBSsingleAFcsdLocus,
@@ -1238,61 +1027,8 @@ save(dataQueens_csdLoc, file = "dataQueensCSDloc.RData")
 Queens_csdLoc_hist <- plotQueens(dataQueens_csdLoc, rel = "QQ",  type = c("IBDe", "IBDr","IBSsingleAF", "IBSmultiAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
 Queens_csdLoc_hist
 
-#Plot csd loc as a heatmap TODO:
-
-relQueens1_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens1$IBSCsd, ibdDF = queens1$IBDCsd, Sinv = Sinv, idDF = queens1$ID)
-relQueens10_csdLoc_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens10$IBSCsd, ibdDF = queens10$IBDCsd, Sinv = Sinv, idDF = queens10$ID)
-relQueens1_csdLoc_heat$Year <- 1
-relQueens10_csdLoc_heat$Year <- 10
-dataQueens_csdLoc_heat <- rbind(relQueens1_csdLoc_heat, relQueens10_csdLoc_heat)
-
-QueensCSDloc1h <- plotQueens_heatmapSOLO(relQueens1_csdLoc_heat, Pop = TRUE, PopIdDF = springerQueensPop1, legend.position = "left")
-QueensCSDloc10h <- plotQueens_heatmapSOLO(relQueens10_csdLoc_heat, Pop = TRUE, PopIdDF = springerQueensPop10, legend.position = "right")
-
-QueensCSDLocHeat <- grid.arrange(QueensCSDloc1h, QueensCSDloc10h, ncol = 2)
-
 
 #Plot csd Chr as Histogram
-load("~/Desktop/GitHub/lstrachan_honeybee_sim/YearCycleSimulation/PlottingData/dataQueensCSDchr.RData")
-
-
 Queens_csdChr_hist <- plotQueens(dataQueensCSDchr, rel = "QQ",  type = c("IBDe", "IBDr", "IBSmultiAF", "IBSsingleAF", "IBSAF0.5"), pops = c("Mel_MelCross", "Mel_Car", "MelCross_Car"), years = c(1,10), palette = cbPaletteQQ)
-
-#Plot csd Chr as heatmap
-relQueens1_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens1$IBScsdChr, ibdDF = queens1$IBDcsdChr, Sinv = Sinv, idDF = queens1$ID)
-relQueens10_csdChr_heat <- prepareDataForPlottingHeatMap_QueensCSD(ibsMultiDF = queens10$IBScsdChr, ibdDF = queens10$IBDcsdChr, Sinv = Sinv, idDF = queens10$ID)
-relQueens1_csdChr_heat$Year <- 1
-relQueens10_csdChr_heat$Year <- 10
-dataQueens_csdChr_heat <- rbind(relQueens1_csdChr_heat, relQueens10_csdChr_heat)
-
-QueensCSDchrHeat1 <- plotQueens_heatmapSOLO(relQueens1_csdChr_heat, Pop = TRUE, PopIdDF = springerQueensPop1, legend.position = "left")
-QueensCSDchrHeat10 <- plotQueens_heatmapSOLO(relQueens10_csdChr_heat, Pop = TRUE, PopIdDF = springerQueensPop10, legend.position = "right")
-
-QueenCSDchrHeat <- grid.arrange(QueensCSDchrHeat1, QueensCSDchrHeat10, ncol = 2)
-
-Queens_CSDchr_head <- plotQueens_heatmapBIND(dataQueens_csdChr_heat, PopIdDF = idPopQueens, years= c(1,10))
-
-### Csd
-# csdVariability <- csdVariability[!is.na(csdVariability$subspecies),]
-# pDiploidDrones <- pDiploidDrones[-1,]
-#
-# csdVariability$nCSD <- as.numeric(csdVariability$nCSD)
-# csdVariability$totalCSD <- as.numeric(csdVariability$totalCSD)
-# csdVariability$year <- as.numeric(csdVariability$year)
-# csdMean <- csdVariability %>%  group_by(subspecies, year) %>%  summarize(meanCSD = mean(nCSD))
-# csdMean$subspecies <- factor(csdMean$subspecies, levels = c("Mel", "MelCross", "Car"))
-# csdVariability$subspecies <- factor(csdVariability$subspecies, levels = c("Mel", "MelCross", "Car"))
-# ggplot(data = csdMean, aes(x = year, y = meanCSD, colour = subspecies)) + geom_line()
-#
-# ggplot(data = csdVariability, aes(x = year, y = totalCSD, colour = subspecies)) + geom_line()
-#
-#
-#
-# pDiploidDrones$pQueenHomBrood <- as.numeric(pDiploidDrones$pQueenHomBrood)
-# pDiploidDrones$year <- as.numeric(pDiploidDrones$year)
-# pDiploidMean <- pDiploidDrones %>%  group_by(subspecies, year) %>%  summarize(meanHom = mean(pQueenHomBrood))
-# pDiploidMean$subspecies <- factor(pDiploidMean$subspecies, levels = c("Mel", "MelCross", "Car"))
-#
-# ggplot(data = pDiploidMean, aes(x = year, y = meanHom, colour = subspecies)) + geom_line()
 
 
